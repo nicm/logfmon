@@ -35,20 +35,26 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon monitors a set of syslog log files and matches each new entry against
-the rules defined in it's configuration file. Each rule may be tested against
-lines from a single file or from all files. Depending on the rule, a command
-may be executed or the entry may be ignored. All unmatched messages are batched
-together and mailed every 15 minutes, or whatever alternative time is specified
-in the configuration file.
+daemon monitors a set of syslog log files and matches each new entry
+against the rules defined in it's configuration file. Each rule may be
+tested against entries from a single file, a set of files or from all
+files. Depending on the rule, a command may be executed or the entry
+may be ignored. All unmatched messages are batched together and mailed
+every 15 minutes, or whatever alternative time is specified in the
+configuration file.
 .Pp
-Messages may also be collected into contexts and piped to a command after a
-final message is found or a number of messages is reached. See
+Messages may also be collected into contexts and piped to a command
+after a final message is found or a number of messages is reached. See
 .Xr logfmon.conf 5
 for more details of this.
 .Pp
 The options are as follows:
 .Bl -tag -width "-f fileXXX"
+.It Fl c Ar cachefile
+Specify the cache file location. Default is
+.Pa /etc/logfmon.cache .
+.Pp
+This overrides any location specified in the configuration file.
 .It Fl d
 Run in the foreground and log to
 .Em stderr .
@@ -57,11 +63,6 @@ This option also causes additional debugging messages to be generated.
 .It Fl f Ar conffile
 Specify the configuration file location. Default is
 .Pa /etc/logfmon.conf .
-.It Fl c Ar cachefile
-Specify the cache file location. Default is
-.Pa /etc/logfmon.cache .
-.Pp
-This overrides any location specified in the configuration file.
 .It Fl p Ar pidfile
 Specify the pid file location. Default is
 .Pa /var/run/logfmon.pid .
