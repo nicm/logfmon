@@ -32,9 +32,7 @@ void *xmalloc(size_t size)
   block = malloc(size);
 
   if(block != NULL)
-  {
     return block;
-  }
 
   die("malloc: %s", strerror(errno));
 
@@ -44,13 +42,11 @@ void *xmalloc(size_t size)
 void *xrealloc(void *block, size_t size)
 {
   block = realloc(block, size);
-
+  
   if(block != NULL)
-  {
     return block;
-  }
-
+  
   die("realloc: %s", strerror(errno));
-
+  
   return NULL;
 }
