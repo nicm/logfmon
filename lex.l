@@ -168,6 +168,7 @@
 mailcmd                 return OPTMAILCMD;
 mailtime                return OPTMAILTIME;
 cachefile               return OPTCACHEFILE;
+pidfile                 return OPTPIDFILE;
 user                    return OPTUSER;
 group                   return OPTGROUP;
 not                     return TOKNOT;

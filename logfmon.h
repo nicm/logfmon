@@ -25,6 +25,7 @@
 
 #define CONFFILE  "/etc/logfmon.conf"
 #define CACHEFILE "/etc/logfmon.cache"
+#define PIDFILE "/var/run/logfmon.pid"
 
 #define CHECKTIMEOUT 10
 #define DEFAULTTIMEOUT 5
@@ -50,6 +51,7 @@ extern gid_t gid;
 
 extern char *conf_file;
 extern char *cache_file;
+extern char *pid_file;
 
 extern int now_daemon;
 

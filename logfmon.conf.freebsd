@@ -1,0 +1,48 @@
+set mailtime 1m
+set mailcmd "/usr/bin/mail -s \"`hostname` `date` log report\" root"
+
+set cachefile "/usr/local/etc/logfmon.cache"
+set pidfile "/var/run/logfmon.pid"
+
+file "/var/log/messages" tag messages
+file "/var/log/maillog" tag mail
+
+match in * "last message repeated [0-9] times" ignore
+
+# newsyslog
+match in * "newsyslog\\[[0-9]*\\]: logfile turned over" ignore
+
+# logfmon
+match in messages "logfmon: started" ignore
+
+# syslogd
+match in messages "syslogd: restart" ignore
+
+# ntpd
+#match in messages "ntpd\\[[0-9]*\\]: adjusting local clock by [0-9.-]*s" ignore
+#match in messages "ntpd\\[[0-9]*\\]: peer \\([0-9.]*\\) now valid" ignore
+#match in messages "ntpd\\[[0-9]*\\]: peer \\([0-9.]*\\) now invalid" ignore
+#match in messages "ntpd\\[[0-9]*\\]: ntp engine ready" ignore
+
+# identd
+#match in messages "identd\\[[0-9]*\\]: Connection from localhost" ignore
+#match in messages "identd\\[[0-9]*\\]: request for .* from localhost" ignore
+#match in messages "identd\\[[0-9]*\\]: Connection from irina" ignore
+#match in messages "identd\\[[0-9]*\\]: request for .* from irina" ignore
+#match in messages "identd\\[[0-9]*\\]: Successful lookup: [0-9]* , 25 : nicholas" ignore
+#match in messages "identd\\[[0-9]*\\]: Successful lookup: [0-9]* , 25 : smmsp" ignore
+#match in messages "identd\\[[0-9]*\\]: Successful lookup: [0-9]* , 25 : root" ignore
+
+# sudo
+match in messages "sudo:[ \t]*nicholas .*" ignore
+match in messages "sudo:[ \t]*root .*" ignore
+
+# rdistd
+#match in messages "rdistd\\[[0-9]*\\]: [a-z]*: startup for irina" ignore
+
+# sendmail
+match in mail "sm-mta\\[[0-9]*\\]: .*" ignore
+#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: to=root, ctladdr=\\(.*\\), delay=00:00:0[0-9], xdelay=00:00:0[0-9], mailer=relay, pri=[0-9]*, relay=\\(.*\\), dsn=2.0.0, stat=Sent .*" ignore
+#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: to=nicholas, ctladdr=\\(.*\\), delay=00:00:0[0-9], xdelay=00:00:0[0-9], mailer=relay, pri=[0-9]*, relay=\\(.*\\), dsn=2.0.0, stat=Sent .*" ignore
+#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: from=root, size=[0-9]*, class=[0-9], nrcpts=[0-9], msgid=\\(.*\\), relay=\\(.*\\)" ignore
+#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: from=nicholas, size=[0-9]*, class=[0-9], nrcpts=[0-9], msgid=\\(.*\\), relay=\\(.*\\)" ignore

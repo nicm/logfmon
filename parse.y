@@ -52,7 +52,7 @@ int yywrap(void)
 
 %token TOKMATCH TOKIGNORE TOKEXEC TOKSET TOKFILE TOKIN TOKTAG
 %token TOKOPEN TOKAPPEND TOKCLOSE TOKPIPE TOKEXPIRE TOKWHEN TOKNOT
-%token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE
+%token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE OPTPIDFILE
 
 %union 
 {
@@ -86,6 +86,13 @@ set: TOKSET OPTMAILCMD STRING
      {
        if(cache_file == NULL)
 	 cache_file = $3;
+       else
+	 free($3);
+     }
+   | TOKSET OPTPIDFILE STRING
+     {
+       if(pid_file == NULL)
+	 pid_file = $3;
        else
 	 free($3);
      }

@@ -51,6 +51,7 @@ gid_t gid;
 
 char *conf_file;
 char *cache_file;
+char *pid_file;
 
 int now_daemon;
 
@@ -419,15 +420,18 @@ int main(int argc, char **argv)
   size_t last, pos;
 
   struct file *file;
+
+  FILE *fd;
  
   now_daemon = 0;
-  
+
+  pid_file = NULL;
   conf_file = CONFFILE;
   cache_file = NULL;
 
   debug = 0;
 
-  while((opt = getopt(argc, argv, "df:c:")) != EOF)
+  while((opt = getopt(argc, argv, "df:c:p:")) != EOF)
   {
     switch(opt)
     {
@@ -441,6 +445,10 @@ int main(int argc, char **argv)
       case 'c':
 	cache_file = xmalloc(strlen(optarg) + 1);
 	strcpy(cache_file, optarg);
+	break;
+      case 'p':
+	pid_file = xmalloc(strlen(optarg) + 1);
+	strcpy(pid_file, optarg);
 	break;
       case '?':
       default:
@@ -471,6 +479,9 @@ int main(int argc, char **argv)
 
   if(cache_file == NULL)
     cache_file = CACHEFILE;
+
+  if(pid_file == NULL)
+    pid_file = PIDFILE;
 
   /*if(rules == NULL)
     die("no rules found");*/
@@ -525,6 +536,18 @@ int main(int argc, char **argv)
   signal(SIGTERM, sighandler);
 
   /*signal(SIGCHLD, SIG_IGN);*/
+
+  if(!debug && pid_file != NULL && *pid_file != '\0')
+  {
+    fd = fopen(pid_file, "w");
+    if(fd == NULL)
+      error("%s: %d", pid_file, strerror(errno));
+    else
+    {
+      fprintf(fd, "%ld\n", (long) getpid());
+      fclose(fd);
+    }
+  }
 
   reload_conf = 0;
   exit_now = 0;
@@ -648,6 +671,8 @@ int main(int argc, char **argv)
   }
   
   close_files();
+  if(!debug && pid_file != NULL && *pid_file != '\0')
+    unlink(pid_file);
 
   return 0;
 }

@@ -46,10 +46,21 @@ The options are as follows:
 .It Fl d
 Run in the foreground and log to
 .Em stderr .
+.Pp
 This option also causes additional debugging messages to be generated.
 .It Fl f Ar file
 Specify the configuration file location. Default is
 .Pa /etc/logfmon.conf .
+.It Fl c Ar file
+Specify the cache file location. Default is
+.Pa /etc/logfmon.cache .
+.Pp
+This overrides any location specified in the configuration file.
+.It Fl p Ar file
+Specify the pid file location. Default is
+.Pa /var/run/logfmon.pid .
+.Pp
+This overrides any location specified in the configuration file.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/logfmon.confXXX" -compact

@@ -80,6 +80,20 @@ This instructs
 to run as a different group or gid. An alternative group will only be used if
 .Xr logfmon 8
 is run as root.
+.It Ic cachefile Ar file
+This Informs
+.Xr logfmon 8
+the path of the file used to retain a cache of the offsets and sizes of 
+the log files to prevent duplicate processing of entries when it is restarted.
+An empty string disables caching. Note that this option may be overridden
+on the command line.
+.It Ic pidfile Ar file
+This instructs 
+.Xr logfmon 8
+to write its pid into the file specified. If an empty string is used, the pid
+is not written. If this entry does not appear in the configuration file, the
+default of /var/run/logfmon.pid is used. Note that this option may be overridden
+on the command line.
 .Sh FILES
 The
 .Ic file
