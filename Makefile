@@ -65,6 +65,8 @@ LIBS+= -lpthread
 
 DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] INSTALL make-linux.sh rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
 
+PORT?=ports/OpenBSD-3.6
+
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}
 
@@ -94,6 +96,15 @@ install:	all
 		${INSTALL} ${INSTALLBIN} ${PROG} ${DESTDIR}/sbin/${PROG}
 		${INSTALL} ${INSTALLMAN} ${PROG}.8.gz ${DESTDIR}/man/man8/${PROG}.8.gz
 		${INSTALL} ${INSTALLMAN} ${PROG}.conf.5.gz ${DESTDIR}/man/man5/${PROG}.conf.5.gz
+
+update-ports:
+		md5 releases/${PROG}-${VERSION}.tar.gz > ${PORT}/distinfo.new
+		sha1 releases/${PROG}-${VERSION}.tar.gz >> ${PORT}/distinfo.new
+		rmd160 releases/${PROG}-${VERSION}.tar.gz >> ${PORT}/distinfo.new
+		cat ${PORT}/distinfo.new | sed -e 's/releases\///' > ${PORT}/distinfo
+		${RM} ${RMFLAGS} ${PORT}/distinfo.new
+		cat ${PORT}/Makefile | sed -e 's/${PROG}-[0-9]\.[0-9]/${PROG}-${VERSION}/' > ${PORT}/Makefile.new
+		mv ${PORT}/Makefile.new ${PORT}/Makefile
 
 uninstall:
 		${RM} ${RMFLAGS} ${DESTDIR}/sbin/${PROG}
