@@ -183,11 +183,11 @@ int open_files(int *failed)
   struct file *file;
   int num;
 
-  if(files.head == NULL)
-    return 0;
-
   if(failed != NULL)
     *failed = 0;
+
+  if(files.head == NULL)
+    return 0;
 
   num = 0;
   for(file = files.head; file != NULL; file = file->next)

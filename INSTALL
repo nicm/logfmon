@@ -36,12 +36,12 @@ If this isn't the case, it almost certainly won't work properly.
 If you are doing any kind of log rotation, you may occasionally see 
 `No such file or directory' messages from logfmon in your logs. This happens
 when logfmon sees that the file has been renamed or deleted by log rotation
-and tries to reopen it before the log file has been recreated. An occasional one
-or two of these is normal. If a file is renamed or deleted after logfmon has
-started it tries to reopen every 5 seconds until it suceeds, so if you see a 
-lot of these messages, something is probably wrong. This only applies when
-logfmon is running. If opening a file fails when logfmon is initially started,
-it will report it to stderr and exit immediately.
+and tries to reopen it before the log file has been recreated. An occasional
+one or two of these is normal. If a file is renamed or deleted after logfmon
+has started it tries to reopen every second until it suceeds, so if you see a 
+lot (more than 5 or 10) of these messages, something is probably wrong. This
+only applies when logfmon is running. If opening a file fails when logfmon is
+initially started, it will report it to stderr and exit immediately.
 
 Feedback is welcome.
 
