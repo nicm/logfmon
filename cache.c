@@ -137,9 +137,9 @@ int load_cache(void)
       {
 	if(sb.st_size >= size)
 	{
-	  file->offset = (off_t) offset;
+	  file->offset = offset;
 	  /* this is correct: size is updated incrementally */
-	  file->size = (off_t) offset; 
+	  file->size = offset; 
 	}
       }
       if(debug)
