@@ -2,7 +2,7 @@
 
 COMMENT=	"monitors logfiles and performs commands"
 
-DISTNAME=	logfmon-0.2
+DISTNAME=	logfmon-0.4
 CATEGORIES=	security
 MASTER_SITES=	${MASTER_SITE_SOURCEFORGE:=logfmon/}
 
