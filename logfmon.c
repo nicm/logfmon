@@ -236,6 +236,12 @@ void parse_line(char *line, struct file *file)
     if(regexec(rule->re, test, 10, matches, 0) != 0)
       continue;
 
+    if(rule->not_re != NULL)
+    {
+      if(regexec(rule->not_re, test, 0, NULL, 0) == 0)
+	continue;
+    }
+
     switch(rule->action)
     {
       case ACTION_IGNORE:

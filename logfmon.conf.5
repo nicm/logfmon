@@ -120,7 +120,9 @@ The format of a match command is:
 .Bl -tag -width Ds
 .It Xo Ic match 
 .Li [\&  Ic in Ar tags Li ] 
-.Ar regexp Ar action
+.Ar regexp
+.Li [\&  Ic not Ar regexp Li ] 
+.Ar action
 .Xc
 .El
 .Pp
@@ -129,6 +131,13 @@ If the
 part is not supplied, or is a single asterisk, the rule is applied in all
 files. A rule may be applied to multiple tags by enclosing them in braces, for
 example { tag1 tag2 tag3 }. Braces are not necessary for a single tag.
+.Pp
+If a
+.Ic not Ar regexp
+part is supplied, the rule only applies if the log entry both matches the
+first regexp and
+.Em doesn't
+match the second, not, regexp.
 .Pp
 For this form of
 .Ic match
@@ -213,7 +222,9 @@ is used, the entire context is piped to the supplied command.
 .Bl -tag -width Ds
 .It Xo Ic match 
 .Li [\&  Ic in Ar tags Li ] 
-.Ar regexp Ic open Ar name
+.Ar regexp 
+.Li [\&  Ic not Ar regexp Li ] 
+.Ic open Ar name
 .Ic expire Ar time
 .Ar action
 .Li [\&  Ic when Ar num
@@ -240,13 +251,17 @@ is taken and the context is removed when the context holds
 entries.
 .It Xo Ic match 
 .Li [\&  Ic in Ar tags Li ] 
-.Ar regexp Ic append Ar name
+.Ar regexp 
+.Li [\&  Ic not Ar regexp Li ] 
+.Ic append Ar name
 .Xc
 This appends a matching log entry to a context. If the context does not exist,
 this rule is silently ignored.
 .It Xo Ic match 
 .Li [\&  Ic in Ar tags Li ] 
-.Ar regexp Ic close Ar name Ar action
+.Ar regexp 
+.Li [\&  Ic not Ar regexp Li ] 
+.Ic close Ar name Ar action
 .Xc
 This applies the specified action and removes the context.
 .El

@@ -35,6 +35,7 @@ struct rule
   struct tags *tags;
 
   regex_t *re;
+  regex_t *not_re;
 
   int action;
   struct 
@@ -59,7 +60,7 @@ struct rules
 
 extern struct rules rules;
 
-struct rule *add_rule(int, struct tags *, char *);
+struct rule *add_rule(int, struct tags *, char *, char *);
 void clear_rules(void);
 
 #endif

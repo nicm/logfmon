@@ -75,7 +75,6 @@ silliness with the pthread implementation.
 
 Currently on my to do list are, in no particular order:
 
-- think about allowing a `doesn't match' regexp as well as a `does match'
 - there is quite a lot of stuff needs cleaned up
 - the Linux event stuff is still a bit crap
 - I'm not altogether happy with the context rules

@@ -169,6 +169,7 @@ mailcmd                 return OPTMAILCMD;
 mailtime                return OPTMAILTIME;
 user                    return OPTUSER;
 group                   return OPTGROUP;
+not                     return TOKNOT;
 in			return TOKIN;
 file			return TOKFILE;
 tag			return TOKTAG;

@@ -31,7 +31,7 @@
 
 struct rules rules = { NULL, NULL };
 
-struct rule *add_rule(int action, struct tags *tags, char *re)
+struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
 {
   struct rule *rule;
 
@@ -72,6 +72,24 @@ struct rule *add_rule(int action, struct tags *tags, char *re)
     return NULL;
   }
 
+  if(not_re != NULL)
+  {
+    rule->not_re = (regex_t *) xmalloc(sizeof(regex_t));
+
+    if(regcomp(rule->not_re, not_re, 0) != 0)
+    {
+      free(rule->not_re);
+      free(rule->re);
+      free(rule);
+      
+      error("%s: bad regexp", not_re);
+
+      return NULL;
+    }
+  }
+  else
+    rule->not_re = NULL;
+
   if(debug)
     info("match=%s, action=%d", re, rule->action);
   
@@ -105,11 +123,16 @@ void clear_rules(void)
     rule = rule->next;
 
     regfree(last->re);
+    if(last->not_re != NULL)
+      regfree(last->not_re);
 
     clear_tags(last->tags);
     free(last->tags);
 
     free(last->re);
+    if(last->not_re != NULL)
+      free(last->not_re);
+
     free(last->params.cmd);
     free(last->params.key);
     free(last);

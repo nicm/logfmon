@@ -54,12 +54,8 @@
  *    - F_SETSIG also looks lannoying to implement, and I'm not sure
  *      it would do the right thing either.
  *
- * So, we are left with a very sucky manual poll with stat() and
- * a read (currently relying on behaviour that is probably not
- * reliable, but I will fix it later) which is, well, crap and
- * I'm not very happy about at all.  
- *
- * It seems to work, though :-/.
+ * So, we are left with a very sucky manual poll with stat()
+ * which is, well, crap and I'm not very happy about at all.  
  *
  */
 
@@ -70,15 +66,6 @@ void init_events(void)
   struct file *file;
 
   evfile = files.head;
-
-  for(file = files.head; file != NULL; file = file->next)
-  {
-    if(file->fd != NULL)
-    {
-      if(fcntl(fileno(file->fd), F_SETFL, O_NONBLOCK) == -1)
-	die("fcntl: %s", strerror(errno));
-    }
-  }
 }
 
 struct file *get_event(int *event, int timeout)
