@@ -57,6 +57,20 @@ lot (more than 5 or 10) of these messages, something is probably wrong. This
 only applies when logfmon is running. If opening a file fails when logfmon is
 initially started, it will report it to stderr and exit immediately.
 
+Note that due to a limitation of kqueue on *BSD, logfmon will refuse to run
+if the log files are not located on a UFS filesystem. If you really must
+put your log files on something else, the Linux version should work on
+*BSD too. In the Makefile, change the line:
+
+SRCS+= event.c
+
+to:
+
+SRCS+= event-linux.c
+
+Note that just setting OS to Linux won't work on FreeBSD due to silliness with
+the pthread implementation.
+
 Currently on my to do list are, in no particular order:
 
 - think about allowing a `doesn't match' regexp as well as a `does match'
