@@ -9,6 +9,10 @@ works fine. Alternatively, the make-linux.sh script should work if you
 have bash installed. Note that the Linux stuff is very poorly tested so YMMV.
 I'd appreciate feedback on problems.
 
+There is some weirdness with yacc on my Linux installation, in that it sometimes
+fails the first time you build with `unexpected end of file'. It seems to work
+fine if you just make it again. It works all the time on OpenBSD and FreeBSD.
+
 To install, do:
 
 	make
