@@ -63,7 +63,7 @@ LDFLAGS+= -pthread
 LIBS+= -lpthread
 .endif
 
-DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] INSTALL make-linux.sh rc.d/logfmon.sh.freebsd.5.3
+DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] INSTALL make-linux.sh rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
 
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}
