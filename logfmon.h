@@ -21,6 +21,8 @@
 
 #include <signal.h>
 
+#include <sys/types.h>
+
 #define CONFFILE  "/etc/logfmon.conf"
 #define CACHEFILE "/etc/logfmon.cache"
 

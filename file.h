@@ -19,6 +19,8 @@
 #ifndef FILE_H
 #define FILE_H
 
+#include <sys/types.h>
+
 #include "context.h"
 #include "messages.h"
 
