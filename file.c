@@ -42,6 +42,8 @@ int add_file(char *path, char *tag)
   file->buffer = NULL;
   file->length = 0;
 
+  file->size = 0;
+
   file->saves.head = file->saves.tail = NULL;
   file->contexts.head = file->contexts.tail = NULL;
 
@@ -202,10 +204,13 @@ int open_files(int *failed)
 	error("%s: %s", file->path, strerror(errno));
       }
       else
+      {
+	file->size = 0;
 	num++;
+      }
     }
   }
-
+  
   return num;
 }
 

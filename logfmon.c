@@ -518,11 +518,17 @@ int main(int argc, char **argv)
 	  file->buffer = xrealloc(file->buffer, file->length + 256);
 
 	  len = read(fileno(file->fd), file->buffer + file->length, 255);
-	  if(len == -1 || len == 0)
+	  if(len == 0 || len == -1)
 	    break;
 	  file->length += len;
 	  if(len < 255)
 	    break;
+	}
+
+	if(len == -1)
+	{
+	  fclose(file->fd);
+	  file->fd = NULL;	  
 	}
 
 	last = 0;

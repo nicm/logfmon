@@ -85,7 +85,6 @@ struct file *get_event(int *event, int timeout)
 {
   struct stat sb;
   int num;
-  ssize_t rc;
 
   num = 0;
 
@@ -121,9 +120,16 @@ struct file *get_event(int *event, int timeout)
 	  return evfile;
 	}
 
-	rc = read(fileno(evfile->fd), NULL, 1);
-	if(rc != 0)
+	if(sb.st_size < evfile->size)
 	{
+	  *event = EVENT_REOPEN;
+	  return evfile;
+	}
+
+	if(sb.st_size > evfile->size)
+	{
+	  evfile->size = sb.st_size;
+
 	  *event = EVENT_READ;
 	  return evfile;
 	}

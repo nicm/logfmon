@@ -32,6 +32,8 @@ struct file
   char *buffer;
   size_t length;
 
+  off_t size;
+
   struct contexts contexts;
   struct messages saves;
 
