@@ -202,6 +202,10 @@ A context expires and is removed after a time supplied to the
 rule. An action may be taken when a context expires, or, with a
 .Ic when
 command, optionally when it reaches a certain number of entries.
+If a
+.Ic pipe
+action is used, then $1 is replaced by the name of the context in the command
+before the context is piped to it.
 .Pp
 Note that unlike the other rules,
 .Xr logfmon 8
