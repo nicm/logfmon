@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 set -x
 
@@ -7,19 +7,25 @@ if [ "$1" == "clean" ]; then
     exit
 fi
 
+CC=gcc
 CFLAGS="-I- -I. -I/usr/local/include $CFLAGS \
         -Wall -W -Wmissing-prototypes -Wmissing-declarations \
         -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare"
+LDFLAGS="-L/usr/local/lib"
+LIBS="-lm -lpthread"
 
-yacc -d parse.y
-lex lex.l
+YACC="bison"
+YACCFLAGS="-d -y"
 
-for i in *.c; do
-    if [ "$i" != "event.c" ]; then
-	if [ ! -f ${i%.c}.o ]; then 
-	    gcc $CFLAGS -c $i -o ${i%.c}.o
-	fi
-    fi
+LEX="lex"
+LEXFLAGS=
+
+[ ! -f y.tab.c ] && $YACC $YACCFLAGS parse.y
+[ ! -f lex.yy.c ] && $LEX $LEXFLAGS lex.l
+
+SRCS=`echo *.c`
+for i in ${SRCS/event.c/}; do
+    [ ! -f ${i%.c}.o ] && $CC $CFLAGS -c $i -o ${i%.c}.o
 done
 
-gcc -L/usr/local/lib -o logfmon -lm -lpthread *.o
+$CC $LDFLAGS -o logfmon $LIBS *.o
