@@ -198,7 +198,10 @@ void open_files(void)
       else
       {
 	if(file->offset > 0)
-	  fsetpos(file->fd, &(file->offset));
+	{
+	  if(fsetpos(file->fd, &(file->offset)) != 0)
+	    error("fsetpos: %s", strerror(errno));
+	}
       }
     }
   }
