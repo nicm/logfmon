@@ -188,9 +188,6 @@ void parse_line(char *line, struct file *file)
   struct context *context;
   int match;
 
-  FILE *fd;
-  struct contextmsg *cmsg;
-
   if(strlen(line) < 17)
     return;
 
@@ -242,11 +239,12 @@ void parse_line(char *line, struct file *file)
 
 	if(find_context(file->contexts, str) != NULL)
 	{
-	  info("ignoring open; found existing context %s", str);
+	  if(debug)
+	    info("ignoring open; found existing context %s", str);
 	  continue;
 	}
 
-	file->contexts = add_context(file->contexts, str, rule->params.expiry);
+	file->contexts = add_context(file->contexts, str, rule);
 
 	free(str);
 
@@ -264,7 +262,8 @@ void parse_line(char *line, struct file *file)
 	free(str);
 	if(context == NULL)
 	{
-	  info("missing context %s for append", str);
+	  if(debug)
+	    info("missing context %s for append", str);
 	  continue;
 	}
 
@@ -279,12 +278,13 @@ void parse_line(char *line, struct file *file)
 
 	if(debug)
 	  info("matched: (%s) %s -- closing: %s", file->tag, test, str);
-
+	
 	context = find_context(file->contexts, str);
 	free(str);
 	if(context == NULL)
 	{
-	  info("missing context %s for close", str);
+	  if(debug)
+	    info("missing context %s for close", str);
 	  continue;
 	}
 
@@ -293,21 +293,8 @@ void parse_line(char *line, struct file *file)
 
 	str = repl_matches(test, rule->params.cmd, matches);
 
-	fd = popen(str, "w");
-	if(fd == NULL)
-	{
+	if(pipe_context(str, context))
 	  error("%s: %s", str, strerror(errno));
-	  free(str);
-	  continue;
-	}
-	cmsg = context->cmsgs;
-	while(cmsg != NULL)
-	{
-	  fprintf(fd, "%s\n", cmsg->msg);
-	  
-	  cmsg = cmsg->next;
-	}
-	pclose(fd);
 	
 	free(str);
 

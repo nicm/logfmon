@@ -29,8 +29,9 @@
 #include "xmalloc.h"
 #include "log.h"
 #include "context.h"
+#include "rules.h"
 
-struct context *add_context(struct context *contexts, char *key, time_t expiry)
+struct context *add_context(struct context *contexts, char *key, struct rule *rule)
 {
   struct context *context, *new;
 
@@ -39,8 +40,9 @@ struct context *add_context(struct context *contexts, char *key, time_t expiry)
   new->next = NULL;
 
   new->cmsgs = NULL;
+  new->rule = rule;
 
-  new->expiry = time(NULL) + expiry;
+  new->expiry = time(NULL) + rule->params.expiry;
 
   new->key = (char *) xmalloc(strlen(key) + 1);
   strcpy(new->key, key);
@@ -200,9 +202,34 @@ struct context *check_contexts(struct context *contexts)
     {
       if(debug)
 	info("context %s expired", last->key);
+      if(last->rule != NULL && last->rule->params.cmd != NULL)
+      {
+	if(pipe_context(last->rule->params.cmd, last))
+	  error("%s: %s", last->rule->params.cmd, strerror(errno));
+      }
       contexts = delete_context(contexts, last->key);
     }
   }
 
   return contexts;
+}
+
+int pipe_context(char *cmd, struct context *context)
+{
+  FILE *fd;
+  struct contextmsg *cmsg;
+
+  fd = popen(cmd, "w");
+  if(fd == NULL)
+    return 1;
+  cmsg = context->cmsgs;
+  while(cmsg != NULL)
+  {
+    fprintf(fd, "%s\n", cmsg->msg);
+    
+    cmsg = cmsg->next;
+  }
+  pclose(fd);
+  
+  return 0;
 }

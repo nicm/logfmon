@@ -21,11 +21,14 @@
 
 #include <time.h>
 
+#include "rules.h"
+
 struct context
 {
   char *key;
 
   time_t expiry;
+  struct rule *rule;
 
   struct contextmsg *cmsgs;
   
@@ -39,12 +42,13 @@ struct contextmsg
   struct contextmsg *next;
 };
 
-struct context *add_context(struct context *, char *, time_t);
+struct context *add_context(struct context *, char *, struct rule *);
 struct context *delete_context(struct context *, char *);
 struct context *clear_contexts(struct context *);
 struct context *find_context(struct context *, char *);
 struct context *check_contexts(struct context *);
 struct contextmsg *add_msg(struct contextmsg *, char *);
 struct contextmsg *clear_msgs(struct contextmsg *);
+int pipe_context(char *, struct context *);
 
 #endif
