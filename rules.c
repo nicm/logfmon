@@ -25,10 +25,13 @@
 #include "xmalloc.h"
 #include "log.h"
 #include "file.h"
+#include "tags.h"
+#include "log.h"
+#include "file.h"
 
 struct rules rules = { NULL, NULL };
 
-struct rule *add_rule(int action, char *tag, char *re)
+struct rule *add_rule(int action, struct tags *tags, char *re)
 {
   struct rule *rule;
 
@@ -43,29 +46,25 @@ struct rule *add_rule(int action, char *tag, char *re)
   rule->params.ent_max = 0;
   rule->params.ent_cmd = NULL;
 
-  if(tag != NULL)
+  if(tags == NULL)
   {
-    if(find_file_by_tag(tag) == NULL)
-    {
-      free(rule);
-
-      error("%s: unknown tag", tag);
-
-      return NULL;
-    }
-
-    rule->tag = (char *) xmalloc(strlen(tag) + 1);
-    strcpy(rule->tag, tag);
+    rule->tags = xmalloc(sizeof(struct tags));
+    rule->tags->head = rule->tags->tail = NULL;
   }
   else
-    rule->tag = NULL;
+    rule->tags = tags;
+  
+  if(check_tags(rule->tags))
+  {
+    free(rule);
+    return NULL;
+  }
 
   rule->re = (regex_t *) xmalloc(sizeof(regex_t));
 
   if(regcomp(rule->re, re, 0) != 0)
   {
     free(rule->re);
-    free(rule->tag);
     free(rule);
 
     error("%s: bad regexp", re);
@@ -74,7 +73,7 @@ struct rule *add_rule(int action, char *tag, char *re)
   }
 
   if(debug)
-    info("match=%s, action=%d, tag=%s", re, rule->action, rule->tag);
+    info("match=%s, action=%d", re, rule->action);
   
   if(rules.head == NULL)
   {
@@ -107,8 +106,10 @@ void clear_rules(void)
 
     regfree(last->re);
 
+    clear_tags(last->tags);
+    free(last->tags);
+
     free(last->re);
-    free(last->tag);
     free(last->params.cmd);
     free(last->params.key);
     free(last);

@@ -37,6 +37,7 @@
 #include "file.h"
 #include "context.h"
 #include "event.h"
+#include "tags.h"
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -231,7 +232,7 @@ void parse_line(char *line, struct file *file)
 
   for(rule = rules.tail; rule != NULL; rule = rule->last)
   {
-    if(rule->tag != NULL && strcmp(rule->tag, file->tag) != 0)
+    if(rule->tags->head == NULL || !find_tag(rule->tags, file->tag))
       continue;
 
     match = regexec(rule->re, test, 10, matches, 0);

@@ -20,10 +20,83 @@
 %{
 #include <stdio.h>
 #include <string.h>
-#include "xmalloc.h"
+#include <ctype.h>
+
 #include "y.tab.h"
+
+#include "xmalloc.h"
+#include "tags.h"
+#include "file.h"
 %}
 %%
+\{                       {
+                          int ch, done, len, pos;
+                          char *tag;
+
+                          done = 0;
+ 
+                          len = 24;
+                          pos = 0;
+                          tag = xmalloc(len);
+
+                          yylval.tags = xmalloc(sizeof(struct tags));
+                          yylval.tags->head = yylval.tags->tail = NULL;
+    
+                          while(!done && (ch = input()))
+                          {
+                            switch(ch)
+                            {
+                              case ' ':
+                                if(pos != 0)
+				{
+				  *(tag + pos) = '\0';
+				  add_tag(yylval.tags, tag);
+				  len = 24;
+				  pos = 0;
+				  tag = xrealloc(tag, len);
+				}
+                                break;
+                              case '}':
+                                done = 1;
+                                break;
+                              default:
+                                if(ch == '-' || ch == '_' || isalpha(ch))
+                                {
+                                  *(tag + pos) = ch; 
+                                  pos++;
+                                  while(pos >= len)
+                                  {
+                                    len *= 2;
+                                    tag = xrealloc(tag, len);
+                                  }
+                                }
+                                else
+                                {
+                                  clear_tags(yylval.tags);
+                                  free(yylval.tags);
+                                  yylval.tags = NULL;
+                                  free(tag);
+                                  return TAGS;
+                                }
+                                break;
+                            }
+                          }
+
+                          if(pos > 0)
+                          {
+                            *(tag + pos) = '\0';
+			    add_tag(yylval.tags, tag);
+                          }
+
+                          if(yylval.tags->head == NULL)
+                          { 
+                            free(yylval.tags);
+                            yylval.tags = NULL;
+                          }
+
+                          free(tag);
+                          return TAGS;
+                        }
 [0-9]+[hms]             {
                           char ch;
 
@@ -109,12 +182,19 @@ append                  return TOKAPPEND;
 close                   return TOKCLOSE;
 pipe                    return TOKPIPE;
 when                    return TOKWHEN;
-\*			return TOKALL;
+\*			{
+                          yylval.tags = xmalloc(sizeof(struct tags));
+                          yylval.tags->head = yylval.tags->tail = NULL;
+                           
+                          return TAGS;
+                        }
 [A-Za-z0-9_-]+ 		{
-                          yylval.string = (char *) xmalloc(strlen(yytext) + 1);
-			  strcpy(yylval.string, yytext);
+                          yylval.tags = xmalloc(sizeof(struct tags));
+                          yylval.tags->head = yylval.tags->tail = NULL;
 
-			  return TAG;
+                          add_tag(yylval.tags, yytext);
+
+			  return TAGS;
 			}
 \#.*\n                  /* ignore comments */;
 \n                      /* ignore end of line */;

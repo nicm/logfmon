@@ -16,50 +16,26 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef RULES_H
-#define RULES_H
+#ifndef TAGS_H
+#define TAGS_H
 
-#include <regex.h>
-
-#include "tags.h"
-
-#define ACTION_IGNORE 0
-#define ACTION_EXEC 1
-#define ACTION_PIPE 2
-#define ACTION_OPEN 3
-#define ACTION_APPEND 4
-#define ACTION_CLOSE 5
-
-struct rule
+struct tag
 {
-  struct tags *tags;
+  char *name;
 
-  regex_t *re;
-
-  int action;
-  struct 
-  {
-    char *cmd;
-    char *key;
-    time_t expiry;
-
-    int ent_max;
-    char *ent_cmd;
-  } params;
- 
-  struct rule *next;
-  struct rule *last;
+  struct tag *next;
+  struct tag *last;
 };
 
-struct rules
+struct tags
 {
-  struct rule *head;
-  struct rule *tail;
+  struct tag *head;
+  struct tag *tail;
 };
 
-extern struct rules rules;
-
-struct rule *add_rule(int, struct tags *, char *);
-void clear_rules(void);
+int add_tag(struct tags *, char *);
+int check_tags(struct tags *);
+void clear_tags(struct tags *);
+struct tag *find_tag(struct tags *, char *);
 
 #endif
