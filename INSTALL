@@ -1,6 +1,6 @@
 This file should probably be called README now.
 
-I've currently tested a lot on OpenBSD 3.6, a bit on  FreeBSD 4.10 and a little
+I've currently tested a lot on OpenBSD 3.6, a bit on FreeBSD 4.10 and a little
 on Debian with Linux 2.6.9 kernel.
 
 The Makefile requires BSD make. In Debian, FreeBSD make is part of the

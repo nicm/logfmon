@@ -358,7 +358,11 @@ void parse_line(char *line, struct file *file)
     info("unmatched: (%s) %s", file->tag, test);
  
     if(mail_cmd != NULL && *mail_cmd != '\0')
+    {
+      pthread_mutex_lock(&save_mutex);
       add_message(&file->saves, line);
+      pthread_mutex_unlock(&save_mutex);
+    }
 }
 
 void usage(void)
