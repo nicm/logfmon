@@ -93,6 +93,7 @@ int add_file(char *path, char *tag)
   {
     files.head->last = file;
     file->next = files.head;
+    file->last = NULL;
     files.head = file;
   }  
 

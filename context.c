@@ -37,8 +37,6 @@ int add_context(struct contexts *contexts, char *key, struct rule *rule)
 
   context = (struct context *) xmalloc(sizeof(struct context));
 
-  context->next = NULL;
-
   context->messages.head = context->messages.tail = NULL;
 
   context->rule = rule;
@@ -56,8 +54,11 @@ int add_context(struct contexts *contexts, char *key, struct rule *rule)
   {
     contexts->head->last = context;
     context->next = contexts->head;
+    context->last = NULL;
     contexts->head = context;
   }  
+
+  //error("*** new context %s: next=%p last=%p; head=%p tail=%p",context->key,context->next,context->last,contexts->head,contexts->tail);
 
   return 0;
 }

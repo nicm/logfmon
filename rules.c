@@ -34,8 +34,6 @@ struct rule *add_rule(int action, char *tag, char *re)
 
   rule = (struct rule *) xmalloc(sizeof(struct rule));
 
-  rule->next = NULL;
-
   rule->action = action;
 
   rule->params.cmd = NULL;
@@ -84,6 +82,7 @@ struct rule *add_rule(int action, char *tag, char *re)
   {
     rules.head->last = rule;
     rule->next = rules.head;
+    rule->last = NULL;
     rules.head = rule;
   }  
 

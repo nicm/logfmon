@@ -46,6 +46,7 @@ int add_message(struct messages *messages, char *msg)
   {
     messages->head->last = message;
     message->next = messages->head;
+    message->last = NULL;
     messages->head = message;
   }  
 

@@ -200,7 +200,7 @@ void parse_line(char *line, struct file *file)
   if(*test == '\0')
     return;
 
-  for(rule = rules.head; rule != NULL; rule = rule->next)
+  for(rule = rules.tail; rule != NULL; rule = rule->last)
   {
     if(rule->tag != NULL && strcmp(rule->tag, file->tag) != 0)
       continue;
