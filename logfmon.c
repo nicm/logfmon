@@ -396,7 +396,7 @@ void usage(void)
 {
   printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n", __progname);
 
-  exit(EXIT_FAILURE);
+  exit(1);
 }
 
 int main(int argc, char **argv)
@@ -422,24 +422,21 @@ int main(int argc, char **argv)
 
   debug = 0;
 
-  while((opt = getopt(argc, argv, "df:c:p:")) != EOF)
+  while((opt = getopt(argc, argv, "c:df:p:")) != EOF)
   {
     switch(opt)
     {
+      case 'c':
+	cache_file = xstrdup(optarg);
+	break;
       case 'd':
 	debug = 1;
 	break;
       case 'f':
-	conf_file = xmalloc(strlen(optarg) + 1);
-	strcpy(conf_file, optarg);
-	break;
-      case 'c':
-	cache_file = xmalloc(strlen(optarg) + 1);
-	strcpy(cache_file, optarg);
+	conf_file = xstrdup(optarg);
 	break;
       case 'p':
-	pid_file = xmalloc(strlen(optarg) + 1);
-	strcpy(pid_file, optarg);
+	pid_file = xstrdup(optarg);
 	break;
       case '?':
       default:
@@ -447,20 +444,17 @@ int main(int argc, char **argv)
     }
   }
 
-  rules.head = rules.tail = NULL;
-  files.head = files.tail = NULL;
-
   mail_time = MAILTIME;
   mail_cmd = NULL;
+
+  rules.head = rules.tail = NULL;
+  files.head = files.tail = NULL;
 
   uid = 0;
   gid = 0;
 
   if(conf_file == NULL)
-  {
-    conf_file = xmalloc(strlen(CONFFILE) + 1);
-    strcpy(conf_file, CONFFILE);
-  }
+    conf_file = xstrdup(CONFFILE);
 
   if(load_conf() != 0)
   {
@@ -469,25 +463,16 @@ int main(int argc, char **argv)
   }
 
   if(mail_cmd == NULL)
-  {
-    mail_cmd = xmalloc(strlen(MAILCMD) + 1);
-    strcpy(mail_cmd, MAILCMD);
-  }
+    mail_cmd = xstrdup(MAILCMD);
   
-  if(files.head == NULL)
-    die("no files specified");
-
   if(cache_file == NULL)
-  {
-    cache_file = xmalloc(strlen(CACHEFILE) + 1);
-    strcpy(cache_file, CACHEFILE);
-  }
+    cache_file = xstrdup(CACHEFILE);
 
   if(pid_file == NULL)
-  {
-    pid_file = xmalloc(strlen(PIDFILE) + 1);
-    strcpy(pid_file, PIDFILE);
-  }
+    pid_file = xstrdup(PIDFILE);
+
+  if(files.head == NULL)
+    die("no files specified");
 
   /*if(rules == NULL)
     die("no rules found");*/
@@ -496,7 +481,7 @@ int main(int argc, char **argv)
 
   if(!debug)
   {
-    if(daemon(1, 0) != 0)
+    if(daemon(0, 0) != 0)
       die("daemon: %s", strerror(errno));
   }
 
@@ -702,5 +687,5 @@ int main(int argc, char **argv)
 
   info("terminated");
 
-  return EXIT_SUCCESS;
+  return 0;
 }

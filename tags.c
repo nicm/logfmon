@@ -40,8 +40,7 @@ int add_tag(struct tags *tags, char *name)
 
   tag = (struct tag *) xmalloc(sizeof(struct tag));
 
-  tag->name = (char *) xmalloc(strlen(name) + 1);
-  strcpy(tag->name, name);
+  tag->name = xstrdup(name);
 
   if(tags->head == NULL)
   {

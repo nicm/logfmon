@@ -23,12 +23,15 @@
 
 #include "tags.h"
 
-#define ACTION_IGNORE 0
-#define ACTION_EXEC 1
-#define ACTION_PIPE 2
-#define ACTION_OPEN 3
-#define ACTION_APPEND 4
-#define ACTION_CLOSE 5
+enum action
+{
+  ACTION_IGNORE,
+  ACTION_EXEC,
+  ACTION_PIPE,
+  ACTION_OPEN,
+  ACTION_APPEND,
+  ACTION_CLOSE,
+};
 
 struct rule
 {
@@ -37,7 +40,7 @@ struct rule
   regex_t *re;
   regex_t *not_re;
 
-  int action;
+  enum action action;
   struct 
   {
     char *cmd;

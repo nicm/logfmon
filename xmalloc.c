@@ -25,6 +25,11 @@
 #include "xmalloc.h"
 #include "log.h"
 
+inline char *xstrdup(char *str)
+{
+  return strcpy(xmalloc(sizeof(str) + 1), str);
+}
+
 void *xmalloc(size_t size)
 {
   void *block;

@@ -39,8 +39,7 @@ int add_message(struct messages *messages, char *msg)
 
   message = (struct message *) xmalloc(sizeof(struct message));
 
-  message->msg = (char *) xmalloc(strlen(msg) + 1);
-  strcpy(message->msg, msg);
+  message->msg = xstrdup(msg);
 
   if(messages->head == NULL)
   {

@@ -16,6 +16,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <syslog.h>
 #include <stdarg.h>
@@ -36,8 +37,8 @@ void die(char *fmt, ...)
 
   if(now_daemon)
     error("exited");
-
-  exit(EXIT_FAILURE);
+  
+  exit(1);
 }
 
 void error(char *fmt, ...)
@@ -46,15 +47,6 @@ void error(char *fmt, ...)
 
   va_start(ap, fmt);
   vlog(LOG_ERR, fmt, ap);
-  va_end(ap);
-}
-
-void warn(char *fmt, ...)
-{
-  va_list ap;
-
-  va_start(ap, fmt);
-  vlog(LOG_WARNING, fmt, ap);
   va_end(ap);
 }
 
@@ -70,11 +62,7 @@ void info(char *fmt, ...)
 void vlog(int pri, char *fmt, va_list ap)
 {
   if(debug || !now_daemon)
-  {
-    fprintf(stderr, "%s: ", __progname);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-  }
+    vwarnx(fmt, ap);
   else
     vsyslog(LOG_DAEMON | pri, fmt, ap);
 }

@@ -21,7 +21,6 @@
 
 void die(char *, ...);
 void error(char *, ...);
-void warn(char *, ...);
 void info(char *, ...);
 
 #endif
