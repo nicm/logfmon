@@ -232,7 +232,7 @@ void parse_line(char *line, struct file *file)
 
   for(rule = rules.tail; rule != NULL; rule = rule->last)
   {
-    if(rule->tags->head == NULL || !find_tag(rule->tags, file->tag))
+    if(rule->tags->head != NULL && !find_tag(rule->tags, file->tag))
       continue;
 
     match = regexec(rule->re, test, 10, matches, 0);
