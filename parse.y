@@ -140,7 +140,7 @@ set: TOKSET OPTMAILCMD STRING
 
        gr = getgrgid($3);
        if(gr == NULL)
-	 die("unknown group %s", $3);
+	 die("unknown gid %s", $3);
 
        gid = gr->gr_gid;
 
@@ -969,6 +969,9 @@ file: TOKFILE STRING TOKTAG TAGS
 
 	if($4 == NULL)
 	  yyerror("no tags or illegal tag");
+
+	if($4->head == NULL)
+	  yyerror("at least one tag must be given");
 
 	if($4->head->next != NULL)
 	  yyerror("only one tag may be assigned to a file");
