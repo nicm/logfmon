@@ -48,6 +48,8 @@ extern int yyparse(void);
 volatile sig_atomic_t reload_conf;
 volatile sig_atomic_t exit_now;
 
+int debug;
+
 char *mail_cmd;
 unsigned int mail_time;
 
@@ -95,13 +97,11 @@ int load_conf(void)
 char *repl_one(char *src, char *repl)
 {
   char *buf;
-  size_t len, pos, rlen;
+  size_t len, pos;
 
   len = strlen(src) + 512;
   buf = xmalloc(len);
   pos = 0;
-
-  rlen = strlen(repl);
 
   while(*src != '\0')
   {
@@ -121,14 +121,14 @@ char *repl_one(char *src, char *repl)
 
     src += 2;
 
-    while(len <= pos + rlen)
+    while(len <= pos + strlen(repl))
     {
       len *= 2;
       buf = xrealloc(buf, len);
     }
 
     strcpy(buf + pos, repl);
-    pos += rlen;
+    pos += strlen(repl);
   }
 
   *(buf + pos) = '\0';
@@ -207,10 +207,8 @@ void parse_line(char *line, struct file *file)
   if(strlen(line) < 17)
     return;
 
-  test = line + 16;
-  while(*test != ' ' && *test != '\0')
-    test++;
-  if(*test == '\0')
+  test = strchr(line + 16, ' ');
+  if(test == NULL)
     return;
   test++;
   if(*test == '\0')
@@ -597,7 +595,7 @@ int main(int argc, char **argv)
     else
       timeout = DEFAULTTIMEOUT;
 
-    file = get_event(&event,timeout);
+    file = get_event(&event, timeout);
 
     now = time(NULL);
     if(now >= prev)
@@ -680,14 +678,10 @@ int main(int argc, char **argv)
   clear_rules();
   clear_files();
 
-  if(conf_file != NULL)
-    free(conf_file);
-  if(cache_file != NULL)
-    free(cache_file);
-  if(pid_file != NULL)
-    free(pid_file);
-  if(mail_cmd != NULL)
-    free(mail_cmd);
+  free(conf_file);
+  free(cache_file);
+  free(pid_file);
+  free(mail_cmd);
 
   pthread_mutex_destroy(&save_mutex);
 

@@ -34,7 +34,7 @@
 #define DEFAULTTIMEOUT 5
 #define REOPENTIMEOUT 2
 
-int debug;
+extern int debug;
 
 extern volatile sig_atomic_t reload_conf;
 extern volatile sig_atomic_t exit_now;

@@ -120,16 +120,17 @@ void clear_rules(void)
     last = rule;
     rule = rule->next;
 
-    regfree(last->re);
-    if(last->not_re != NULL)
-      regfree(last->not_re);
-
     clear_tags(last->tags);
     free(last->tags);
 
+    regfree(last->re);
     free(last->re);
+
     if(last->not_re != NULL)
+    {
+      regfree(last->not_re);
       free(last->not_re);
+    }
 
     free(last->params.cmd);
     free(last->params.key);

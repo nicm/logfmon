@@ -1836,7 +1836,7 @@ file: TOKFILE STRING TOKTAG TAGS
 
 	for(num = 1; num > 0; num++)
 	{
-	  snprintf(tag,13,"__%u",num);
+	  snprintf(tag, 13, "__%u", num);
 	  if(!find_file_by_tag(tag))
 	    break;
 	}
