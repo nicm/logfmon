@@ -36,6 +36,11 @@ may be executed or the entry may be ignored. All unmatched messages are batched
 together and mailed every 15 minutes, or whatever alternative time is specified
 in the configuration file.
 .Pp
+Messages may also be collected into contexts and piped to a command after a
+final message is found. See
+.Xr logfmon.conf 5
+for more details of this.
+.Pp
 The options are as follows:
 .Bl -tag -width "-f fileXXX"
 .It Fl d
