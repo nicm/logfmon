@@ -25,8 +25,9 @@ YACC= yacc
 YACCFLAGS= -d
 
 CC= cc
+CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W
-CFLAGS+= -Wmissing-prototypes
+CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare

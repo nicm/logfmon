@@ -19,7 +19,7 @@
 #ifndef XMALLOC_H
 #define XMALLOC_H
 
-inline char *xstrdup(char *);
+char *xstrdup(char *);
 void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 

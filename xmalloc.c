@@ -25,7 +25,7 @@
 #include "logfmon.h"
 #include "xmalloc.h"
 
-inline char *xstrdup(char *str)
+char *xstrdup(char *str)
 {
   return strcpy(xmalloc(strlen(str) + 1), str);
 }

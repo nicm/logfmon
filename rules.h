@@ -32,7 +32,7 @@ enum action
   ACTION_PIPE,
   ACTION_OPEN,
   ACTION_APPEND,
-  ACTION_CLOSE,
+  ACTION_CLOSE
 };
 
 struct rule
