@@ -17,13 +17,13 @@
  */
 
 #include <err.h>
-#include <stdio.h>
-#include <syslog.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 
-#include "logfmon.h"
 #include "log.h"
+#include "logfmon.h"
 
 void vlog(int, char *, va_list);
 
@@ -37,7 +37,7 @@ void die(char *fmt, ...)
 
   if(now_daemon)
     error("exited");
-  
+
   exit(1);
 }
 

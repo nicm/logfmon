@@ -16,14 +16,14 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
+#include "log.h"
 #include "logfmon.h"
 #include "xmalloc.h"
-#include "log.h"
 
 inline char *xstrdup(char *str)
 {
@@ -47,11 +47,11 @@ void *xmalloc(size_t size)
 void *xrealloc(void *block, size_t size)
 {
   block = realloc(block, size);
-  
+
   if(block != NULL)
     return block;
-  
+
   die("realloc: %s", strerror(errno));
-  
+
   return NULL;
 }

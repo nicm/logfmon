@@ -19,6 +19,8 @@
 #ifndef RULES_H
 #define RULES_H
 
+#include <sys/types.h>
+
 #include <regex.h>
 
 #include "tags.h"
@@ -41,7 +43,7 @@ struct rule
   regex_t *not_re;
 
   enum action action;
-  struct 
+  struct
   {
     char *cmd;
     char *key;
@@ -50,7 +52,7 @@ struct rule
     int ent_max;
     char *ent_cmd;
   } params;
- 
+
   struct rule *next;
   struct rule *last;
 };

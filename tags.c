@@ -16,18 +16,18 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <syslog.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
-#include "logfmon.h"
-#include "xmalloc.h"
-#include "tags.h"
 #include "file.h"
 #include "log.h"
+#include "logfmon.h"
+#include "tags.h"
+#include "xmalloc.h"
 
 void init_tags(struct tags *tags)
 {
@@ -53,7 +53,7 @@ int add_tag(struct tags *tags, char *name)
     tag->next = tags->head;
     tag->last = NULL;
     tags->head = tag;
-  }  
+  }
 
   return 0;
 }
@@ -73,7 +73,7 @@ int check_tags(struct tags *tags)
       return 1;
     }
   }
-  
+
   return 0;
 }
 

@@ -16,17 +16,17 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <syslog.h>
 #include <errno.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #include "logfmon.h"
-#include "xmalloc.h"
 #include "messages.h"
+#include "xmalloc.h"
 
 void init_messages(struct messages *messages)
 {
@@ -52,7 +52,7 @@ int add_message(struct messages *messages, char *msg)
     message->next = messages->head;
     message->last = NULL;
     messages->head = message;
-  }  
+  }
 
   return 0;
 }

@@ -16,30 +16,31 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <grp.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <errno.h> 
-#include <signal.h>
-#include <grp.h>
-#include <ctype.h>
 
-#include <sys/types.h>
-#include <sys/resource.h>
-
-#include "logfmon.h"
-#include "xmalloc.h"
-#include "rules.h"
-#include "save.h"
-#include "log.h"
-#include "file.h"
+#include "cache.h"
 #include "context.h"
 #include "event.h"
+#include "file.h"
+#include "log.h"
+#include "logfmon.h"
+#include "rules.h"
+#include "save.h"
 #include "tags.h"
-#include "cache.h"
 #include "threads.h"
+#include "xmalloc.h"
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -71,7 +72,7 @@ void sighandler(int sig)
   {
     case SIGTERM:
       exit_now = 1;
-      break;	
+      break;
     case SIGHUP:
       reload_conf = 1;
       break;
@@ -107,14 +108,14 @@ char *repl_one(char *src, char *repl)
     if(*src != '$' || *(src + 1) != '1')
     {
       *(buf + pos) = *src++;
-      
+
       pos++;
       while(len <= pos)
       {
 	len *= 2;
 	buf = xrealloc(buf, len);
       }
-      
+
       continue;
     }
 
@@ -131,8 +132,8 @@ char *repl_one(char *src, char *repl)
   }
 
   *(buf + pos) = '\0';
-  
-  return buf;  
+
+  return buf;
 }
 
 char *repl_matches(char *line, char *src, regmatch_t *matches)
@@ -144,13 +145,13 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
   len = strlen(src) + 512;
   buf = xmalloc(len);
   pos = 0;
-    
+
   while(*src != '\0')
   {
     if(*src != '$' || !isdigit(*(src + 1)) || isdigit(*(src + 2)))
     {
       *(buf + pos) = *src++;
-      
+
       pos++;
       while(len <= pos)
       {
@@ -171,16 +172,16 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
 	len *= 2;
 	buf = xrealloc(buf, len);
       }
-      
+
       strncpy(buf + pos, line + matches[num].rm_so, mlen);
       pos += mlen;
-      
+
       src++;
     }
     else
     {
       *(buf + pos) = '$';
-      
+
       pos++;
       while(len <= pos)
       {
@@ -217,7 +218,8 @@ void parse_line(char *line, struct file *file)
 
   for(rule = rules.tail; rule != NULL; rule = rule->last)
   {
-    if(rule->tags->head != NULL && !find_tag(rule->tags, file->tag))
+    /* if rule->tags->head is NULL all tags match for this rule */
+    if(rule->tags->head != NULL && find_tag(rule->tags, file->tag) == NULL)
       continue;
 
     if(regexec(rule->re, test, 10, matches, 0) != 0)
@@ -237,10 +239,10 @@ void parse_line(char *line, struct file *file)
       	return;
       case ACTION_EXEC:
 	str = repl_matches(test, rule->params.cmd, matches);
-	
+
 	if(debug)
 	  info("matched: (%s) %s -- executing: %s", file->tag, test, str);
-   
+
 	if(str == NULL || *str == '\0')
 	{
 	  error("empty command for exec");
@@ -276,14 +278,14 @@ void parse_line(char *line, struct file *file)
 	  {
 	    fwrite(line, strlen(line), 1, fd);
 	    fputc('\n', fd);
-	    
+
 	    if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
 	      die("pthread_create failed");
 
 	    free(str);
 	  }
 	}
-	
+
 	return;
       case ACTION_OPEN:
 	if(rule->params.key == NULL || *(rule->params.key) == '\0')
@@ -293,7 +295,7 @@ void parse_line(char *line, struct file *file)
 
 	if(debug)
 	  info("matched: (%s) %s -- opening: '%s'", file->tag, test, str);
- 
+
 	if(find_context_by_key(&file->contexts, str) != NULL)
 	{
 	  if(debug)
@@ -335,10 +337,10 @@ void parse_line(char *line, struct file *file)
 	{
 	  if(debug)
 	    info("context %s reached limit of %d entries", context->key, context->rule->params.ent_max);
-	  
+
 	  if(context->rule->params.ent_cmd != NULL)
 	    pipe_context(context, context->rule->params.ent_cmd);
-	  
+
 	  delete_context(&file->contexts, context);
 	}
 
@@ -346,12 +348,12 @@ void parse_line(char *line, struct file *file)
       case ACTION_CLOSE:
 	if(rule->params.key == NULL || *(rule->params.key) == '\0')
 	  return;
-	
+
 	str = repl_matches(test, rule->params.key, matches);
 
 	if(debug)
 	  info("matched: (%s) %s -- closing: '%s'", file->tag, test, str);
-	
+
 	context = find_context_by_key(&file->contexts, str);
 	if(context == NULL)
 	{
@@ -365,21 +367,21 @@ void parse_line(char *line, struct file *file)
 	if(rule->params.cmd != NULL && *(rule->params.cmd) != '\0')
 	{
 	  str = repl_matches(test, rule->params.cmd, matches);
-	  
+
 	  pipe_context(context, str);
-	  
+
 	  free(str);
 	}
-	
+
 	delete_context(&file->contexts, context);
-	
+
 	continue;
     }
   }
 
   if(debug)
     info("unmatched: (%s) %s", file->tag, test);
- 
+
   if(mail_cmd != NULL && *mail_cmd != '\0')
   {
     if(pthread_mutex_lock(&save_mutex) != 0)
@@ -414,7 +416,7 @@ int main(int argc, char **argv)
   struct file *file;
 
   FILE *fd;
- 
+
   now_daemon = 0;
 
   pid_file = NULL;
@@ -465,7 +467,7 @@ int main(int argc, char **argv)
 
   if(mail_cmd == NULL)
     mail_cmd = xstrdup(MAILCMD);
-  
+
   if(cache_file == NULL)
     cache_file = xstrdup(CACHEFILE);
 
@@ -571,7 +573,7 @@ int main(int argc, char **argv)
 
       clear_rules();
       clear_files(); /* closes too */
-      
+
       if(load_conf() != 0)
 	die("%s: %s", conf_file, strerror(errno));
 
@@ -594,7 +596,7 @@ int main(int argc, char **argv)
       timeout = REOPENTIMEOUT;
     else
       timeout = DEFAULTTIMEOUT;
-   
+
     file = get_event(&event,timeout);
 
     now = time(NULL);
@@ -628,14 +630,14 @@ int main(int argc, char **argv)
 	for(;;)
 	{
 	  file->buffer = xrealloc(file->buffer, file->length + 256);
-	  
+
 	  len = read(fileno(file->fd), file->buffer + file->length, 255);
 	  if(len == 0 || len == -1)
 	    break;
 	  file->length += len;
 	  if(len < 255)
 	    break;
-	  
+
 	  if(file->length > 256*1024)
 	    break;
 	}
@@ -643,7 +645,7 @@ int main(int argc, char **argv)
 	if(len == -1)
 	{
 	  fclose(file->fd);
-	  file->fd = NULL;	  
+	  file->fd = NULL;
 	}
 
 	last = 0;
@@ -651,7 +653,7 @@ int main(int argc, char **argv)
 	{
 	  if(*(file->buffer + pos) == '\0')
 	    *(file->buffer + pos) = '_';
-	  
+
 	  if(*(file->buffer + pos) == '\n')
 	  {
 	    *(file->buffer + pos) = '\0';
@@ -669,7 +671,7 @@ int main(int argc, char **argv)
 	break;
     }
   }
-  
+
   close_files();
   if(pid_file != NULL && *pid_file != '\0')
     unlink(pid_file);

@@ -16,24 +16,24 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "event.h"
+#include "file.h"
+#include "log.h"
 #include "logfmon.h"
 #include "save.h"
 #include "xmalloc.h"
-#include "log.h"
-#include "file.h"
-#include "event.h"
 
 /*
  * Okay, this is a bit of a hack since, as far as I can tell:
@@ -49,13 +49,13 @@
  *    - epoll is poorly documented, not well supported by distros as
  *      yet (both a 2.6 kernel and a patched glibc is needed), and
  *      refuses to work for me altogether on files.
- *    - aio_* is not what I am looking for at all, and it would be 
+ *    - aio_* is not what I am looking for at all, and it would be
  *      a real pain to make it do what I want.
  *    - F_SETSIG also looks lannoying to implement, and I'm not sure
  *      it would do the right thing either.
  *
  * So, we are left with a very sucky manual poll with stat()
- * which is, well, crap and I'm not very happy about at all.  
+ * which is, well, crap and I'm not very happy about at all.
  *
  */
 
@@ -91,10 +91,10 @@ struct file *get_event(enum event *event, int timeout)
       *event = EVENT_TIMEOUT;
       return NULL;
     }
-    
+
     if(evfile == NULL)
       evfile = files.head;
-    
+
     for(; evfile != NULL; evfile = evfile->next)
     {
       if(evfile->fd != NULL)
@@ -122,4 +122,3 @@ struct file *get_event(enum event *event, int timeout)
     }
   }
 }
-

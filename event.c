@@ -16,21 +16,21 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "event.h"
+#include "file.h"
+#include "log.h"
 #include "logfmon.h"
 #include "save.h"
 #include "xmalloc.h"
-#include "log.h"
-#include "file.h"
-#include "event.h"
 
 int kq = -1;
 
@@ -39,14 +39,14 @@ void init_events(void)
   struct file *file;
   struct kevent *kevlist, *kevptr;
   int kevlen;
-  
+
   if(kq == -1)
   {
     kq = kqueue();
     if(kq == -1)
       die("kqueue: %s", strerror(errno));
   }
-  
+
   kevlen = count_open_files() * 2;
   if(kevlen == 0)
     return;
@@ -85,14 +85,14 @@ struct file *get_event(enum event *event, int timeout)
 
   ts.tv_nsec = 0;
   ts.tv_sec = timeout;
-  
+
   rc = kevent(kq, NULL, 0, &kev, 1, &ts);
 
   if(rc == -1)
   {
     if(errno == EINTR) /* && !debug) */
       return NULL;
-    
+
     die("kevent: %s", strerror(errno));
   }
 

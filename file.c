@@ -16,17 +16,19 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
+#include <sys/types.h>
 
-#include "logfmon.h"
-#include "file.h"
-#include "xmalloc.h"
-#include "log.h"
-#include "save.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "context.h"
+#include "file.h"
+#include "log.h"
+#include "logfmon.h"
+#include "save.h"
+#include "xmalloc.h"
 
 struct files files = { NULL, NULL };
 
@@ -81,7 +83,7 @@ int add_file(char *path, char *tag)
 
     return 1;
   }
-   
+
   file->tag = xstrdup(tag);
 
   if(debug)
@@ -98,7 +100,7 @@ int add_file(char *path, char *tag)
     file->next = files.head;
     file->last = NULL;
     files.head = file;
-  }  
+  }
 
   return 0;
 }
@@ -182,12 +184,12 @@ int count_closed_files(void)
 }
 
 void open_files(void)
-{ 
+{
   struct file *file;
 
   if(files.head == NULL)
     return;
-  
+
   for(file = files.head; file != NULL; file = file->next)
   {
     if(file->fd == NULL)
@@ -206,12 +208,12 @@ void open_files(void)
       }
     }
   }
-  
+
   return;
 }
 
 int reopen_files(int *failed)
-{ 
+{
   struct file *file;
   int num;
 
@@ -249,10 +251,10 @@ int reopen_files(int *failed)
       }
     }
   }
-  
+
   return num;
 }
-  
+
 void close_files(void)
 {
   struct file *file;

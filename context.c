@@ -16,21 +16,21 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <syslog.h>
 #include <errno.h>
-#include <time.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "logfmon.h"
-#include "xmalloc.h"
-#include "log.h"
 #include "context.h"
+#include "log.h"
+#include "logfmon.h"
 #include "rules.h"
 #include "threads.h"
+#include "xmalloc.h"
 
 void init_contexts(struct contexts *contexts)
 {
@@ -61,7 +61,7 @@ int add_context(struct contexts *contexts, char *key, struct rule *rule)
     context->next = contexts->head;
     context->last = NULL;
     contexts->head = context;
-  }  
+  }
 
   return 0;
 }
@@ -90,7 +90,7 @@ void delete_context(struct contexts *contexts, struct context *context)
     context->last->next = context->next;
 
   clear_messages(&context->messages);
-  
+
   free(context->key);
   free(context);
 }
@@ -109,7 +109,7 @@ void clear_contexts(struct contexts *contexts)
     context = context->next;
 
     clear_messages(&last->messages);
-  
+
     free(last->key);
     free(last);
   }
@@ -142,7 +142,7 @@ void check_contexts(struct contexts *contexts)
     return;
 
   now = time(NULL);
-  
+
   context = contexts->head;
   while(context != NULL)
   {

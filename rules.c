@@ -17,17 +17,15 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "file.h"
+#include "log.h"
 #include "logfmon.h"
 #include "rules.h"
-#include "xmalloc.h"
-#include "log.h"
-#include "file.h"
 #include "tags.h"
-#include "log.h"
-#include "file.h"
+#include "xmalloc.h"
 
 struct rules rules = { NULL, NULL };
 
@@ -45,7 +43,7 @@ struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
 
   rule->params.ent_max = 0;
   rule->params.ent_cmd = NULL;
-  
+
   if(tags == NULL)
   {
     rule->tags = xmalloc(sizeof(struct tags));
@@ -53,7 +51,7 @@ struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
   }
   else
     rule->tags = tags;
-  
+
   if(check_tags(rule->tags))
   {
     free(rule);
@@ -81,7 +79,7 @@ struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
       free(rule->not_re);
       free(rule->re);
       free(rule);
-      
+
       error("%s: bad regexp", not_re);
 
       return NULL;
@@ -92,7 +90,7 @@ struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
 
   if(debug)
     info("match=%s, action=%d", re, rule->action);
-  
+
   if(rules.head == NULL)
   {
     rule->next = rule->last = NULL;
@@ -104,7 +102,7 @@ struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
     rule->next = rules.head;
     rule->last = NULL;
     rules.head = rule;
-  }  
+  }
 
   return rule;
 }
@@ -140,4 +138,3 @@ void clear_rules(void)
 
   rules.head = rules.tail = NULL;
 }
-

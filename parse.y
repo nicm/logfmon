@@ -19,42 +19,45 @@
 /* Declarations */
 
 %{
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <pwd.h>
+#include <sys/types.h>
+
 #include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
+#include "file.h"
+#include "log.h"
 #include "logfmon.h"
 #include "rules.h"
-#include "log.h"
-#include "file.h"
 #include "tags.h"
 
-extern int yylineno; 
+extern int yylineno;
 
 int yyparse(void);
 void yyerror(const char *);
 int yywrap(void);
-int yylex(void);
+
+extern int yylex(void);
 
 void yyerror(const char *str)
 {
   die("%s at line %d", str, yylineno);
 }
-  
+
 int yywrap(void)
 {
   return 1;
-} 
+}
 %}
 
 %token TOKMATCH TOKIGNORE TOKEXEC TOKSET TOKFILE TOKIN TOKTAG
 %token TOKOPEN TOKAPPEND TOKCLOSE TOKPIPE TOKEXPIRE TOKWHEN TOKNOT
 %token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE OPTPIDFILE
 
-%union 
+%union
 {
   int number;
   char *string;
@@ -1838,7 +1841,7 @@ file: TOKFILE STRING TOKTAG TAGS
 	    break;
 	}
 	if(num > 0)
-	{	
+	{
    	  if(add_file($2, tag))
 	    exit(1);
 	}
@@ -1851,4 +1854,3 @@ file: TOKFILE STRING TOKTAG TAGS
 %%
 
 /* Programs */
-

@@ -16,18 +16,18 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
 #include <errno.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
+#include "file.h"
+#include "log.h"
 #include "logfmon.h"
 #include "save.h"
 #include "xmalloc.h"
-#include "log.h"
-#include "file.h"
 
 pthread_mutex_t save_mutex;
 
@@ -58,7 +58,7 @@ void *save_thread(void *arg)
       if(file->saves.head != NULL)
 	break;
     }
-    
+
     if(file == NULL)
       continue;
 
@@ -71,12 +71,12 @@ void *save_thread(void *arg)
       error("%s: %s", mail_cmd, strerror(errno));
       continue;
     }
-    
+
     msgs = 0;
-    
+
     if(pthread_mutex_lock(&save_mutex) != 0)
       die("pthread_mutex_lock failed");
-    
+
     for(file = files.tail; file != NULL; file = file->last)
     {
       if(file->saves.head != NULL)
@@ -101,7 +101,7 @@ void *save_thread(void *arg)
 
     if(pthread_mutex_unlock(&save_mutex) != 0)
       die("pthread_mutex_unlock failed");
-	
+
     if(debug)
       info("processed %d unmatched messages", msgs);
   }

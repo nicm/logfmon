@@ -16,17 +16,17 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
+#include "log.h"
 #include "logfmon.h"
 #include "threads.h"
-#include "log.h"
 
-void *pclose_thread(void *arg) 
-{ 
+void *pclose_thread(void *arg)
+{
   pclose((FILE *) arg);
 
   return NULL;
@@ -40,4 +40,3 @@ void *exec_thread(void *arg)
 
   return NULL;
 }
-

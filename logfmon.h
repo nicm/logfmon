@@ -19,9 +19,9 @@
 #ifndef LOGFMON_H
 #define LOGFMON_H
 
-#include <signal.h>
-
 #include <sys/types.h>
+
+#include <signal.h>
 
 #define MAILTIME 900
 #define MAILCMD "/usr/bin/mail root"

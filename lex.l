@@ -18,15 +18,16 @@
 
 %option yylineno
 %{
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 
+#include "file.h"
+#include "tags.h"
+#include "xmalloc.h"
 #include "y.tab.h"
 
-#include "xmalloc.h"
-#include "tags.h"
-#include "file.h"
+extern int yylex(void);
 %}
 %%
 \{                       {

@@ -19,10 +19,13 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#include <time.h>
+#include <sys/types.h>
 
-#include "rules.h"
+#include <time.h>
+#include <regex.h>
+
 #include "messages.h"
+#include "rules.h"
 
 struct context
 {
@@ -33,7 +36,7 @@ struct context
   struct rule *rule;
 
   struct messages messages;
-  
+
   struct context *next;
   struct context *last;
 };

@@ -16,20 +16,20 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "logfmon.h"
-#include "xmalloc.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "cache.h"
 #include "file.h"
 #include "log.h"
+#include "logfmon.h"
+#include "xmalloc.h"
 
 int save_cache(void)
 {
@@ -50,7 +50,7 @@ int save_cache(void)
     free(name);
     return 1;
   }
-  
+
   fd = fopen(name, "w+");
   if(fd == NULL)
   {
@@ -58,7 +58,7 @@ int save_cache(void)
     free(name);
     return 1;
   }
-   
+
   for(file = files.head; file != NULL; file = file->next)
     fprintf(fd, "%d %s %lld %lld\n", (int) strlen(file->path), file->path, (long long) file->size, (long long) file->offset);
 
@@ -101,7 +101,7 @@ int load_cache(void)
     info("%s: %s", cache_file, strerror(errno));
     return 1;
   }
-  
+
   path = NULL;
   size = 0;
   offset = 0;
@@ -144,7 +144,7 @@ int load_cache(void)
 	{
 	  file->offset = offset;
 	  /* this is correct: size is updated incrementally */
-	  file->size = offset; 
+	  file->size = offset;
 	}
       }
       if(debug)
