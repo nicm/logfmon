@@ -35,13 +35,6 @@
 #include "file.h"
 #include "event.h"
 
-struct file *evfile = NULL;
-
-void init_events(void)
-{
-  evfile = files.head;
-}
-
 /*
  * Okay, this is a bit of a hack since, as far as I can tell:
  *
@@ -70,12 +63,32 @@ void init_events(void)
  *
  */
 
+struct file *evfile = NULL;
+
+void init_events(void)
+{
+  struct file *file;
+
+  evfile = files.head;
+
+  for(file = files.head; file != NULL; file = file->next)
+  {
+    if(file->fd != NULL)
+    {
+      if(fcntl(fileno(file->fd), F_SETFL, O_NONBLOCK) == -1)
+	die("fcntl: %s", strerror(errno));
+    }
+  }
+}
+
 struct file *get_event(int *event, int timeout)
 {
   struct stat sb;
-  int num, rc;
+  int num;
+  ssize_t rc;
 
   num = 0;
+
   for(;;)
   {
     *event = EVENT_NONE;
@@ -109,7 +122,7 @@ struct file *get_event(int *event, int timeout)
 	}
 
 	rc = read(fileno(evfile->fd), NULL, 1);
-	if(rc !=0)
+	if(rc != 0)
 	{
 	  *event = EVENT_READ;
 	  return evfile;
