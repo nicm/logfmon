@@ -34,7 +34,8 @@ void *pclose_thread(void *arg)
 
 void *exec_thread(void *arg)
 {
-  system((char *) arg);
+  if(system((char *) arg) == -1)
+    error("%s: %s", (char *) arg, strerror(errno));
 
   free(arg);
 

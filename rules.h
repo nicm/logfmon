@@ -65,7 +65,7 @@ struct rules
 
 extern struct rules rules;
 
-struct rule *add_rule(int, struct tags *, char *, char *);
+struct rule *add_rule(enum action, struct tags *, char *, char *);
 void clear_rules(void);
 
 #endif

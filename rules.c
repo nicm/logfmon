@@ -29,7 +29,7 @@
 
 struct rules rules = { NULL, NULL };
 
-struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
+struct rule *add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 {
   struct rule *rule;
 

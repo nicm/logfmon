@@ -31,6 +31,7 @@
 
 pthread_mutex_t save_mutex;
 
+/* ARGSUSED */
 void *save_thread(void *arg)
 {
   struct message *save;
@@ -81,7 +82,8 @@ void *save_thread(void *arg)
     {
       if(file->saves.head != NULL)
       {
-	fprintf(fd, "Unmatched messages for file %s, tag %s:\n\n", file->path, file->tag);
+	if(fprintf(fd, "Unmatched messages for file %s, tag %s:\n\n", file->path, file->tag) == -1)
+	  break;
 
 	for(save = file->saves.tail; save != NULL; save = save->last)
 	{
@@ -92,7 +94,7 @@ void *save_thread(void *arg)
 	  msgs++;
 	}
 
-	fputc('\n', fd);
+	(void) fputc('\n', fd);
 
 	clear_messages(&file->saves);
       }

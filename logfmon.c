@@ -89,7 +89,7 @@ int load_conf(void)
 
   yyparse();
 
-  fclose(yyin);
+  (void) fclose(yyin);
 
   return 0;
 }
@@ -127,7 +127,7 @@ char *repl_one(char *src, char *repl)
       buf = xrealloc(buf, len);
     }
 
-    strcpy(buf + pos, repl);
+    (void) strcpy(buf + pos, repl);
     pos += strlen(repl);
   }
 
@@ -163,7 +163,7 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
     }
 
     num = atoi(++src);
-    mlen = matches[num].rm_eo - matches[num].rm_so;
+    mlen = (size_t) (matches[num].rm_eo - matches[num].rm_so);
 
     if(mlen > 0)
     {
@@ -173,7 +173,7 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
 	buf = xrealloc(buf, len);
       }
 
-      strncpy(buf + pos, line + matches[num].rm_so, mlen);
+      (void) strncpy(buf + pos, line + (size_t) matches[num].rm_so, mlen);
       pos += mlen;
 
       src++;
@@ -274,8 +274,8 @@ void parse_line(char *line, struct file *file)
 	    error("%s: %s", str, strerror(errno));
 	  else
 	  {
-	    fwrite(line, strlen(line), 1, fd);
-	    fputc('\n', fd);
+	    if(fwrite(line, strlen(line), 1, fd) == 1)
+	      (void) fputc('\n', fd);
 
 	    if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
 	      die("pthread_create failed");
@@ -302,7 +302,7 @@ void parse_line(char *line, struct file *file)
 	  continue;
 	}
 
-	add_context(&file->contexts, str, rule);
+	(void) add_context(&file->contexts, str, rule);
 
 	free(str);
 
@@ -326,7 +326,7 @@ void parse_line(char *line, struct file *file)
 	}
 	free(str);
 
-	add_message(&context->messages, line);
+	(void) add_message(&context->messages, line);
 
 	if(context->rule->params.ent_max == 0)
 	  continue;
@@ -337,7 +337,7 @@ void parse_line(char *line, struct file *file)
 	    info("context %s reached limit of %d entries", context->key, context->rule->params.ent_max);
 
 	  if(context->rule->params.ent_cmd != NULL)
-	    pipe_context(context, context->rule->params.ent_cmd);
+	    (void) pipe_context(context, context->rule->params.ent_cmd);
 
 	  delete_context(&file->contexts, context);
 	}
@@ -366,7 +366,7 @@ void parse_line(char *line, struct file *file)
 	{
 	  str = repl_matches(test, rule->params.cmd, matches);
 
-	  pipe_context(context, str);
+	  (void) pipe_context(context, str);
 
 	  free(str);
 	}
@@ -385,7 +385,7 @@ void parse_line(char *line, struct file *file)
     if(pthread_mutex_lock(&save_mutex) != 0)
       die("pthread_mutex_lock failed");
 
-    add_message(&file->saves, line);
+    (void) add_message(&file->saves, line);
 
     if(pthread_mutex_unlock(&save_mutex) != 0)
       die("pthread_mutex_unlock failed");
@@ -394,7 +394,7 @@ void parse_line(char *line, struct file *file)
 
 void usage(void)
 {
-  printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n", __progname);
+  (void) printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n", __progname);
 
   exit(1);
 }
@@ -478,7 +478,7 @@ int main(int argc, char **argv)
   /*if(rules == NULL)
     die("no rules found");*/
 
-  setpriority(PRIO_PROCESS, getpid(), 1);
+  setpriority(PRIO_PROCESS, (id_t) getpid(), 1);
 
   if(!debug)
   {
@@ -511,7 +511,7 @@ int main(int argc, char **argv)
   now_daemon = 1;
   info("started");
 
-  load_cache();
+  (void) load_cache();
 
   reload_conf = 0;
   exit_now = 0;
@@ -544,8 +544,10 @@ int main(int argc, char **argv)
       error("%s: %s", pid_file, strerror(errno));
     else
     {
-      fprintf(fd, "%ld\n", (long) getpid());
-      fclose(fd);
+      if(fprintf(fd, "%ld\n", (long) getpid()) == -1)
+	error("error writing pid");
+
+      (void) fclose(fd);
     }
   }
 
@@ -564,7 +566,7 @@ int main(int argc, char **argv)
     {
       info("reloading configuration");
 
-      save_cache();
+      (void) save_cache();
 
       if(pthread_mutex_lock(&save_mutex) != 0)
 	die("pthread_mutex_lock failed");
@@ -578,7 +580,7 @@ int main(int argc, char **argv)
       if(pthread_mutex_unlock(&save_mutex) != 0)
 	die("pthread_mutex_unlock failed");
 
-      load_cache();
+      (void) load_cache();
       open_files();
       init_events();
 
@@ -603,7 +605,7 @@ int main(int argc, char **argv)
       check_files();
       if(dirty)
       {
-	save_cache();
+	(void) save_cache();
 	dirty = 0;
       }
       prev = now + CHECKTIMEOUT;
@@ -618,7 +620,7 @@ int main(int argc, char **argv)
       case EVENT_TIMEOUT:
 	break;
       case EVENT_REOPEN:
-	fclose(file->fd);
+	(void) fclose(file->fd);
 	file->fd = NULL;
 	file->timer = time(NULL) + REOPENTIMEOUT;
 
@@ -642,7 +644,7 @@ int main(int argc, char **argv)
 
 	if(len == -1)
 	{
-	  fclose(file->fd);
+	  (void) fclose(file->fd);
 	  file->fd = NULL;
 	}
 
@@ -660,7 +662,7 @@ int main(int argc, char **argv)
 	  }
 	}
 
-	memmove(file->buffer, file->buffer + last, file->length - last);
+	(void) memmove(file->buffer, file->buffer + last, file->length - last);
 	file->length -= last;
 
 	file->offset += last;

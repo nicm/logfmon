@@ -18,6 +18,9 @@ SRCS+= event.c
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 
+LINT = lint
+LINTFLAGS = -aabcehprsu /usr/libdata/lint/llib-lstdc.ln
+
 LEX= lex
 LEXFLAGS=
 
@@ -25,8 +28,8 @@ YACC= yacc
 YACCFLAGS= -d
 
 CC= cc
-CFLAGS+= -pedantic -Wno-long-long
-CFLAGS+= -Wall -W
+CFLAGS+= -ansi -pedantic -Wno-long-long
+CFLAGS+= -Wall -W -Wnested-externs
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
@@ -69,7 +72,7 @@ LIBS+= -lpthread
 
 DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] INSTALL make-linux.sh rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
 
-PORT?=ports/OpenBSD-3.6
+PORT?= ports/OpenBSD-3.6
 
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}
@@ -117,3 +120,6 @@ uninstall:
 
 clean:
 		${RM} ${RMFLAGS} ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz *~ *.ln
+
+lint:
+		-${LINT} ${LINTFLAGS} ${SRCS}

@@ -154,7 +154,7 @@ void check_contexts(struct contexts *contexts)
       if(debug)
 	info("context %s expired", last->key);
       if(last->rule != NULL && last->rule->params.cmd != NULL)
-	pipe_context(last, last->rule->params.cmd);
+	(void) pipe_context(last, last->rule->params.cmd);
       delete_context(contexts, last);
     }
   }

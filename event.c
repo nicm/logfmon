@@ -102,7 +102,7 @@ struct file *get_event(enum event *event, int timeout)
     return NULL;
   }
 
-  file = find_file_by_fd(kev.ident);
+  file = find_file_by_fd((int) kev.ident);
   if(file == NULL)
     return NULL;
 

@@ -60,9 +60,18 @@ int save_cache(void)
   }
 
   for(file = files.head; file != NULL; file = file->next)
-    fprintf(fd, "%d %s %lld %lld\n", (int) strlen(file->path), file->path, (long long) file->size, (long long) file->offset);
+  {
+    if(fprintf(fd, "%d %s %lld %lld\n", (int) strlen(file->path), file->path, (long long) file->size, (long long) file->offset) == -1)
+    {
+      (void) fclose(fd);
+      error("error writing cache");
+      unlink(name);
+      free(name);
+      return 1;
+    }
+  }
 
-  fclose(fd);
+  (void) fclose(fd);
 
   if(rename(name, cache_file) == -1)
   {
@@ -153,13 +162,13 @@ int load_cache(void)
   }
 
   free(path);
-  fclose(fd);
+  (void) fclose(fd);
 
   return 0;
 
  error:
   free(path);
-  fclose(fd);
+  (void) fclose(fd);
 
   return 1;
 }
