@@ -65,6 +65,15 @@ to run as a different user or uid. In common with other strings, a user name
 must be in double quotes. An alternative user will only be used if
 .Xr logfmon 8
 is run as root.
+.Pp
+It is important to note that when
+.Xr logfmon 8
+runs as a different user or group, it will still need read access to any
+log files specified with a 
+.Ic file
+command and the ability to execute any external commands (including the
+.Ic mailcmd
+setting) specified in the configuration file.
 .It Ic group Ar group Li | Ar gid
 This instructs
 .Xr logfmon 8
