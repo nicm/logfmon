@@ -75,6 +75,10 @@ set: TOKSET OPTMAILCMD STRING
 	 free(mail_cmd);
        mail_cmd = $3;
      }
+   | TOKSET OPTMAILTIME TIME
+     {
+       mail_time = $3;
+     }
    | TOKSET OPTMAILTIME NUMBER
      {
        mail_time = $3;
@@ -119,6 +123,20 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	free($2);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, NULL, $2);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $4;
+	rule->params.expiry = $6;
+
+	free($2);
+      }
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
 	struct rule *rule;
 
@@ -223,7 +241,36 @@ rule: TOKMATCH STRING TOKEXEC STRING
 
 	free($4);
       }
+    | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, NULL, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.expiry = $8;
+
+	free($4);
+      }
     | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, NULL, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.expiry = $8;
+	rule->params.cmd = $10;
+
+	free($4);
+      }
+    | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
 	struct rule *rule;
 
@@ -320,7 +367,38 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	free($3);
 	free($4);
       }
+    | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, $3, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.expiry = $8;
+
+	free($3);
+	free($4);
+      }
     | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, $3, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.expiry = $8;
+	rule->params.cmd = $10;
+
+	free($3);
+	free($4);
+      }
+    | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
 	struct rule *rule;
 

@@ -34,13 +34,23 @@ strings may be escaped.
 .Pp
 The possible entries are:
 .Bl -tag -width Ds
-.It Ic set mailtime Ar seconds
-Specify the time between mails of unmatched messages. Default is 900 seconds.
+.It Ic set mailtime Ar time
+Specify the time between mails of unmatched messages. The time
+may be specified as a simple number in seconds, or with a suffix of
+.Ql h
+for hours, 
+.Ql m
+for minutes or
+.Ql s
+for seconds. The default is 900 seconds and the minimum is 10 seconds. A time of zero
+disables the sending of the mail. 
 .It Ic set mailcmd Ar command
 Specify the command to which mail will be piped. For example:
 .Bd -ragged -offset indent
 set mailcmd "/usr/bin/mail -s \\"`date` log report\\" root"
 .Ed
+.Pp
+An empty string will prevent the mail being sent.
 .It Ic file Ar file
 .It Ic file Ar file Ic tag Ar tag
 Specify a log file to check. At least one file must be specified in the configuration.
@@ -76,6 +86,93 @@ Execute a command on each entry matching the specified regexp. For example:
 .Bd -ragged -offset indent
 match "sshd\\\\[[0-9]*\\\\]: Invalid user .* from \\\\([0-9\\.]*\\\\)" exec "grep $1 /etc/pf.ignore || (echo $1 >> /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1; echo $0 | mail -s 'ssh attempt' root)"
 .Ed
+.It Ic match Ar regexp Ic pipe Ar command
+.It Xo Ic match in * Ar regexp
+.Ic pipe Ar command
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic pipe Ar command
+.Xc
+Pipe the matching log entry to a command.
+.It Xo Ic match Ar regexp Ic open Ar name 
+.Ic expire Ar time Ic ignore
+.Xc
+.It Xo Ic match Ar regexp Ic open Ar name 
+.Ic expire Ar time Ic pipe Ar command
+.Xc
+.It Xo Ic match in * Ar regexp Ic open
+.Ar name Ic expire Ar time Ic ignore
+.Xc
+.It Xo Ic match in * Ar regexp Ic open
+.Ar name Ic expire Ar time Ic pipe Ar command
+.Xc
+.It Xo Ic match in Ar tag Ar regexp 
+.Ic open Ar name Ic expire Ar time Ic ignore
+.Xc
+.It Xo Ic match in Ar tag Ar regexp 
+.Ic open Ar name Ic expire Ar time Ic pipe
+.Ar command
+.Xc
+Opens a context with the specified name and set to expire after the specified time. 
+The time is in the same format as for the
+.Ic set mailcmd
+command.
+.Pp
+If
+.Ic ignore
+is specified, the context will simply be silently removed when it expires. If
+.Ic pipe
+is specified, the context will be piped to the specified command before being removed.
+The context expiry time is counted from the point at which the context is created, so a
+context with a time of 2 minutes will be expired after 2 minutes regardless of when the
+last message was appended to it.
+.Pp
+Note that unlike the other rules,
+.Xr logfmon 8
+does
+.Em not
+stop parsing rules when a message matches a context rule. This means that without a 
+matching
+.Ic ignore
+rule, messages that match
+.Ic open
+or the other context rules described below will be included in the email of unmatched rules.
+It also means, however, that messages matching an
+.Ic open
+can be included in the context with an
+.Ic append
+command, or indeed used to execute a command.
+.It Ic match Ar regexp Ic append Ar name 
+.It Xo Ic match in * Ar regexp Ic append
+.Ar name
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic append Ar name
+.Xc
+Appends the matched message to the specified context. If the context does not exist, this
+rule is silently ignored.
+.It Xo Ic match Ar regexp Ic close Ar name 
+.Ic pipe Ar command
+.Xc
+.It Xo Ic match in * Ar regexp Ic close
+.Ar name Ic pipe Ar command
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic close Ar name Ic pipe Ar command
+.Xc
+This closes a context and pipes all the messages appended to the context to the specified command.
+An example set of context rules is:
+.Bd -ragged -offset indent
+match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: input_userauth_request: invalid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s \\"`date` ssh attempt (expired)\\" root"
+.Ed
+.Bd -ragged -offset indent
+match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: .*" append "sshd-$1"
+.Ed
+.Bd -ragged -offset indent
+match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: Received disconnect from .*" close "sshd-$1" pipe "/usr/bin/mail -s \\"`date` ssh attempt\\" root"
+.Ed
+.Pp
+The first rule opens the context named with the sshd pid, the second appends all messages from the same sshd pid (including the messages matching the open and close rules) to the context and the third rule closes and mails the context when the remote client disconnects.
 .Sh FILES
 .Bl -tag -width "/etc/logfmon.confXXX" -compact
 .It Pa /etc/logfmon.conf

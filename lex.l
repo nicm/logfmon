@@ -23,13 +23,23 @@
 #include "y.tab.h"
 %}
 %%
-[0-9]+[hm]              {
+[0-9]+[hms]             {
                           char ch;
 
-                          ch = *(yytext + strlen(yytext));
-                          *(yytext + strlen(yytext)) = '\0';
+                          ch = *(yytext + strlen(yytext) - 1);
+                          *(yytext + strlen(yytext) - 1) = '\0';
+
                           yylval.number=atoi(yytext);
-                          yylval.number *= (ch == 'h' ? 3600 : 60);
+                          switch(ch)
+                          {
+                            case 'h':
+                              yylval.number *= 3600;
+                              break;
+                            case 'm':
+                              yylval.number *= 60;
+                              break;
+                          }
+
                           return TIME;
                         } 
 [0-9]+                  {

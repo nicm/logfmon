@@ -410,6 +410,12 @@ int main(int argc, char **argv)
     return 1;
   }
 
+  if(mail_time == 0)
+    mail_cmd = "";
+
+  if(mail_time < 10)
+    die("mailtime must be at least 10 seconds");
+
   if(mail_cmd == NULL)
     mail_cmd = "/usr/bin/mail root";
   
