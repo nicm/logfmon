@@ -150,7 +150,7 @@ void check_contexts(struct contexts *contexts)
 	info("context %s expired", last->key);
       if(last->rule != NULL && last->rule->params.cmd != NULL)
       {
-	if(pipe_context(last, last->rule->params.cmd))
+	if(pipe_context(last, last->rule->params.cmd) == 1)
 	  error("%s: %s", last->rule->params.cmd, strerror(errno));
       }
       delete_context(contexts, last);
@@ -164,6 +164,12 @@ int pipe_context(struct context *context, char *cmd)
 {
   FILE *fd;
   struct message *message;
+
+  if(cmd == NULL || *cmd == '\0')
+  {
+    error("empty pipe command");
+    return 0;
+  }
 
   fd = popen(cmd, "w");
   if(fd == NULL)

@@ -126,6 +126,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$4 == '\0')
+	  die("context key cannot be empty string");
+
+	if($6 == 0)
+	  die("expiry time cannot be zero");
+
 	rule = add_rule(ACTION_OPEN, NULL, $2);
 
 	if(rule == NULL)
@@ -140,6 +146,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$4 == '\0')
+	  die("context key cannot be empty string");
+
+	if($6 == 0)
+	  die("expiry time cannot be zero");
+
 	rule = add_rule(ACTION_OPEN, NULL, $2);
 
 	if(rule == NULL)
@@ -153,6 +165,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
       {
 	struct rule *rule;
+
+	if(*$4 == '\0')
+	  die("context key cannot be empty string");
+
+	if($6 == 0)
+	  die("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $2);
 
@@ -231,6 +249,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
+
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
 	if(rule == NULL)
@@ -244,6 +268,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
 	struct rule *rule;
+
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
@@ -259,6 +289,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
+
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
 	if(rule == NULL)
@@ -273,6 +309,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
 	struct rule *rule;
+
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
@@ -356,6 +398,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
+
 	rule = add_rule(ACTION_OPEN, $3, $4);
 
 	if(rule == NULL)
@@ -370,6 +418,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
 	struct rule *rule;
+
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, $3, $4);
 
@@ -386,6 +440,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
+
 	rule = add_rule(ACTION_OPEN, $3, $4);
 
 	if(rule == NULL)
@@ -401,6 +461,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
 	struct rule *rule;
+
+	if(*$6 == '\0')
+	  die("context key cannot be empty string");
+
+	if($8 == 0)
+	  die("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, $3, $4);
 

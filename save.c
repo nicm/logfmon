@@ -50,7 +50,7 @@ void *save_thread(void *arg)
     if(exit_now)
       break;
 
-    if(*mail_cmd == '\0')
+    if(mail_cmd == NULL || *mail_cmd == '\0')
       continue;
 
     for(file = files.head; file != NULL; file = file->next)

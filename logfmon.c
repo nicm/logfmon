@@ -241,16 +241,18 @@ void parse_line(char *line, struct file *file)
 	  info("matched: (%s) %s -- ignoring", file->tag, test);
       	return;
       case ACTION_EXEC:
-	if(rule->params.cmd == NULL || *(rule->params.cmd) == '\0')
-	  return;
-
 	str = repl_matches(test, rule->params.cmd, matches);
 	
 	if(debug)
 	  info("matched: (%s) %s -- executing: %s", file->tag, test, str);
    
-	if(pthread_create(&thread, NULL, exec_thread, str) != 0)
-	  die("pthread_create: %s", strerror(errno));
+	if(str == NULL || *str == '\0')
+	  error("empty command for exec");
+	else
+	{
+	  if(pthread_create(&thread, NULL, exec_thread, str) != 0)
+	    die("pthread_create: %s", strerror(errno));
+	}
     
 	return;
       case ACTION_PIPE:
@@ -262,15 +264,20 @@ void parse_line(char *line, struct file *file)
 	if(debug)
 	  info("matched: (%s) %s -- piping: %s", file->tag, test, str);
 
-	args = xmalloc(sizeof(struct pipeargs));
-
-	args->cmd = str;
-	args->line = xmalloc(strlen(line) + 1);
-	strcpy(args->line, line);
+	if(str == NULL || *str == '\0')
+	  error("empty command for pipe");
+	else
+	{
+	  args = xmalloc(sizeof(struct pipeargs));
+	  
+	  args->cmd = str;
+	  args->line = xmalloc(strlen(line) + 1);
+	  strcpy(args->line, line);
+	  
+	  if(pthread_create(&thread, NULL, pipe_thread, args) != 0)
+	    die("pthread_create: %s", strerror(errno));
+	}
 	
-	if(pthread_create(&thread, NULL, pipe_thread, args) != 0)
-	  die("pthread_create: %s", strerror(errno));
-    
 	return;
       case ACTION_OPEN:
 	if(rule->params.key == NULL || *(rule->params.key) == '\0')
@@ -337,7 +344,7 @@ void parse_line(char *line, struct file *file)
 
 	str = repl_matches(test, rule->params.cmd, matches);
 
-	if(pipe_context(context, str))
+ 	if(pipe_context(context, str) == 1)
 	  error("%s: %s", str, strerror(errno));
 	
 	free(str);
@@ -410,11 +417,8 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  if(mail_time == 0)
-    mail_cmd = "";
-
   if(mail_time < 10)
-    die("mailtime must be at least 10 seconds");
+    die("mail time must be at least 10 seconds");
 
   if(mail_cmd == NULL)
     mail_cmd = "/usr/bin/mail root";
