@@ -406,7 +406,8 @@ int main(int argc, char **argv)
 
   time_t now, prev;
 
-  int event, timeout, failed, dirty;
+  int timeout, failed, dirty;
+  enum event event;
   ssize_t len;
   size_t last, pos;
 
@@ -613,6 +614,9 @@ int main(int argc, char **argv)
 
     switch(event)
     {
+      case EVENT_NONE:
+      case EVENT_TIMEOUT:
+	break;
       case EVENT_REOPEN:
 	fclose(file->fd);
 	file->fd = NULL;

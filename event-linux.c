@@ -66,7 +66,7 @@ void init_events(void)
   evfile = files.head;
 }
 
-struct file *get_event(int *event, int timeout)
+struct file *get_event(enum event *event, int timeout)
 {
   struct stat sb;
   int num;

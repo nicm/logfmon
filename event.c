@@ -71,7 +71,7 @@ void init_events(void)
   free(kevlist);
 }
 
-struct file *get_event(int *event, int timeout)
+struct file *get_event(enum event *event, int timeout)
 {
   struct file *file;
   struct kevent kev;

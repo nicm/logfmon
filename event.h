@@ -19,12 +19,15 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#define EVENT_NONE 0
-#define EVENT_TIMEOUT 1
-#define EVENT_REOPEN 2
-#define EVENT_READ 3
+enum event
+{
+  EVENT_NONE,
+  EVENT_TIMEOUT,
+  EVENT_REOPEN,
+  EVENT_READ
+};
 
 void init_events(void);
-struct file *get_event(int *, int timeout);
+struct file *get_event(enum event *, int timeout);
 
 #endif
