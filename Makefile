@@ -44,6 +44,9 @@ GZIP= gzip
 GZIPFLAGS= -9
 
 CAT= cat
+MV= mv
+
+SED= sed
 
 DESTDIR?= /usr/local
 
@@ -101,10 +104,10 @@ update-ports:
 		md5 releases/${PROG}-${VERSION}.tar.gz > ${PORT}/distinfo.new
 		sha1 releases/${PROG}-${VERSION}.tar.gz >> ${PORT}/distinfo.new
 		rmd160 releases/${PROG}-${VERSION}.tar.gz >> ${PORT}/distinfo.new
-		cat ${PORT}/distinfo.new | sed -e 's/releases\///' > ${PORT}/distinfo
+		${CAT} ${PORT}/distinfo.new | ${SED} -e 's/releases\///' > ${PORT}/distinfo
 		${RM} ${RMFLAGS} ${PORT}/distinfo.new
-		cat ${PORT}/Makefile | sed -e 's/${PROG}-[0-9]\.[0-9]/${PROG}-${VERSION}/' > ${PORT}/Makefile.new
-		mv ${PORT}/Makefile.new ${PORT}/Makefile
+		${CAT} ${PORT}/Makefile | ${SED} -e 's/${PROG}-[0-9]\.[0-9]/${PROG}-${VERSION}/' > ${PORT}/Makefile.new
+		${MV} ${PORT}/Makefile.new ${PORT}/Makefile
 
 uninstall:
 		${RM} ${RMFLAGS} ${DESTDIR}/sbin/${PROG}
