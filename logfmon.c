@@ -49,7 +49,7 @@ int now_daemon;
 
 int load_conf(void);
 void sighandler(int);
-void exec_cmd(char *);
+char *repl_matches(char *, char *, regmatch_t *);
 void parse_line(char *, struct file *);
 void usage(void);
 void *exec_thread(void *);
@@ -90,25 +90,115 @@ void *exec_thread(void *arg)
   return NULL;
 }
 
+char *repl_matches(char *line, char *src, regmatch_t *matches)
+{
+  char *buf;
+  size_t len, mlen, pos;
+  int num;
+
+  len = strlen(src) + 512;
+  buf = xmalloc(len);
+  pos = 0;
+    
+  while(*src != '\0')
+  {
+    if(*src != '$')
+    {
+      *(buf + pos) = *src++;
+
+      pos++;
+      while(len <= pos)
+      {
+	len *= 2;
+	buf = xrealloc(buf, len);
+      }
+
+      continue;
+    }
+
+    src++;
+    if(*src == '\0')
+    {
+      *(buf + pos) = '$';
+
+      pos++;
+      while(len <= pos)
+      {
+	len *= 2;
+	buf = xrealloc(buf, len);
+      }
+
+      continue;
+    }
+
+    if(*src >= '0' && *src <= '9')
+    {
+      num = *src++ - '0';
+      mlen = matches[num].rm_eo - matches[num].rm_so;
+
+      printf("+++ match %d, mlen %d\n",num,mlen);
+
+      if(mlen > 0)
+      {
+	while(len <= pos + mlen)
+	{
+	  len *= 2;
+	  buf = xrealloc(buf, len);
+	}
+
+	strncpy(buf + pos, line + matches[num].rm_so, mlen);
+	pos += mlen;
+      }
+      else
+      {
+	while(len <= pos + 2)
+	{
+	  len *= 2;
+	  buf = xrealloc(buf, len);
+	}
+	*(buf + pos) = '$';
+	pos++;
+	*(buf + pos) = num + '0';
+	pos++;
+      }
+    }
+    else
+    {
+      while(len <= pos + 2)
+      {
+	len *= 2;
+	buf = xrealloc(buf, len);
+      }
+      *(buf + pos) = '$';
+      pos++;
+      *(buf + pos) = *src++;
+      pos++;
+    }
+  }
+  *(buf + pos) = '\0';
+
+  return buf;
+}
+
 void parse_line(char *line, struct file *file)
 {
-  char *cpy, *src, *buf, *test;
-  int match, matched, num, len, pos;
+  char *cmd, *test;
   regmatch_t matches[10];
   pthread_t thread;
   struct rule *rule;
-  
+  int match;
+
   if(strlen(line) < 17)
     return;
 
   test = line + 16;
   while(*test != ' ' && *test != '\0')
     test++;
+  if(*test != ' ')
+    return;
   test++;
   if(*test == '\0')
     return;
-
-  matched = 0;
 
   for(rule = rules; rule != NULL; rule = rule->next)
   {
@@ -119,93 +209,32 @@ void parse_line(char *line, struct file *file)
     if(match != 0)
       continue;
 
-    matched = 1;
-    
-    if(rule->cmd == NULL)
+    switch(rule->action)
     {
-      if(debug)
-	info("matched: (%s) %s -- ignoring", file->tag, test);
-      
-      break;
-    }
+      case ACTION_IGNORE:
+	if(debug)
+	  info("matched: (%s) %s -- ignoring", file->tag, test);
+      	return;
+      case ACTION_EXEC:
+	if(rule->cmd == NULL || *(rule->cmd) == '\0')
+	  return;
 
-    src = rule->cmd;
-    len = strlen(src) + 512;
-    buf = xmalloc(len);
-    pos = 0;
+	cmd = repl_matches(test, rule->cmd, matches);
+	
+	if(debug)
+	  info("matched: (%s) %s -- executing: %s", file->tag, test, cmd);      
     
-    while(*src != '\0')
-    {
-      if(*src == '$')
-      {
-	src++;
-	if(*src >= '0' && *src <= '9')
-	{
-	  num = *src++ - '0';
-	  if(matches[num].rm_so != matches[num].rm_eo)
-	  {
-	    cpy = &test[matches[num].rm_so];
-	    while(cpy < &test[matches[num].rm_eo])
-	    {
-	      *(buf + pos) = *cpy++;
-	      pos++;
-	      if(pos >= len)
-	      {
-		len *= 2;
-		buf = xrealloc(buf, len);
-	      }
-	    }
-	  }
-	  else
-	  {
-	    *(buf + pos) = *src++;
-	    pos++;
-	    if(pos >= len)
-	    {
-	      len *= 2;
-	      buf = xrealloc(buf, len);
-	    }
-	  }
-	}
-	else
-	{
-	  *(buf + pos) = *src++;
-	  pos++;
-	  if(pos >= len)
-	  {
-	    len *= 2;
-	    buf = xrealloc(buf, len);
-	  }
-	}
-      }
-      else
-      {
-	*(buf + pos) = *src++;
-	pos++;
-	if(pos >= len)
-	{
-	  len *= 2;
-	  buf = xrealloc(buf, len);
-	}
-      }
+	if(pthread_create(&thread, NULL, exec_thread, cmd) != 0)
+	  die("pthread_create: %s", strerror(errno));
+    
+	return;
     }
-    *(buf + pos) = '\0';
-    
-    if(debug)
-      info("matched: (%s) %s -- executing: %s", file->tag, test, buf);      
-    
-    if(pthread_create(&thread, NULL, exec_thread, buf) != 0)
-      die("pthread_create: %s", strerror(errno));
-    
-    break;
   }
 
-  if(matched == 0)
-  {
-    if(debug)
-      info("unmatched: (%s) %s", file->tag, test);
-    file->saves = add_save(file->saves, line);
-  }
+  if(debug)
+    info("unmatched: (%s) %s", file->tag, test);
+    
+  file->saves = add_save(file->saves, line);
 }
 
 struct kevent *make_kev_list(int *kevlen)

@@ -21,17 +21,24 @@
 
 #include <regex.h>
 
+#define ACTION_IGNORE 0
+#define ACTION_EXEC 1
+
 struct rule
 {
-  regex_t *re;
-  char *cmd;
   char *tag;
+
+  regex_t *re;
+
+  int action;
+  char *cmd;
+
   struct rule *next;
 };
 
 extern struct rule *rules;
 
-int add_rule(char *, char *, char *);
+int add_rule(int, char *, char *, char *);
 void clear_rules(void);
 
 #endif

@@ -28,13 +28,15 @@
 
 struct rule *rules;
 
-int add_rule(char *cmd, char *re, char *tag)
+int add_rule(int action, char *cmd, char *re, char *tag)
 {
   struct rule *rule, *new;
 
   new = (struct rule *) xmalloc(sizeof(struct rule));
 
   new->next = NULL;
+
+  new->action = action;
 
   if(cmd != NULL)
   {
@@ -77,7 +79,7 @@ int add_rule(char *cmd, char *re, char *tag)
   }
 
   if(debug)
-    info("match=%s, command=%s, tag=%s", re, new->cmd, new->tag);
+    info("match=%s, action=%d, command=%s, tag=%s", re, new->action, new->cmd, new->tag);
 
   if(rules == NULL)
     rules = new;

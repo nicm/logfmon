@@ -80,33 +80,33 @@ set: TOKSET OPTMAILCMD STRING
 
 rule: TOKMATCH STRING TOKEXEC STRING
       {
-	if(add_rule($4, $2, NULL))
+	if(add_rule(ACTION_EXEC, $4, $2, NULL))
 	  exit(1);
 	free($2);
 	free($4);
       }
     | TOKMATCH STRING TOKIGNORE
       {
-	if(add_rule(NULL, $2, NULL))
+	if(add_rule(ACTION_IGNORE, NULL, $2, NULL))
 	  exit(1);
 	free($2);
       }
     | TOKMATCH TOKIN TOKALL STRING TOKEXEC STRING
       {
-	if(add_rule($6, $4, NULL))
+	if(add_rule(ACTION_EXEC, $6, $4, NULL))
 	  exit(1);
 	free($4);
 	free($6);
       }
     | TOKMATCH TOKIN TOKALL STRING TOKIGNORE
       {
-	if(add_rule(NULL, $4, NULL))
+	if(add_rule(ACTION_IGNORE, NULL, $4, NULL))
 	  exit(1);
 	free($4);
       }
     | TOKMATCH TOKIN TAG STRING TOKEXEC STRING
       {
-	if(add_rule($6, $4, $3))
+	if(add_rule(ACTION_EXEC, $6, $4, $3))
 	  exit(1);
 	free($3);
 	free($4);
@@ -114,7 +114,7 @@ rule: TOKMATCH STRING TOKEXEC STRING
       }
     | TOKMATCH TOKIN TAG STRING TOKIGNORE
       {
-	if(add_rule(NULL, $4, $3))
+	if(add_rule(ACTION_IGNORE, NULL, $4, $3))
 	  exit(1);
 	free($3);
 	free($4);

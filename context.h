@@ -34,7 +34,7 @@ struct contextmsg
 };
 
 struct context *add_context(struct context *, char *);
-struct context *clear_context(struct context *);
+struct context *clear_contexts(struct context *);
 void attach_msg(struct context *, struct contextmsg *);
 
 #endif

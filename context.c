@@ -27,15 +27,53 @@
 #include "logfmon.h"
 #include "xmalloc.h"
 #include "log.h"
+#include "context.h"
 
-struct save *clear_saves(struct save *);
-
-struct save *add_context(struct save *contexts, char *key)
+struct context *add_context(struct context *contexts, char *key)
 {
+  struct context *context, *new;
+
+  new = (struct context *) xmalloc(sizeof(struct context));
+
+  new->next = NULL;
+
+  new->key = (char *) xmalloc(strlen(key) + 1);
+  strcpy(new->key, key);
+
+  if(contexts == NULL)
+    contexts = new;
+  else
+  {
+    context = contexts;
+    while(context->next != NULL)
+      context = context->next;
+    context->next = new;
+  }  
+
   return contexts;
 }
 
-struct save *clear_contexts(struct save *saves)
+struct context *clear_contexts(struct context *contexts)
 {
+  struct context *context, *last;
+
+  if(contexts == NULL)
+    return NULL;
+
+  context = contexts;
+  while(context != NULL)
+  {
+    last = context;
+
+    context = context->next;
+
+    free(last->key);
+    free(last);
+  }
+
   return NULL;
+}
+
+void attach_msg(struct context *contexts, struct contextmsg *msg)
+{
 }
