@@ -45,7 +45,7 @@ struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
 
   rule->params.ent_max = 0;
   rule->params.ent_cmd = NULL;
-
+  
   if(tags == NULL)
   {
     rule->tags = xmalloc(sizeof(struct tags));

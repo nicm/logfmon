@@ -190,7 +190,7 @@ void parse_line(char *line, struct file *file)
   test = line + 16;
   while(*test != ' ' && *test != '\0')
     test++;
-  if(*test != ' ')
+  if(*test == '\0')
     return;
   test++;
   if(*test == '\0')
@@ -479,7 +479,7 @@ int main(int argc, char **argv)
     else
     {
       if(setuid(uid) != 0 || seteuid(uid) != 0)
-	die("failed to drop user privileges %s", strerror(errno));
+	die("failed to drop user privileges");
     }
   }
 
@@ -595,14 +595,14 @@ int main(int argc, char **argv)
 	for(;;)
 	{
 	  file->buffer = xrealloc(file->buffer, file->length + 256);
-
+	  
 	  len = read(fileno(file->fd), file->buffer + file->length, 255);
 	  if(len == 0 || len == -1)
 	    break;
 	  file->length += len;
 	  if(len < 255)
 	    break;
-
+	  
 	  if(file->length > 256*1024)
 	    break;
 	}
