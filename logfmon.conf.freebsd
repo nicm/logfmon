@@ -42,7 +42,7 @@ match in messages "sudo:[ \t]*root .*" ignore
 
 # sendmail
 match in mail "sm-mta\\[[0-9]*\\]: .*" ignore
-#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: to=root, ctladdr=\\(.*\\), delay=00:00:0[0-9], xdelay=00:00:0[0-9], mailer=relay, pri=[0-9]*, relay=\\(.*\\), dsn=2.0.0, stat=Sent .*" ignore
-#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: to=nicholas, ctladdr=\\(.*\\), delay=00:00:0[0-9], xdelay=00:00:0[0-9], mailer=relay, pri=[0-9]*, relay=\\(.*\\), dsn=2.0.0, stat=Sent .*" ignore
-#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: from=root, size=[0-9]*, class=[0-9], nrcpts=[0-9], msgid=\\(.*\\), relay=\\(.*\\)" ignore
-#match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: from=nicholas, size=[0-9]*, class=[0-9], nrcpts=[0-9], msgid=\\(.*\\), relay=\\(.*\\)" ignore
+match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: to=root, ctladdr=\\(.*\\), delay=00:00:0[0-9], xdelay=00:00:0[0-9], mailer=relay, pri=[0-9]*, relay=\\(.*\\), dsn=2.0.0, stat=Sent .*" ignore
+match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: to=nicholas, ctladdr=\\(.*\\), delay=00:00:0[0-9], xdelay=00:00:0[0-9], mailer=relay, pri=[0-9]*, relay=\\(.*\\), dsn=2.0.0, stat=Sent .*" ignore
+match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: from=root, size=[0-9]*, class=[0-9], nrcpts=[0-9], msgid=\\(.*\\), relay=\\(.*\\)" ignore
+match in mail "sendmail\\[[0-9]*\\]: [a-zA-Z0-9]*: from=nicholas, size=[0-9]*, class=[0-9], nrcpts=[0-9], msgid=\\(.*\\), relay=\\(.*\\)" ignore

@@ -21,22 +21,6 @@
 
 #include <pthread.h>
 
-struct save
-{
-  char *msg;
-
-  struct save *next;
-  struct save *last;
-};
-
-struct saves
-{
-  struct save *head;
-  struct save *tail;
-};
-
-extern pthread_mutex_t save_mutex;
-
 void *save_thread(void *);
 
 #endif

@@ -19,6 +19,8 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
+#include <pthread.h>
+
 struct message
 {
   char *msg;
@@ -29,10 +31,13 @@ struct message
 
 struct messages
 {
+  pthread_mutex_t mutex;
+
   struct message *head;
   struct message *tail;
 };
 
+void init_messages(struct messages *);
 int add_message(struct messages *, char *);
 int count_messages(struct messages *);
 void clear_messages(struct messages *);

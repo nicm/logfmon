@@ -27,6 +27,15 @@
 #include "logfmon.h"
 #include "xmalloc.h"
 #include "messages.h"
+#include "log.h"
+
+void init_messages(struct messages *messages)
+{
+  messages->head = messages->tail = NULL;
+
+  if((errno = pthread_mutex_init(&(messages->mutex), NULL)) != 0)
+    die("pthread_mutex_init: %s", strerror(errno));
+}
 
 int add_message(struct messages *messages, char *msg)
 {
@@ -58,12 +67,19 @@ int count_messages(struct messages *messages)
   struct message *message;
   int num;
 
+  pthread_mutex_lock(&(messages->mutex));
+
   if(messages->head == NULL)
+  {
+    pthread_mutex_unlock(&(messages->mutex));
     return 0;
+  }
 
   num = 0;
   for(message = messages->head; message != NULL; message = message->next)
     num++;
+
+  pthread_mutex_unlock(&(messages->mutex));
 
   return num;
 }
@@ -72,8 +88,13 @@ void clear_messages(struct messages *messages)
 {
   struct message *message, *last;
 
+  pthread_mutex_lock(&(messages->mutex));
+
   if(messages->head == NULL)
+  {
+    pthread_mutex_unlock(&(messages->mutex));
     return;
+  }
 
   message = messages->head;
   while(message != NULL)
@@ -86,4 +107,6 @@ void clear_messages(struct messages *messages)
   }
 
   messages->head = messages->tail = NULL;
+
+  pthread_mutex_unlock(&(messages->mutex));
 }

@@ -74,7 +74,3 @@ configuration file
 .Sh SEE ALSO
 .Xr logfmon.conf 5
 .Xr syslog 3
-.Sh CAVEATS
-If
-.Nm
-is killed and restarted or the configuration is reloaded via a HUP signal, it will rescan the entire log files, even if some of the messages have been dealt with before.
