@@ -403,7 +403,7 @@ void parse_line(char *line, struct file *file)
 
 void usage(void)
 {
-  printf("usage: %s [-d] [-f file]\n", __progname);
+  printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n", __progname);
 
   exit(1);
 }
