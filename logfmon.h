@@ -23,6 +23,13 @@
 
 #define CONFFILE  "/etc/logfmon.conf"
 
+/* temporary struct for passing to thread */
+struct pipeargs
+{
+  char *cmd;
+  char *line;
+};
+
 int debug;
 
 volatile sig_atomic_t reload_conf;

@@ -84,10 +84,10 @@ int load_conf(void)
 
 void *pipe_thread(void *arg)
 {
-  struct { char *cmd; char *line; } *args;
+  struct pipeargs *args;
   FILE *fd;
 
-  args = (struct { char *cmd; char *line; } *) arg;
+  args = (struct pipeargs *) arg;
 
   fd = popen(args->cmd, "w");
   if(fd == NULL)
@@ -209,7 +209,7 @@ void parse_line(char *line, struct file *file)
   struct rule *rule;
   struct context *context;
   int match;
-  struct { char *cmd; char *line; } arg;
+  struct pipeargs args;
 
   if(strlen(line) < 17)
     return;
@@ -260,11 +260,11 @@ void parse_line(char *line, struct file *file)
 	if(debug)
 	  info("matched: (%s) %s -- piping: %s", file->tag, test, str);
 
-	arg.cmd = str;
-	arg.line = xmalloc(strlen(line) + 1);
-	strcpy(line, arg.line);
+	args.cmd = str;
+	args.line = xmalloc(strlen(line) + 1);
+	strcpy(line, args.line);
 	
-	if(pthread_create(&thread, NULL, pipe_thread, &arg) != 0)
+	if(pthread_create(&thread, NULL, pipe_thread, &args) != 0)
 	  die("pthread_create: %s", strerror(errno));
     
 	return;
