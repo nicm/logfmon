@@ -475,8 +475,6 @@ int main(int argc, char **argv)
   /*if(rules == NULL)
     die("no rules found");*/
 
-  load_cache();
-
   setpriority(PRIO_PROCESS, getpid(), 1);
 
   if(!debug)
@@ -509,6 +507,8 @@ int main(int argc, char **argv)
 
   now_daemon = 1;
   info("started");
+
+  load_cache();
 
   pthread_mutex_init(&save_mutex, NULL);
 
@@ -582,7 +582,8 @@ int main(int argc, char **argv)
     if(now >= prev)
     {
       check_files();
-      save_cache();
+      if(dirty)
+	save_cache();
       prev = now + CHECKTIMEOUT;
     }
 
@@ -607,6 +608,9 @@ int main(int argc, char **argv)
 	    break;
 	  file->length += len;
 	  if(len < 255)
+	    break;
+
+	  if(file->length > 256*1024)
 	    break;
 	}
 

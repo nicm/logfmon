@@ -76,7 +76,7 @@ int load_cache(void)
   fd = fopen(cache_file,"r");
   if(fd == NULL)
   {
-    error("%s: %s", cache_file, strerror(errno));
+    info("%s: %s", cache_file, strerror(errno));
     return 1;
   }
   
@@ -102,10 +102,11 @@ int load_cache(void)
 	error("%s: %s", path, strerror(errno));
       else
       {
-	file->size = sb.st_size;
-
 	if(sb.st_size >= size)
+	{
+	  file->size = offset; /* this is correct: size is updated incrementally */
 	  file->offset = offset;
+	}
       }
       if(debug)
 	info("file %s, was %lld/%lld now %lld/%lld", path, offset, size, file->offset, file->size);
