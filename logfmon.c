@@ -383,7 +383,7 @@ void parse_line(char *line, struct file *file)
 	  
 	  free(str);
 	}
-	  
+	
 	delete_context(&file->contexts, context);
 	
 	continue;

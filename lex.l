@@ -187,13 +187,13 @@ pipe                    return TOKPIPE;
 when                    return TOKWHEN;
 \*			{
                           yylval.tags = xmalloc(sizeof(struct tags));
-                          yylval.tags->head = yylval.tags->tail = NULL;
+                          init_tags(yylval.tags);
                            
                           return TAGS;
                         }
 [A-Za-z0-9_-]+ 		{
                           yylval.tags = xmalloc(sizeof(struct tags));
-                          yylval.tags->head = yylval.tags->tail = NULL;
+                          init_tags(yylval.tags);
 
                           add_tag(yylval.tags, yytext);
 

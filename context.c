@@ -113,7 +113,7 @@ void clear_contexts(struct contexts *contexts)
     free(last);
   }
 
-  return;
+  contexts->head = contexts->tail = NULL;
 }
 
 struct context *find_context_by_key(struct contexts *contexts, char *key)
