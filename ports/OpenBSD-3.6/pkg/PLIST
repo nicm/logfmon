@@ -1,0 +1,4 @@
+@comment $Id$
+sbin/logfmon
+man/man5/logfmon.conf.5.gz
+man/man8/logfmon.8.gz
