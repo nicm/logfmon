@@ -1,8 +1,9 @@
 This file should probably be called README now.
 
-I've currently tested a lot on OpenBSD 3.6, a bit on FreeBSD 4.10 and a little
-on Debian with Linux 2.6.9 kernel. Oh, and Debian with Linux 2.4.18 since 
-2.6.9 is currently shit and can't stay up under any sort of memory load.
+I've currently tested a lot on OpenBSD 3.6, a bit on FreeBSD 4.10, quite
+a bit on FreeBSD 5.3 and a little on Debian with Linux 2.6.9 kernel. Oh,
+and Debian with Linux 2.4.18 since 2.6.9 is currently shit and can't stay
+up under any sort of memory load on my box.
 
 The Makefile requires BSD make. In Debian, FreeBSD make is part of the
 freebsd-buildutils package - installed as /usr/bin/freebsd-make - and it

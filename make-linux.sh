@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -x
 
@@ -7,8 +7,9 @@ if [ "$1" == "clean" ]; then
     exit
 fi
 
-CFLAGS="-I- -I. $CFLAGS -Wall -W -Wmissing-prototypes -Wmissing-declarations \
-    -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare -D_GNU_SOURCE"
+CFLAGS="-I- -I. -I/usr/local/include $CFLAGS \
+        -Wall -W -Wmissing-prototypes -Wmissing-declarations \
+        -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare"
 
 yacc -d parse.y
 lex lex.l
@@ -16,7 +17,7 @@ lex lex.l
 for i in *.c; do
     if [ "$i" != "event.c" ]; then
 	if [ ! -f ${i%.c}.o ]; then 
-	    gcc $CFLAGS -I/usr/local/include -c $i -o ${i%.c}.o
+	    gcc $CFLAGS -c $i -o ${i%.c}.o
 	fi
     fi
 done

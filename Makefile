@@ -31,10 +31,6 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 
-.if ${OS} == "Linux"
-CFLAGS+= -D_GNU_SOURCE
-.endif
-
 MKDEP= mkdep
 MKDEPFLAGS= 
 

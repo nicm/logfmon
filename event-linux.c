@@ -63,8 +63,6 @@ struct file *evfile = NULL;
 
 void init_events(void)
 {
-  struct file *file;
-
   evfile = files.head;
 }
 
