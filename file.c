@@ -202,7 +202,7 @@ void open_files(void)
 	file->timer = 0;
 	if(file->offset > 0)
 	{
-	  if(fseek(file->fd, (long) file->offset, SEEK_SET) != 0)
+	  if(fseeko(file->fd, file->offset, SEEK_SET) != 0)
 	    error("fseek: %s", strerror(errno));
 	}
       }
