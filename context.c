@@ -179,3 +179,30 @@ struct contextmsg *clear_msgs(struct contextmsg *cmsgs)
 
   return NULL;
 }
+
+struct context *check_contexts(struct context *contexts)
+{
+  struct context *context, *last;
+  time_t now;
+
+  if(contexts == NULL)
+    return NULL;
+
+  now = time(NULL);
+  context = contexts;
+  while(context != NULL)
+  {
+    last = context;
+
+    context = context->next;
+
+    if(now >= last->expiry)
+    {
+      if(debug)
+	info("context %s expired", last->key);
+      contexts = delete_context(contexts, last->key);
+    }
+  }
+
+  return contexts;
+}

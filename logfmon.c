@@ -237,14 +237,14 @@ void parse_line(char *line, struct file *file)
 
 	str = repl_matches(test, rule->params.key, matches);
 
-	if(find_context(file->contexts, str) != NULL)
-	{
-	  info("removing duplicate context %s", str);
-	  file->contexts = delete_context(file->contexts, str);
-	}
-
 	if(debug)
 	  info("matched: (%s) %s -- opening: %s", file->tag, test, str);      
+
+	if(find_context(file->contexts, str) != NULL)
+	{
+	  info("ignoring open; found existing context %s", str);
+	  continue;
+	}
 
 	file->contexts = add_context(file->contexts, str, rule->params.expiry);
 
@@ -257,20 +257,18 @@ void parse_line(char *line, struct file *file)
 
 	str = repl_matches(test, rule->params.key, matches);
 
-	context = find_context(file->contexts, str);
-	if(context == NULL)
-	{
-	  info("missing context %s for append", str);
-	  free(str);
-	  continue;
-	}
-
 	if(debug)
 	  info("matched: (%s) %s -- appending: %s", file->tag, test, str);
 
-	context->cmsgs = add_msg(context->cmsgs, line);
-
+	context = find_context(file->contexts, str);
 	free(str);
+	if(context == NULL)
+	{
+	  info("missing context %s for append", str);
+	  continue;
+	}
+
+	context->cmsgs = add_msg(context->cmsgs, line);
 
 	continue;
       case ACTION_CLOSE:
@@ -279,6 +277,9 @@ void parse_line(char *line, struct file *file)
 	
 	str = repl_matches(test, rule->params.key, matches);
 
+	if(debug)
+	  info("matched: (%s) %s -- closing: %s", file->tag, test, str);
+
 	context = find_context(file->contexts, str);
 	free(str);
 	if(context == NULL)
@@ -286,9 +287,6 @@ void parse_line(char *line, struct file *file)
 	  info("missing context %s for close", str);
 	  continue;
 	}
-
-	if(debug)
-	  info("matched: (%s) %s -- closing: %s", file->tag, test, str);
 
 	if(rule->params.cmd == NULL)
 	  continue;
@@ -367,6 +365,8 @@ int main(int argc, char **argv)
 {
   int opt;
   pthread_t thread;
+
+  time_t now, prev;
 
   int rc;
   ssize_t len;
@@ -458,6 +458,8 @@ int main(int argc, char **argv)
   if(kq == -1)
     die("kqueue: %s", strerror(errno));
 
+  prev = time(NULL) + 10;
+
   while(!exit_now)
   {
     if(reload_conf)
@@ -495,15 +497,9 @@ int main(int argc, char **argv)
       free(kevlist);
     }
 
-    if(count_closed_files() > 0)
-    {
-      ts.tv_nsec = 0;
-      ts.tv_sec = 3;
-
-      rc = kevent(kq, NULL, 0, &kev, 1, &ts);
-    }
-    else
-      rc = kevent(kq, NULL, 0, &kev, 1, NULL);
+    ts.tv_nsec = 0;
+    ts.tv_sec = 10;
+    rc = kevent(kq, NULL, 0, &kev, 1, &ts);
 
     if(rc == -1)
     {
@@ -514,6 +510,14 @@ int main(int argc, char **argv)
       error("exited");
       
       exit(1);
+    }
+
+    now = time(NULL);
+    if(rc == 0 || now > prev)
+    {
+      check_files();
+
+      prev = time(NULL) + 10;      
     }
 
     if(rc == 0)

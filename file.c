@@ -272,3 +272,19 @@ struct file *find_file_by_fn(int fn)
 
   return NULL;
 }
+
+void check_files(void)
+{
+  struct file *file;
+
+  if(files == NULL)
+    return;
+
+  file = files;
+  while(file != NULL)
+  {
+    file->contexts = check_contexts(file->contexts);
+
+    file = file->next;
+  }
+}

@@ -42,7 +42,8 @@ struct contextmsg
 struct context *add_context(struct context *, char *, time_t);
 struct context *delete_context(struct context *, char *);
 struct context *clear_contexts(struct context *);
-struct context *find_context(struct context *contexts, char *key);
+struct context *find_context(struct context *, char *);
+struct context *check_contexts(struct context *);
 struct contextmsg *add_msg(struct contextmsg *, char *);
 struct contextmsg *clear_msgs(struct contextmsg *);
 

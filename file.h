@@ -49,5 +49,6 @@ void close_files(void);
 struct file *find_file_by_tag(char *);
 struct file *find_file_by_path(char *);
 struct file *find_file_by_fn(int);
+void check_files(void);
 
 #endif
