@@ -53,6 +53,21 @@ int add_message(struct messages *messages, char *msg)
   return 0;
 }
 
+int count_messages(struct messages *messages)
+{
+  struct message *message;
+  int num;
+
+  if(messages->head == NULL)
+    return 0;
+
+  num = 0;
+  for(message = messages->head; message != NULL; message = message->next)
+    num++;
+
+  return num;
+}
+
 void clear_messages(struct messages *messages)
 {
   struct message *message, *last;

@@ -286,12 +286,13 @@ void parse_line(char *line, struct file *file)
 	str = repl_matches(test, rule->params.key, matches);
 
 	if(debug)
-	  info("matched: (%s) %s -- opening: %s", file->tag, test, str);      
+	  info("matched: (%s) %s -- opening: '%s'", file->tag, test, str);      
 
 	if(find_context_by_key(&file->contexts, str) != NULL)
 	{
 	  if(debug)
 	    info("ignoring open; found existing context %s", str);
+	  free(str);
 	  continue;
 	}
 
@@ -307,7 +308,7 @@ void parse_line(char *line, struct file *file)
 	str = repl_matches(test, rule->params.key, matches);
 
 	if(debug)
-	  info("matched: (%s) %s -- appending: %s", file->tag, test, str);
+	  info("matched: (%s) %s -- appending: '%s'", file->tag, test, str);
 
 	context = find_context_by_key(&file->contexts, str);
 	if(context == NULL)
@@ -321,6 +322,20 @@ void parse_line(char *line, struct file *file)
 
 	add_message(&context->messages, line);
 
+	if(context->rule->params.ent_max == 0)
+	  continue;
+
+	if(count_messages(&context->messages) >= context->rule->params.ent_max)
+	{
+	  if(debug)
+	    info("context %s reached limit of %d entries", context->key, context->rule->params.ent_max);
+	  
+	  if(context->rule->params.ent_cmd != NULL)
+	    pipe_context(context, context->rule->params.ent_cmd);
+	  
+	  delete_context(&file->contexts, context);
+	}
+
 	continue;
       case ACTION_CLOSE:
 	if(rule->params.key == NULL || *(rule->params.key) == '\0')
@@ -329,7 +344,7 @@ void parse_line(char *line, struct file *file)
 	str = repl_matches(test, rule->params.key, matches);
 
 	if(debug)
-	  info("matched: (%s) %s -- closing: %s", file->tag, test, str);
+	  info("matched: (%s) %s -- closing: '%s'", file->tag, test, str);
 	
 	context = find_context_by_key(&file->contexts, str);
 	if(context == NULL)
@@ -340,15 +355,15 @@ void parse_line(char *line, struct file *file)
 	  continue;
 	}
 
-	if(rule->params.cmd == NULL)
-	  continue;
-
-	str = repl_matches(test, rule->params.cmd, matches);
-
- 	pipe_context(context, str);
-	
-	free(str);
-
+	if(rule->params.cmd != NULL && *(rule->params.cmd) != '\0')
+	{
+	  str = repl_matches(test, rule->params.cmd, matches);
+	  
+	  pipe_context(context, str);
+	  
+	  free(str);
+	}
+	  
 	delete_context(&file->contexts, context);
 	
 	continue;

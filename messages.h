@@ -34,6 +34,7 @@ struct messages
 };
 
 int add_message(struct messages *, char *);
+int count_messages(struct messages *);
 void clear_messages(struct messages *);
 
 #endif

@@ -2,7 +2,7 @@
 
 .SUFFIXES: .c .o .y .l .h .8 .8.gz .5 .5.gz
 
-VERSION= 0.2
+VERSION= 0.3
 
 OS!= uname
 

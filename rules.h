@@ -40,6 +40,9 @@ struct rule
     char *cmd;
     char *key;
     time_t expiry;
+
+    int ent_max;
+    char *ent_cmd;
   } params;
  
   struct rule *next;

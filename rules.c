@@ -40,6 +40,9 @@ struct rule *add_rule(int action, char *tag, char *re)
   rule->params.key = NULL;
   rule->params.expiry = 0;
 
+  rule->params.ent_max = 0;
+  rule->params.ent_cmd = NULL;
+
   if(tag != NULL)
   {
     if(find_file_by_tag(tag) == NULL)
@@ -72,7 +75,7 @@ struct rule *add_rule(int action, char *tag, char *re)
 
   if(debug)
     info("match=%s, action=%d, tag=%s", re, rule->action, rule->tag);
-
+  
   if(rules.head == NULL)
   {
     rule->next = rule->last = NULL;

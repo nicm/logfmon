@@ -106,6 +106,7 @@ expire                  return TOKEXPIRE;
 append                  return TOKAPPEND;
 close                   return TOKCLOSE;
 pipe                    return TOKPIPE;
+when                    return TOKWHEN;
 \*			return TOKALL;
 [A-Za-z0-9_-]+ 		{
                           yylval.string = (char *) xmalloc(strlen(yytext) + 1);
