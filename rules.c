@@ -28,7 +28,7 @@
 
 struct rule *rules;
 
-int add_rule(int action, char *cmd, char *re, char *tag)
+int add_rule(int action, char *param, char *re, char *tag)
 {
   struct rule *rule, *new;
 
@@ -38,19 +38,19 @@ int add_rule(int action, char *cmd, char *re, char *tag)
 
   new->action = action;
 
-  if(cmd != NULL)
+  if(param != NULL)
   {
-    new->cmd = (char *) xmalloc(strlen(cmd) + 1);
-    strcpy(new->cmd, cmd);
+    new->param = (char *) xmalloc(strlen(param) + 1);
+    strcpy(new->param, param);
   }
   else
-    new->cmd = NULL;
+    new->param = NULL;
 
   if(tag != NULL)
   {
     if(find_file_by_tag(tag) == NULL)
     {
-      free(new->cmd);
+      free(new->param);
       free(new);
 
       error("%s: unknown tag", tag);
@@ -69,7 +69,7 @@ int add_rule(int action, char *cmd, char *re, char *tag)
   if(regcomp(new->re, re, 0) != 0)
   {
     free(new->re);
-    free(new->cmd);
+    free(new->param);
     free(new->tag);
     free(new);
 
@@ -79,7 +79,7 @@ int add_rule(int action, char *cmd, char *re, char *tag)
   }
 
   if(debug)
-    info("match=%s, action=%d, command=%s, tag=%s", re, new->action, new->cmd, new->tag);
+    info("match=%s, action=%d, param=%s, tag=%s", re, new->action, new->param, new->tag);
 
   if(rules == NULL)
     rules = new;
@@ -110,7 +110,7 @@ void clear_rules(void)
 
     regfree(last->re);
     free(last->re);
-    free(last->cmd);
+    free(last->param);
     free(last->tag);
     free(last);
   }

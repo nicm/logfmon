@@ -23,6 +23,8 @@
 
 #define ACTION_IGNORE 0
 #define ACTION_EXEC 1
+#define ACTION_OPEN 2
+#define ACTION_APPEND 3
 
 struct rule
 {
@@ -31,7 +33,7 @@ struct rule
   regex_t *re;
 
   int action;
-  char *cmd;
+  char *param;
 
   struct rule *next;
 };

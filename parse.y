@@ -43,7 +43,7 @@ int yywrap(void)
 } 
 %}
 
-%token TOKMATCH TOKIGNORE TOKEXEC TOKSET TOKFILE TOKIN TOKTAG TOKALL
+%token TOKMATCH TOKIGNORE TOKEXEC TOKSET TOKFILE TOKIN TOKTAG TOKALL TOKOPEN TOKAPPEND
 %token OPTMAILCMD OPTMAILTIME
 
 %union 
@@ -91,6 +91,20 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	  exit(1);
 	free($2);
       }
+    | TOKMATCH STRING TOKOPEN STRING
+      {
+	if(add_rule(ACTION_OPEN, $4, $2, NULL))
+	  exit(1);
+	free($2);
+	free($4);
+      }
+    | TOKMATCH STRING TOKAPPEND STRING
+      {
+	if(add_rule(ACTION_APPEND, $4, $2, NULL))
+	  exit(1);
+	free($2);
+	free($4);
+      }
     | TOKMATCH TOKIN TOKALL STRING TOKEXEC STRING
       {
 	if(add_rule(ACTION_EXEC, $6, $4, NULL))
@@ -103,6 +117,20 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	if(add_rule(ACTION_IGNORE, NULL, $4, NULL))
 	  exit(1);
 	free($4);
+      }
+    | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING
+      {
+	if(add_rule(ACTION_OPEN, $6, $4, NULL))
+	  exit(1);
+	free($4);
+	free($6);
+      }
+    | TOKMATCH TOKIN TOKALL STRING TOKAPPEND STRING
+      {
+	if(add_rule(ACTION_APPEND, $6, $4, NULL))
+	  exit(1);
+	free($4);
+	free($6);
       }
     | TOKMATCH TOKIN TAG STRING TOKEXEC STRING
       {
@@ -118,6 +146,22 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	  exit(1);
 	free($3);
 	free($4);
+      }
+    | TOKMATCH TOKIN TAG STRING TOKOPEN STRING
+      {
+	if(add_rule(ACTION_OPEN, $6, $4, $3))
+	  exit(1);
+	free($3);
+	free($4);
+	free($6);
+      }
+    | TOKMATCH TOKIN TAG STRING TOKAPPEND STRING
+      {
+	if(add_rule(ACTION_APPEND, $6, $4, $3))
+	  exit(1);
+	free($3);
+	free($4);
+	free($6);
       }
     ;
 

@@ -36,6 +36,7 @@
 #include "save.h"
 #include "log.h"
 #include "file.h"
+#include "context.h"
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -136,8 +137,6 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
       num = *src++ - '0';
       mlen = matches[num].rm_eo - matches[num].rm_so;
 
-      printf("+++ match %d, mlen %d\n",num,mlen);
-
       if(mlen > 0)
       {
 	while(len <= pos + mlen)
@@ -182,10 +181,11 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
 
 void parse_line(char *line, struct file *file)
 {
-  char *cmd, *test;
+  char *str, *test;
   regmatch_t matches[10];
   pthread_t thread;
   struct rule *rule;
+  struct context *context;
   int match;
 
   if(strlen(line) < 17)
@@ -216,17 +216,54 @@ void parse_line(char *line, struct file *file)
 	  info("matched: (%s) %s -- ignoring", file->tag, test);
       	return;
       case ACTION_EXEC:
-	if(rule->cmd == NULL || *(rule->cmd) == '\0')
+	if(rule->param == NULL || *(rule->param) == '\0')
 	  return;
 
-	cmd = repl_matches(test, rule->cmd, matches);
+	str = repl_matches(test, rule->param, matches);
 	
 	if(debug)
-	  info("matched: (%s) %s -- executing: %s", file->tag, test, cmd);      
+	  info("matched: (%s) %s -- executing: %s", file->tag, test, str);      
     
-	if(pthread_create(&thread, NULL, exec_thread, cmd) != 0)
+	if(pthread_create(&thread, NULL, exec_thread, str) != 0)
 	  die("pthread_create: %s", strerror(errno));
     
+	return;
+      case ACTION_OPEN:
+	if(rule->param == NULL || *(rule->param) == '\0')
+	  return;
+
+	str = repl_matches(test, rule->param, matches);
+
+	if(find_context(file->contexts, str) != NULL)
+	{
+	  info("removing duplicate context %s", str);
+	  file->contexts = delete_context(file->contexts, str);
+	}
+
+	if(debug)
+	  info("matched: (%s) %s -- opening: %s", test, str);      
+
+	file->contexts = add_context(file->contexts, str);
+	
+	return;
+      case ACTION_APPEND:
+	if(rule->param == NULL || *(rule->param) == '\0')
+	  return;
+
+	str = repl_matches(test, rule->param, matches);
+
+	context = find_context(file->contexts, str);
+	if(context == NULL)
+	{
+	  info("missing context %s for append", test, str);
+	  continue;
+	}
+
+	if(debug)
+	  info("matched: (%s) %s -- appending: %s", str);      
+
+	context->cmsgs = add_msg(context->cmsgs, line);
+
 	return;
     }
   }

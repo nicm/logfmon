@@ -37,6 +37,8 @@ struct context *add_context(struct context *contexts, char *key)
 
   new->next = NULL;
 
+  new->cmsgs = NULL;
+
   new->key = (char *) xmalloc(strlen(key) + 1);
   strcpy(new->key, key);
 
@@ -49,6 +51,41 @@ struct context *add_context(struct context *contexts, char *key)
       context = context->next;
     context->next = new;
   }  
+
+  return contexts;
+}
+
+struct context *delete_context(struct context *contexts, char *key)
+{
+  struct context *context, *last;
+
+  if(contexts == NULL)
+    return NULL;
+
+  if(strcmp(contexts->key, key) == 0)
+  {
+    context = contexts;
+    contexts = contexts->next;
+  }
+  else
+  {
+    last = contexts;
+    context = contexts->next;
+    while(context != NULL)
+    {
+      if(strcmp(context->key, key) == 0)
+	break;
+
+      last = context;
+    }
+
+    last->next = context->next;
+  }
+
+  clear_msgs(context->cmsgs);
+  
+  free(context->key);
+  free(context);
 
   return contexts;
 }
@@ -67,6 +104,8 @@ struct context *clear_contexts(struct context *contexts)
 
     context = context->next;
 
+    clear_msgs(last->cmsgs);
+  
     free(last->key);
     free(last);
   }
@@ -74,6 +113,31 @@ struct context *clear_contexts(struct context *contexts)
   return NULL;
 }
 
-void attach_msg(struct context *contexts, struct contextmsg *msg)
+struct context *find_context(struct context *contexts, char *key)
 {
+  struct context *context;
+
+  if(contexts == NULL)
+    return NULL;
+
+  context = contexts;
+  while(context != NULL)
+  {
+    if(strcmp(context->key, key) == 0)
+      return context;
+
+    context = context->next;
+  }
+
+  return NULL;
+}
+
+struct contextmsg *add_msg(struct contextmsg *cmsgs, char *msg)
+{
+  return NULL;
+}
+
+struct contextmsg *clear_msgs(struct contextmsg *cmsgs)
+{
+  return NULL;
 }

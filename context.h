@@ -22,6 +22,8 @@
 struct context
 {
   char *key;
+
+  struct contextmsg *cmsgs;
   
   struct context *next;
 };
@@ -34,7 +36,10 @@ struct contextmsg
 };
 
 struct context *add_context(struct context *, char *);
+struct context *delete_context(struct context *, char *);
 struct context *clear_contexts(struct context *);
-void attach_msg(struct context *, struct contextmsg *);
+struct context *find_context(struct context *contexts, char *key);
+struct contextmsg *add_msg(struct contextmsg *, char *);
+struct contextmsg *clear_msgs(struct contextmsg *);
 
 #endif

@@ -81,6 +81,8 @@ set                     return TOKSET;
 match                   return TOKMATCH;
 ignore                  return TOKIGNORE;
 exec                    return TOKEXEC;
+open                    return TOKOPEN;
+append                  return TOKAPPEND;
 \*			return TOKALL;
 [A-Za-z0-9_-]+ 		{
                           yylval.string = (char *) xmalloc(strlen(yytext) + 1);
