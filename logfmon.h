@@ -29,7 +29,7 @@
 
 #define CHECKTIMEOUT 10
 #define DEFAULTTIMEOUT 5
-#define REOPENTIMEOUT 1
+#define REOPENTIMEOUT 2
 
 int debug;
 

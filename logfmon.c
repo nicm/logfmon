@@ -605,6 +605,7 @@ int main(int argc, char **argv)
       case EVENT_REOPEN:
 	fclose(file->fd);
 	file->fd = NULL;
+	file->timer = time(NULL) + REOPENTIMEOUT;
 
 	dirty = 1;
 	break;

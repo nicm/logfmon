@@ -26,6 +26,8 @@
 
 struct file
 {
+  time_t timer;
+
   char *path;
   char *tag;
 

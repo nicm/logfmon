@@ -45,6 +45,8 @@ int add_file(char *path, char *tag)
   file->size = 0;
   file->offset = 0;
 
+  file->timer = 0;
+
   init_messages(&file->saves);
   init_contexts(&file->contexts);
 
@@ -197,6 +199,7 @@ void open_files(void)
 	error("%s: %s", file->path, strerror(errno));
       else
       {
+	file->timer = 0;
 	if(file->offset > 0)
 	{
 	  if(fseek(file->fd, (long) file->offset, SEEK_SET) != 0)
@@ -225,6 +228,13 @@ int reopen_files(int *failed)
   {
     if(file->fd == NULL)
     {
+      if(file->timer != 0 && file->timer > time(NULL))
+      {
+	if(failed != NULL)
+	  (*failed)++;
+	continue;
+      }
+
       file->fd = fopen(file->path, "r");
       if(file->fd == NULL)
       {
@@ -234,6 +244,7 @@ int reopen_files(int *failed)
       }
       else
       {
+	file->timer = 0;
 	file->size = 0;
 	file->offset = 0;
 	num++;
