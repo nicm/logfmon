@@ -44,6 +44,7 @@ int add_file(char *path, char *tag)
   new->length = 0;
 
   new->saves = NULL;
+  new->contexts = NULL;
 
   if(find_file_by_path(path) != NULL)
   {
