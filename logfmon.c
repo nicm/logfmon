@@ -251,7 +251,11 @@ void parse_line(char *line, struct file *file)
 	  info("matched: (%s) %s -- executing: %s", file->tag, test, str);
    
 	if(str == NULL || *str == '\0')
+	{
 	  error("empty command for exec");
+	  if(str != NULL)
+	    free(str);
+	}
 	else
 	{
 	  if(pthread_create(&thread, NULL, exec_thread, str) != 0)
@@ -269,7 +273,11 @@ void parse_line(char *line, struct file *file)
 	  info("matched: (%s) %s -- piping: %s", file->tag, test, str);
 
 	if(str == NULL || *str == '\0')
+	{
 	  error("empty command for pipe");
+	  if(str != NULL)
+	    free(str);
+	}
 	else
 	{
 	  args = xmalloc(sizeof(struct pipeargs));
@@ -290,8 +298,8 @@ void parse_line(char *line, struct file *file)
 	str = repl_matches(test, rule->params.key, matches);
 
 	if(debug)
-	  info("matched: (%s) %s -- opening: '%s'", file->tag, test, str);      
-
+	  info("matched: (%s) %s -- opening: '%s'", file->tag, test, str);
+ 
 	if(find_context_by_key(&file->contexts, str) != NULL)
 	{
 	  if(debug)
@@ -358,6 +366,7 @@ void parse_line(char *line, struct file *file)
 	  free(str);
 	  continue;
 	}
+	free(str);
 
 	if(rule->params.cmd != NULL && *(rule->params.cmd) != '\0')
 	{
