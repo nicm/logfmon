@@ -28,7 +28,7 @@ YACC= yacc
 YACCFLAGS= -d
 
 CC= cc
-CFLAGS+= -ansi -pedantic -Wno-long-long
+CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W -Wnested-externs
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+= -Wmissing-declarations
