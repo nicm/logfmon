@@ -64,15 +64,15 @@ void usage(void);
 
 void sighandler(int sig)
 {
-    switch(sig)
-    {
-      case SIGTERM:
-	exit_now = 1;
-	break;	
-      case SIGHUP:
-	reload_conf = 1;
-	break;
-    }
+  switch(sig)
+  {
+    case SIGTERM:
+      exit_now = 1;
+      break;	
+    case SIGHUP:
+      reload_conf = 1;
+      break;
+  }
 }
 
 int load_conf(void)
@@ -103,7 +103,7 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
     if(*src != '$')
     {
       *(buf + pos) = *src++;
-
+      
       pos++;
       while(len <= pos)
       {
