@@ -101,6 +101,8 @@ void *pipe_thread(void *arg)
   free(args->line);
   free(args->cmd);
 
+  free(args);
+
   return NULL;
 }
 
@@ -209,7 +211,7 @@ void parse_line(char *line, struct file *file)
   struct rule *rule;
   struct context *context;
   int match;
-  struct pipeargs args;
+  struct pipeargs *args;
 
   if(strlen(line) < 17)
     return;
@@ -260,11 +262,13 @@ void parse_line(char *line, struct file *file)
 	if(debug)
 	  info("matched: (%s) %s -- piping: %s", file->tag, test, str);
 
-	args.cmd = str;
-	args.line = xmalloc(strlen(line) + 1);
-	strcpy(line, args.line);
+	args = xmalloc(sizeof(struct pipeargs));
+
+	args->cmd = str;
+	args->line = xmalloc(strlen(line) + 1);
+	strcpy(args->line, line);
 	
-	if(pthread_create(&thread, NULL, pipe_thread, &args) != 0)
+	if(pthread_create(&thread, NULL, pipe_thread, args) != 0)
 	  die("pthread_create: %s", strerror(errno));
     
 	return;
