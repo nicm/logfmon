@@ -52,7 +52,7 @@ void clear_files(void);
 int count_files(void);
 int count_open_files(void);
 int count_closed_files(void);
-int open_files(void);
+int open_files(int *);
 void close_files(void);
 struct file *find_file_by_tag(char *);
 struct file *find_file_by_path(char *);

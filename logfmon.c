@@ -375,7 +375,7 @@ int main(int argc, char **argv)
 
   time_t now, prev;
 
-  int event, timeout;
+  int event, timeout, failed;
   ssize_t len;
   size_t last, pos;
 
@@ -481,10 +481,10 @@ int main(int argc, char **argv)
       reload_conf = 0;
     }
 
-    if(open_files() > 0)
+    if(open_files(&failed) > 0)
       init_events();
 
-    if(count_closed_files() > 0)
+    if(failed > 0)
       timeout = REOPENTIMEOUT;
     else
       timeout = DEFAULTTIMEOUT;
@@ -495,7 +495,6 @@ int main(int argc, char **argv)
     if(now >= prev)
     {
       check_files();
-      
       prev = now + CHECKTIMEOUT;
     }
 

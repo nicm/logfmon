@@ -178,13 +178,16 @@ int count_closed_files(void)
   return num;
 }
 
-int open_files(void)
+int open_files(int *failed)
 {
   struct file *file;
   int num;
 
   if(files.head == NULL)
     return 0;
+
+  if(failed != NULL)
+    *failed = 0;
 
   num = 0;
   for(file = files.head; file != NULL; file = file->next)
@@ -193,7 +196,11 @@ int open_files(void)
     {
       file->fd = fopen(file->path, "r");
       if(file->fd == NULL)
+      {
+	if(failed != NULL)
+	  (*failed)++;
 	error("%s: %s", file->path, strerror(errno));
+      }
       else
 	num++;
     }
