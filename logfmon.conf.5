@@ -41,7 +41,7 @@ command.
 It may be followed by the following options, one per command:
 .Pp
 .Bl -tag -width Ds
-.It Ic mailtime Ar time 
+.It Ic mailtime Ar time
 This is used to set the time between mails of unmatched messages.
 .Pp
 The time may be specified as a plain number in seconds or with a suffix of
@@ -69,7 +69,7 @@ is run as root.
 It is important to note that when
 .Xr logfmon 8
 runs as a different user or group, it will still need read access to any
-log files specified with a 
+log files specified with a
 .Ic file
 command and the ability to execute any external commands (including the
 .Ic mailcmd
@@ -83,12 +83,12 @@ is run as root.
 .It Ic cachefile Ar file
 This informs
 .Xr logfmon 8
-of the path of the file used to retain a cache of the offsets and sizes of 
+of the path of the file used to retain a cache of the offsets and sizes of
 the log files to prevent duplicate processing of entries when it is restarted.
 An empty string disables caching. Note that this option may be overridden
-on the command line.
+on the command line. The default setting is /etc/logfmon.cache.
 .It Ic pidfile Ar file
-This instructs 
+This instructs
 .Xr logfmon 8
 to write its pid into the file specified. If an empty string is used, the pid
 is not written. If this entry does not appear in the configuration file, the
@@ -132,10 +132,10 @@ optionally a tag or set of tags to restrict matches to a single file.
 .Pp
 The format of a match command is:
 .Bl -tag -width Ds
-.It Xo Ic match 
-.Li [\&  Ic in Ar tags Li ] 
+.It Xo Ic match
+.Li [\&  Ic in Ar tags Li ]
 .Ar regexp
-.Li [\&  Ic not Ar regexp Li ] 
+.Li [\&  Ic not Ar regexp Li ]
 .Ar action
 .Xc
 .El
@@ -183,13 +183,13 @@ rule is:
 match "sshd\\\\[[0-9]*\\\\]: Invalid user .* from \\\\([0-9\\.]*\\\\)" exec "grep $1 /etc/pf.ignore || (echo $1 >> /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1; echo $0 | mail -s 'ssh attempt' root)"
 .Ed
 .It Ic pipe Ar command
-With this action, the entire log entry is piped to the supplied command. 
+With this action, the entire log entry is piped to the supplied command.
 .El
 .Sh CONTEXTS
 A context is a set of log entries that has been collected together. A context
 is opened by an
 .Ic open
-action on a 
+action on a
 .Ic match
 rule, messages may be appended to it with an
 .Ic append
@@ -238,10 +238,10 @@ appears. When
 .Ic pipe
 is used, the entire context is piped to the supplied command.
 .Bl -tag -width Ds
-.It Xo Ic match 
-.Li [\&  Ic in Ar tags Li ] 
-.Ar regexp 
-.Li [\&  Ic not Ar regexp Li ] 
+.It Xo Ic match
+.Li [\&  Ic in Ar tags Li ]
+.Ar regexp
+.Li [\&  Ic not Ar regexp Li ]
 .Ic open Ar name
 .Ic expire Ar time
 .Ar action
@@ -267,18 +267,18 @@ part of the rule is supplied, the specified
 is taken and the context is removed when the context holds
 .Ar num
 entries.
-.It Xo Ic match 
-.Li [\&  Ic in Ar tags Li ] 
-.Ar regexp 
-.Li [\&  Ic not Ar regexp Li ] 
+.It Xo Ic match
+.Li [\&  Ic in Ar tags Li ]
+.Ar regexp
+.Li [\&  Ic not Ar regexp Li ]
 .Ic append Ar name
 .Xc
 This appends a matching log entry to a context. If the context does not exist,
 this rule is silently ignored.
-.It Xo Ic match 
-.Li [\&  Ic in Ar tags Li ] 
-.Ar regexp 
-.Li [\&  Ic not Ar regexp Li ] 
+.It Xo Ic match
+.Li [\&  Ic in Ar tags Li ]
+.Ar regexp
+.Li [\&  Ic not Ar regexp Li ]
 .Ic close Ar name Ar action
 .Xc
 This applies the specified action and removes the context.
