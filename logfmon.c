@@ -87,6 +87,65 @@ int load_conf(void)
   return 0;
 }
 
+char *repl_one(char *src, char *repl)
+{
+  char *buf;
+  size_t len, pos, rlen;
+
+  len = strlen(src) + 512;
+  buf = xmalloc(len);
+  pos = 0;
+
+  rlen = strlen(repl);
+
+  while(*src != '\0')
+  {
+    if(*src != '$')
+    {
+      *(buf + pos) = *src++;
+      
+      pos++;
+      while(len <= pos)
+      {
+	len *= 2;
+	buf = xrealloc(buf, len);
+      }
+      
+      continue;
+    }
+
+    src++;
+    if(*src != '1')
+    {
+      *(buf + pos) = *src++;
+      
+      pos++;
+      while(len <= pos)
+      {
+	len *= 2;
+	buf = xrealloc(buf, len);
+      }
+      
+      continue;
+    }
+
+    src++;
+
+    while(len <= pos + rlen)
+    {
+      len *= 2;
+      buf = xrealloc(buf, len);
+    }
+
+    strcpy(buf + pos, repl);
+    pos += rlen;
+  }
+
+  *(buf + pos) = '\0';
+  
+  return buf;  
+}
+
 char *repl_matches(char *line, char *src, regmatch_t *matches)
 {
   char *buf;

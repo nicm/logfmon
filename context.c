@@ -175,17 +175,21 @@ int pipe_context(struct context *context, char *cmd)
     return 1;
   }
 
+  cmd = repl_one(cmd, context->key);
+
   fd = popen(cmd, "w");
   if(fd == NULL)
-    {
-      error("%s: %s", cmd, strerror(errno));
-      return 1;
-    }
+  {
+    error("%s: %s", cmd, strerror(errno));
+    return 1;
+  }
   for(message = context->messages.tail; message != NULL; message = message->last)
     fprintf(fd, "%s\n", message->msg);
 
   if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
     die("pthread_create: %s", strerror(errno));
+
+  free(cmd);
 
   return 0;
 }

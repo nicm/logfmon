@@ -50,4 +50,6 @@ extern int now_daemon;
 
 extern char *__progname;
 
+char *repl_one(char *, char *);
+
 #endif
