@@ -97,20 +97,70 @@ Pipe the matching log entry to a command.
 .Ic expire Ar time Ic ignore
 .Xc
 .It Xo Ic match Ar regexp Ic open Ar name 
+.Ic expire Ar time Ic ignore Ic when
+.Ar number Ic ignore
+.Xc
+.It Xo Ic match Ar regexp Ic open Ar name 
+.Ic expire Ar time Ic ignore Ic when
+.Ar number Ic pipe Ar command
+.Xc
+.It Xo Ic match Ar regexp Ic open Ar name 
 .Ic expire Ar time Ic pipe Ar command
+.Xc
+.It Xo Ic match Ar regexp Ic open Ar name 
+.Ic expire Ar time Ic pipe Ar command
+.Ic when Ar number Ic ignore
+.Xc
+.It Xo Ic match Ar regexp Ic open Ar name 
+.Ic expire Ar time Ic pipe Ar command
+.Ic when Ar number Ic pipe Ar command
 .Xc
 .It Xo Ic match in * Ar regexp Ic open
 .Ar name Ic expire Ar time Ic ignore
 .Xc
 .It Xo Ic match in * Ar regexp Ic open
-.Ar name Ic expire Ar time Ic pipe Ar command
+.Ar name Ic expire Ar time Ic ignore Ic when
+.Ar number Ic ignore
 .Xc
-.It Xo Ic match in Ar tag Ar regexp 
-.Ic open Ar name Ic expire Ar time Ic ignore
+.It Xo Ic match in * Ar regexp Ic open
+.Ar name Ic expire Ar time Ic ignore Ic when
+.Ar number Ic pipe Ar command
+.Xc
+.It Xo Ic match in * Ar regexp Ic open
+.Ar name  Ic expire Ar time Ic pipe Ar command
+.Xc
+.It Xo Ic match in * Ar regexp Ic open
+.Ar name Ic expire Ar time Ic pipe Ar command
+.Ic when Ar number Ic ignore
+.Xc
+.It Xo Ic match in * Ar regexp Ic open
+.Ar name Ic expire Ar time Ic pipe Ar command
+.Ic when Ar number Ic pipe Ar command
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic open Ar name Ic expire Ar time 
+.Ic ignore
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic open Ar name Ic expire Ar time
+.Ic ignore Ic when Ar number Ic ignore
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic open Ar name Ic expire Ar time
+.Ic ignore Ic when Ar number Ic pipe
+.Ar command
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic open Ar name Ic expire Ar time Ic pipe 
+.Ar command
 .Xc
 .It Xo Ic match in Ar tag Ar regexp 
 .Ic open Ar name Ic expire Ar time Ic pipe
-.Ar command
+.Ar command Ic when Ar number Ic ignore
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
+.Ic open Ar name Ic expire Ar time Ic pipe
+.Ar command Ic when Ar number Ic pipe Ar command
 .Xc
 Opens a context with the specified name and set to expire after the specified time. 
 The time is in the same format as for the
@@ -125,6 +175,14 @@ is specified, the context will be piped to the specified command before being re
 The context expiry time is counted from the point at which the context is created, so a
 context with a time of 2 minutes will be expired after 2 minutes regardless of when the
 last message was appended to it.
+.Pp
+If
+.Ic when Ar number
+is included, the context is closed when it holds
+.Ar number
+messages. If 
+.Ic pipe
+is specified, the context is piped to the command when this happens.
 .Pp
 Note that unlike the other rules,
 .Xr logfmon 8
@@ -151,15 +209,28 @@ command, or indeed used to execute a command.
 Appends the matched message to the specified context. If the context does not exist, this
 rule is silently ignored.
 .It Xo Ic match Ar regexp Ic close Ar name 
+.Ic ignore
+.Xc
+.It Xo Ic match Ar regexp Ic close Ar name 
 .Ic pipe Ar command
+.Xc
+.It Xo Ic match in * Ar regexp Ic close
+.Ar name Ic ignore
 .Xc
 .It Xo Ic match in * Ar regexp Ic close
 .Ar name Ic pipe Ar command
 .Xc
 .It Xo Ic match in Ar tag Ar regexp
+.Ic close Ar name Ic ignore
+.Xc
+.It Xo Ic match in Ar tag Ar regexp
 .Ic close Ar name Ic pipe Ar command
 .Xc
-This closes a context and pipes all the messages appended to the context to the specified command.
+This closes a context. If 
+.Ic ignore
+is specified, the context is simply removed. If
+.Ic pipe
+then the messages appended to the context are piped to the specified command.
 An example set of context rules is:
 .Bd -ragged -offset indent
 match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: input_userauth_request: invalid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s \\"`date` ssh attempt (expired)\\" root"
