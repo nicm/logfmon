@@ -76,7 +76,7 @@ ${PROG}:	${OBJS}
 		${CC} ${LDFLAGS} -o ${PROG} ${LIBS} ${OBJS}
 
 dist:		clean
-		${TAR} ${TARFLAGS} -f ${PROG}-${VERSION}.tar.gz *.[chyl] ${PROG}.conf Makefile *.[1-9] INSTALL
+		${TAR} ${TARFLAGS} -f ${PROG}-${VERSION}.tar.gz *.[chyl] ${PROG}.conf Makefile *.[1-9] INSTALL make-linux.sh
 
 depend:
 		${MKDEP} ${MKDEPFLAGS} ${CFLAGS} ${SRCS}
