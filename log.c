@@ -34,6 +34,9 @@ void die(char *fmt, ...)
   vlog(LOG_ERR, fmt, ap);
   va_end(ap);
 
+  if(now_daemon)
+    error("exited");
+
   exit(EXIT_FAILURE);
 }
 

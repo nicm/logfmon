@@ -193,7 +193,7 @@ int pipe_context(struct context *context, char *cmd)
   }
 
   if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
-    die("pthread_create: %s", strerror(errno));
+    die("pthread_create failed");
 
   free(cmd);
 

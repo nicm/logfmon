@@ -75,7 +75,7 @@ void *save_thread(void *arg)
     msgs = 0;
     
     if(pthread_mutex_lock(&save_mutex) != 0)
-      continue;
+      die("pthread_mutex_lock failed");
     
     for(file = files.tail; file != NULL; file = file->last)
     {
@@ -99,7 +99,8 @@ void *save_thread(void *arg)
     }
     pclose(fd);
 
-    pthread_mutex_unlock(&save_mutex);
+    if(pthread_mutex_unlock(&save_mutex) != 0)
+      die("pthread_mutex_unlock failed");
 	
     if(debug)
       info("processed %d unmatched messages", msgs);

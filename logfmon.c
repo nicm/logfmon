@@ -249,7 +249,7 @@ void parse_line(char *line, struct file *file)
 	else
 	{
 	  if(pthread_create(&thread, NULL, exec_thread, str) != 0)
-	    die("pthread_create: %s", strerror(errno));
+	    die("pthread_create failed");
 	}
 
 	return;
@@ -278,7 +278,7 @@ void parse_line(char *line, struct file *file)
 	    fputc('\n', fd);
 	    
 	    if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
-	      die("pthread_create: %s", strerror(errno));
+	      die("pthread_create failed");
 
 	    free(str);
 	  }
@@ -382,11 +382,13 @@ void parse_line(char *line, struct file *file)
  
   if(mail_cmd != NULL && *mail_cmd != '\0')
   {
-    if(pthread_mutex_lock(&save_mutex) == 0)
-    {
-      add_message(&file->saves, line);
-      pthread_mutex_unlock(&save_mutex);
-    }
+    if(pthread_mutex_lock(&save_mutex) != 0)
+      die("pthread_mutex_lock failed");
+
+    add_message(&file->saves, line);
+
+    if(pthread_mutex_unlock(&save_mutex) != 0)
+      die("pthread_mutex_unlock failed");
   }
 }
 
@@ -404,7 +406,7 @@ int main(int argc, char **argv)
 
   time_t now, prev;
 
-  int event, timeout, failed, dirty, err;
+  int event, timeout, failed, dirty;
   ssize_t len;
   size_t last, pos;
 
@@ -528,13 +530,11 @@ int main(int argc, char **argv)
   reload_conf = 0;
   exit_now = 0;
 
-  err = pthread_mutex_init(&save_mutex, NULL);
-  if(err != 0)
-    die("pthread_mutex_init: %s", strerror(err));
+  if(pthread_mutex_init(&save_mutex, NULL) != 0)
+    die("pthread_mutex_init failed");
 
-  err = pthread_create(&thread, NULL, save_thread, NULL);
-  if(err != 0)
-    die("pthread_create: %s", strerror(err));
+  if(pthread_create(&thread, NULL, save_thread, NULL) != 0)
+    die("pthread_create failed");
 
   if(!debug)
   {
@@ -580,27 +580,17 @@ int main(int argc, char **argv)
 
       save_cache();
 
-      err = pthread_mutex_lock(&save_mutex);
-      if(err != 0)
-       {
-	 error("pthread_mutex_lock: %s", strerror(err));
-	 error("exited");
-	 
-	 exit(EXIT_FAILURE);
-       }
+      if(pthread_mutex_lock(&save_mutex) != 0)
+	die("pthread_mutex_lock failed");
 
       clear_rules();
       clear_files(); /* closes too */
       
       if(load_conf() != 0)
-      {
-	error("%s: %s", conf_file, strerror(errno));
-	error("exited");
-	
-	exit(EXIT_FAILURE);
-      }
+	die("%s: %s", conf_file, strerror(errno));
 
-      pthread_mutex_unlock(&save_mutex);
+      if(pthread_mutex_unlock(&save_mutex) != 0)
+	die("pthread_mutex_unlock failed");
 
       load_cache();
       open_files();
