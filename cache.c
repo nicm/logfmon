@@ -48,7 +48,7 @@ int save_cache(void)
   {
     error("sprintf: %s", strerror(errno));
     free(name);
-    return 0;
+    return 1;
   }
   
   fd = fopen(name,"w+");
@@ -117,12 +117,12 @@ int load_cache(void)
     result = snprintf(format, sizeof(format), "%%%dc %%lld %%lld", length);
     if(result < 0 || result > (int) sizeof(format))
     {
-      error("cannot load cache file; possibly corrupted");
+      error("cannot load entire cache file; possibly corrupted");
       break;
     }
     if(fscanf(fd, format, path, &size, &offset) < 3)
     {
-      error("cannot load cache file; possibly corrupted");
+      error("cannot load entire cache file; possibly corrupted");
       break;
     }
     path[length] = '\0';
