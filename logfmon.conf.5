@@ -29,208 +29,218 @@ Empty lines and lines beginning with the
 .Sq #
 character are ignored.
 .Pp
-Regexps and strings must be enclosed in double quotes. Special characters in regexps and 
-strings may be escaped.
+Regexps and strings must be enclosed in double quotes. Special characters in
+regexps and strings must be escaped. Note that this may mean double-escaping
+in regexps.
 .Pp
-The possible entries are:
+Possible commands are covered in the following sections.
+.Sh OPTIONS
+Options are configured using the
+.Ic set
+command.
+It may be followed by the following options, one per command:
+.Pp
 .Bl -tag -width Ds
-.It Ic set mailtime Ar time
-Specify the time between mails of unmatched messages. The time
-may be specified as a simple number in seconds, or with a suffix of
+.It Ic mailtime Ar time 
+This is used to set the time between mails of unmatched messages.
+.Pp
+The time may be specified as a plain number in seconds or with a suffix of
 .Ql h
-for hours, 
+for hours,
 .Ql m
 for minutes or
 .Ql s
-for seconds. The default is 900 seconds and the minimum is 10 seconds.
-.It Ic set mailcmd Ar command
-Specify the command to which mail will be piped. For example:
+for seconds. The default is 15 minutes and the minimum is 10 seconds.
+.It Ic mailcmd Ar command
+This sets the command to which the mail is piped. For example:
 .Bd -ragged -offset indent
 set mailcmd "/usr/bin/mail -s \\"`date` log report\\" root"
 .Ed
 .Pp
-An empty string will prevent the mail being sent.
-.It Ic file Ar file
-.It Ic file Ar file Ic tag Ar tag
-Specify a log file to check. At least one file must be specified in the configuration.
+No mail will be sent if the command is an empty string ("").
+.It Ic user Ar user Li | Ar uid
+This instructs
+.Xr logfmon 8
+to run as a different user or uid. In common with other strings, a user name
+must be in double quotes. An alternative user will only be used if
+.Xr logfmon 8
+is run as root.
+.It Ic group Ar group Li | Ar gid
+This instructs
+.Xr logfmon 8
+to run as a different group or gid. An alternative group will only be used if
+.Xr logfmon 8
+is run as root.
+.Sh FILES
+The
+.Ic file
+command is used to instruct
+.Xr logfmon 8
+to monitor a file. The filename must be given as a parameter.
 .Pp
-The tag is an identifier used to refer to this log file in the 
+Optionally, the file may be given a tag by specifying
+.Ic tag Ar tag
+following the filename. This tag is used in
 .Ic match
-directive. It it restricted to alphanumeric characters, hyphens and underscores.
+rules, described below, to restrict matches to a particular file. The tag is
+restricted to alphanumeric characters, hypens and underscores. If no tag is
+given for a file,
+.Xr logfmon 8
+assigns it a tag.
 .Pp
-The file name must be in quotes, for example:
+An example of a
+.Ic file
+command is:
 .Bd -ragged -offset indent
 file "/var/log/daemon" tag daemon
 .Ed
-.It Ic match Ar regexp Ic ignore
-.It Ic match in * Ar regexp Ic ignore
-.It Ic match in Ar tag Ar regexp Ic ignore
-Ignore all log entries matching the specified regexp.
+.Sh RULES
+Rules are described using the
+.Ic match
+command. This section describes simple rules, contexts are covered in a
+seperate section below.
 .Pp
-If a tag is supplied, tests are restricted to the file with that tag. A tag of * or no tag are
-equivalent and indicate that lines should be matched in all files.
+Each
+.Ic match
+command gives
+.Xr logfmon 8
+a regexp to test each new log entry against, an action to perform and
+optionally a tag to restrict matches to a single file.
 .Pp
-For example:
+The format of a match command is:
+.Bl -tag -width Ds
+.It Xo Ic match 
+.Li [\&  Ic in Ar tag Li ] 
+.Ar regexp Ar action
+.Xc
+.El
+.Pp
+If the
+.Ic in Ar tag
+part is not supplied, or the tag is an asterisk, the rule is applied in all
+files.
+.Pp
+For this form of
+.Ic match
+command, testing of a log entry is stopped as soon as a matching rule is found.
+.Pp
+The possible actions are:
+.Bl -tag -width Ds
+.It Ic ignore
+Any matched log entries in the specified files are ignored. They are not
+batched into the unmatched email and are tested against no further rules.
+.Pp
+An example
+.Ic ignore
+rule is:
 .Bd -ragged -offset indent
-match in daemon "ntpd\\\\[[0-9]*\\\\]: adjusting local clock by [0-9.\\\\-]*s" ignore
+match in daemon "ntpd\\\\[[0-9]*\\\\]: adjusting local clock by [0-9.-]*s" ignore
 .Ed
-.It Ic match Ar regexp Ic exec Ar command
-.It Xo Ic match in * Ar regexp
-.Ic exec Ar command
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic exec Ar command
-.Xc
-Execute a command on each entry matching the specified regexp. For example:
+.It Ic exec Ar command
+This executes
+.Ar command
+when a matching entry is seen. $0 is replaced in the command with the entire
+log entry and $1 to $9 are replaced with any bracketted expressions in the
+regexp.
+.Pp
+An example
+.Ic exec
+rule is:
 .Bd -ragged -offset indent
 match "sshd\\\\[[0-9]*\\\\]: Invalid user .* from \\\\([0-9\\.]*\\\\)" exec "grep $1 /etc/pf.ignore || (echo $1 >> /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1; echo $0 | mail -s 'ssh attempt' root)"
 .Ed
-.It Ic match Ar regexp Ic pipe Ar command
-.It Xo Ic match in * Ar regexp
-.Ic pipe Ar command
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic pipe Ar command
-.Xc
-Pipe the matching log entry to a command.
-.It Xo Ic match Ar regexp Ic open Ar name 
-.Ic expire Ar time Ic ignore
-.Xc
-.It Xo Ic match Ar regexp Ic open Ar name 
-.Ic expire Ar time Ic ignore Ic when
-.Ar number Ic ignore
-.Xc
-.It Xo Ic match Ar regexp Ic open Ar name 
-.Ic expire Ar time Ic ignore Ic when
-.Ar number Ic pipe Ar command
-.Xc
-.It Xo Ic match Ar regexp Ic open Ar name 
-.Ic expire Ar time Ic pipe Ar command
-.Xc
-.It Xo Ic match Ar regexp Ic open Ar name 
-.Ic expire Ar time Ic pipe Ar command
-.Ic when Ar number Ic ignore
-.Xc
-.It Xo Ic match Ar regexp Ic open Ar name 
-.Ic expire Ar time Ic pipe Ar command
-.Ic when Ar number Ic pipe Ar command
-.Xc
-.It Xo Ic match in * Ar regexp Ic open
-.Ar name Ic expire Ar time Ic ignore
-.Xc
-.It Xo Ic match in * Ar regexp Ic open
-.Ar name Ic expire Ar time Ic ignore Ic when
-.Ar number Ic ignore
-.Xc
-.It Xo Ic match in * Ar regexp Ic open
-.Ar name Ic expire Ar time Ic ignore Ic when
-.Ar number Ic pipe Ar command
-.Xc
-.It Xo Ic match in * Ar regexp Ic open
-.Ar name  Ic expire Ar time Ic pipe Ar command
-.Xc
-.It Xo Ic match in * Ar regexp Ic open
-.Ar name Ic expire Ar time Ic pipe Ar command
-.Ic when Ar number Ic ignore
-.Xc
-.It Xo Ic match in * Ar regexp Ic open
-.Ar name Ic expire Ar time Ic pipe Ar command
-.Ic when Ar number Ic pipe Ar command
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic open Ar name Ic expire Ar time 
-.Ic ignore
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic open Ar name Ic expire Ar time
-.Ic ignore Ic when Ar number Ic ignore
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic open Ar name Ic expire Ar time
-.Ic ignore Ic when Ar number Ic pipe
-.Ar command
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic open Ar name Ic expire Ar time Ic pipe 
-.Ar command
-.Xc
-.It Xo Ic match in Ar tag Ar regexp 
-.Ic open Ar name Ic expire Ar time Ic pipe
-.Ar command Ic when Ar number Ic ignore
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic open Ar name Ic expire Ar time Ic pipe
-.Ar command Ic when Ar number Ic pipe Ar command
-.Xc
-Opens a context with the specified name and set to expire after the specified time. 
-The time is in the same format as for the
-.Ic set mailcmd
-command.
+.It Ic pipe Ar command
+With this action, the entire log entry is piped to the supplied command. 
+.El
+.Sh CONTEXTS
+A context is a set of log entries that has been collected together. A context
+is opened by an
+.Ic open
+action on a 
+.Ic match
+rule, messages may be appended to it with an
+.Ic append
+action and it may be closed and an action taken with a
+.Ic close
+rule.
 .Pp
-If
-.Ic ignore
-is specified, the context will simply be silently removed when it expires. If
-.Ic pipe
-is specified, the context will be piped to the specified command before being removed.
-The context expiry time is counted from the point at which the context is created, so a
-context with a time of 2 minutes will be expired after 2 minutes regardless of when the
-last message was appended to it.
-.Pp
-If
-.Ic when Ar number
-is included, the context is closed when it holds
-.Ar number
-messages. If 
-.Ic pipe
-is specified, the context is piped to the command when this happens.
+A context expires and is removed after a time supplied to the
+.Ic open
+rule. An action may be taken when a context expires, or, with a
+.Ic when
+command, optionally when it reaches a certain number of entries.
 .Pp
 Note that unlike the other rules,
 .Xr logfmon 8
 does
 .Em not
-stop parsing rules when a message matches a context rule. This means that without a 
-matching
+stop parsing rules when a message matches a context rule. This means that
+without a matching
 .Ic ignore
-rule, messages that match
-.Ic open
-or the other context rules described below will be included in the email of unmatched rules.
-It also means, however, that messages matching an
+rule, messages that match any of the context rules described below will be
+included in the email of unmatched rules. This also means, however, that
+messages matching an
 .Ic open
 can be included in the context with an
 .Ic append
-command, or indeed used to execute a command.
-.It Ic match Ar regexp Ic append Ar name 
-.It Xo Ic match in * Ar regexp Ic append
-.Ar name
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic append Ar name
-.Xc
-Appends the matched message to the specified context. If the context does not exist, this
-rule is silently ignored.
-.It Xo Ic match Ar regexp Ic close Ar name 
-.Ic ignore
-.Xc
-.It Xo Ic match Ar regexp Ic close Ar name 
-.Ic pipe Ar command
-.Xc
-.It Xo Ic match in * Ar regexp Ic close
-.Ar name Ic ignore
-.Xc
-.It Xo Ic match in * Ar regexp Ic close
-.Ar name Ic pipe Ar command
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic close Ar name Ic ignore
-.Xc
-.It Xo Ic match in Ar tag Ar regexp
-.Ic close Ar name Ic pipe Ar command
-.Xc
-This closes a context. If 
-.Ic ignore
-is specified, the context is simply removed. If
+command, or indeed used to
+.Ic exec
+or
 .Ic pipe
-then the messages appended to the context are piped to the specified command.
+in later rules.
+.Pp
+The forms of
+.Ic match
+command relating to contexts are described below.
+.Ic pipe
+or
+.Ic ignore
+are the only actions permitted where
+.Ar action
+appears. When
+.Ic pipe
+is used, the entire context is piped to the supplied command.
+.Bl -tag -width Ds
+.It Xo Ic match 
+.Li [\&  Ic in Ar tag Li ] 
+.Ar regexp Ic open Ar name
+.Ic expire Ar time
+.Ar action
+.Li [\&  Ic when Ar num
+.Ar action Li ]
+.Xc
+This opens a context with name
+.Ar name
+and sets it to expire after the time specified.
+.Ar time
+is in the same format as for the
+.Ic set mailtime
+command. $0 to $9 are replaced as normal in the context name.
+.Pp
+The expiry time is counted from the point at which the context is created, so a
+context with a time of two minutes will be expired after two minutes
+regardless of when the last message was appended to it.
+.Pp
+If the optional
+.Ic when
+part of the rule is supplied, the specified
+.Ar action
+is taken and the context is removed when the context holds
+.Ar num
+entries.
+.It Xo Ic match 
+.Li [\&  Ic in Ar tag Li ] 
+.Ar regexp Ic append Ar name
+.Xc
+This appends a matching log entry to a context. If the context does not exist,
+this rule is silently ignored.
+.It Xo Ic match 
+.Li [\&  Ic in Ar tag Li ] 
+.Ar regexp Ic close Ar name Ar action
+.Xc
+This applies the specified action and removes the context.
+.El
+.Pp
 An example set of context rules is:
 .Bd -ragged -offset indent
 match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: input_userauth_request: invalid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s \\"`date` ssh attempt (expired)\\" root"

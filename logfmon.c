@@ -462,14 +462,24 @@ int main(int argc, char **argv)
 
   if(gid != 0)
   {
-    if(setgroups(1, &gid) != 0 || setegid(gid) != 0 || setgid(gid) != 0)
-      die("failed to drop group privileges");
+    if(geteuid())
+      error("need root privileges to set group");
+    else
+    {
+      if(setgroups(1, &gid) != 0 || setegid(gid) != 0 || setgid(gid) != 0)
+	die("failed to drop group privileges");
+    }
   }
 
   if(uid != 0)
   {
-    if(setuid(uid) != 0 || seteuid(uid) != 0)
-      die("failed to drop user privileges %s", strerror(errno));
+    if(geteuid())
+      error("need root privileges to set user");
+    else
+    {
+      if(setuid(uid) != 0 || seteuid(uid) != 0)
+	die("failed to drop user privileges %s", strerror(errno));
+    }
   }
   
   now_daemon = 1;

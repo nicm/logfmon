@@ -98,9 +98,6 @@ set: TOKSET OPTMAILCMD STRING
      {
        struct passwd *pw;
 
-       if(geteuid())
-	 die("need root privileges for alternative user");
-
        pw = getpwnam($3);
        if(pw == NULL)
 	 die("unknown user %s", $3);
@@ -114,9 +111,6 @@ set: TOKSET OPTMAILCMD STRING
      {
        struct passwd *pw;
 
-       if(geteuid())
-	 die("need root privileges for alternative user");
-
        pw = getpwuid($3);
        if(pw == NULL)
 	 die("unknown uid %d", $3);
@@ -128,9 +122,6 @@ set: TOKSET OPTMAILCMD STRING
    | TOKSET OPTGROUP STRING
      {
        struct group *gr;
-
-       if(geteuid())
-	 die("need root privileges for alternative group");
 
        gr = getgrnam($3);
        if(gr == NULL)
@@ -144,9 +135,6 @@ set: TOKSET OPTMAILCMD STRING
    | TOKSET OPTGROUP NUMBER
      {
        struct group *gr;
-
-       if(geteuid())
-	 die("need root privileges for alternative group");
 
        gr = getgrgid($3);
        if(gr == NULL)
