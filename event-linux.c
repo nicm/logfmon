@@ -46,13 +46,13 @@
  *    is appended to:
  *
  *    - select() & poll() return immediately when a file is at EOF.
- *    - epoll is poorly documented, not well by supported by distros as
+ *    - epoll is poorly documented, not well supported by distros as
  *      yet (both a 2.6 kernel and a patched glibc is needed), and
  *      refuses to work for me altogether on files.
  *    - aio_* is not what I am looking for at all, and it would be 
  *      a real pain to make it do what I want.
- *    - F_SETSIG also looks like annoying to implement, and I'm not
- *      sure it would do the right thing either.
+ *    - F_SETSIG also looks lannoying to implement, and I'm not sure
+ *      it would do the right thing either.
  *
  * So, we are left with a very sucky manual poll with stat() and
  * a read (currently relying on behaviour that is probably not

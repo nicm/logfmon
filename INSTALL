@@ -1,6 +1,13 @@
-I've currently tested on OpenBSD 3.6 and FreeBSD 4.10.
+This file should probably be called README now.
 
-The Makefile requires BSD make.
+I've currently tested a lot on OpenBSD 3.6, a bit on  FreeBSD 4.10 and a little
+on Debian with Linux 2.6.9 kernel.
+
+The Makefile requires BSD make. In Debian, FreeBSD make is part of the
+freebsd-buildutils package - installed as /usr/bin/freebsd-make - and it
+works fine. Alternatively, the make-linux.sh script should work if you
+have bash installed. Note that the Linux stuff is very poorly tested so YMMV.
+I'd appreciate feedback on problems.
 
 To install, do:
 
@@ -24,7 +31,10 @@ On OpenBSD, I add these lines to /etc/rc.local to run logfmon on startup:
 	fi
 
 If you change the configuration, send a HUP to a running logfmon to make it
-reload.
+reload. Note that this will cause all log files to be reread in their
+entirity. I don't find this a problem since I rotate logs quite aggressively
+and my logs are not added to rapidly, but I'll probably look into fixing
+it sometime later.
 
 At the moment, the program assumes each log line has a 15 character date,
 followed by a space, the hostname, another space and the message, for example:
@@ -42,6 +52,17 @@ has started it tries to reopen every second until it suceeds, so if you see a
 lot (more than 5 or 10) of these messages, something is probably wrong. This
 only applies when logfmon is running. If opening a file fails when logfmon is
 initially started, it will report it to stderr and exit immediately.
+
+Currently on my to do list are, in no particular order:
+
+- allow a uid/gid to run as to be specified
+- let a context to be piped to a command when it reaches a certain number
+  of entries
+- think about allowing a `doesn't match' regexp as well as a `does match'
+- there is quite a lot of stuff needs cleaned up
+- the linux event stuff is crap
+- I'm not altogether happy with the context rules
+- the man pages are crap and need redone
 
 Feedback is welcome.
 
