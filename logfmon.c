@@ -478,7 +478,7 @@ int main(int argc, char **argv)
   /*if(rules == NULL)
     die("no rules found");*/
 
-  setpriority(PRIO_PROCESS, (int) getpid(), 1);
+  setpriority(PRIO_PROCESS, getpid(), 1);
 
   if(!debug)
   {
