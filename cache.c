@@ -35,6 +35,7 @@ int save_cache(void)
 {
   struct file *file;
   FILE *fd;
+  char *name;
 
   if(cache_file == NULL || *cache_file == '\0')
     return 0;
@@ -42,10 +43,14 @@ int save_cache(void)
   if(debug)
     info("saving cache");
 
-  fd = fopen(cache_file,"w+");
+  name = xmalloc(strlen(cache_file) + 5);
+  sprintf(name, "%s.new", cache_file);
+
+  fd = fopen(name,"w+");
   if(fd == NULL)
   {
-    error("%s: %s", cache_file, strerror(errno));
+    error("%s: %s", name, strerror(errno));
+    free(name);
     return 1;
   }
    
@@ -53,6 +58,11 @@ int save_cache(void)
     fprintf(fd, "%d %s %lld %lld\n", strlen(file->path), file->path, file->size, file->offset);
 
   fclose(fd);
+
+  if(rename(name, cache_file) == -1)
+    error("rename: %s", strerror(errno));
+
+  free(name);
 
   return 0;
 }
@@ -89,7 +99,12 @@ int load_cache(void)
     fscanf(fd, "%d ", &length);
     if(path != NULL)
       free(path);
-    path = xmalloc(length + 1);
+    path = malloc(length + 1); /* not xmalloc */
+    if(path == NULL)
+    {
+      error("malloc: %s (cache: length = %d)", strerror(errno), length);
+      break;
+    }
     sprintf(format, "%%%dc %%lld %%lld", length);
     if(fscanf(fd, format, path, &size, &offset) < 3)
       break;

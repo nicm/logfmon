@@ -583,7 +583,10 @@ int main(int argc, char **argv)
     {
       check_files();
       if(dirty)
+      {
 	save_cache();
+	dirty = 0;
+      }
       prev = now + CHECKTIMEOUT;
     }
 
