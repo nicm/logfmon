@@ -1,7 +1,8 @@
 This file should probably be called README now.
 
 I've currently tested a lot on OpenBSD 3.6, a bit on FreeBSD 4.10 and a little
-on Debian with Linux 2.6.9 kernel.
+on Debian with Linux 2.6.9 kernel. Oh, and Debian with Linux 2.4.18 since 
+2.6.9 is currently shit and can't stay up under any sort of memory load.
 
 The Makefile requires BSD make. In Debian, FreeBSD make is part of the
 freebsd-buildutils package - installed as /usr/bin/freebsd-make - and it
@@ -9,9 +10,10 @@ works fine. Alternatively, the make-linux.sh script should work if you
 have bash installed. Note that the Linux stuff is very poorly tested so YMMV.
 I'd appreciate feedback on problems.
 
-There is some weirdness with yacc on my Linux installation, in that it sometimes
-fails the first time you build with `unexpected end of file'. It seems to work
-fine if you just make it again. It works all the time on OpenBSD and FreeBSD.
+There is some weirdness with yacc on my Linux installation, in that it
+sometimes fails the first time you build with `unexpected end of file'. It
+seems to work fine if you just make again. It works all the time on OpenBSD
+and FreeBSD.
 
 To install, do:
 
@@ -68,16 +70,16 @@ to:
 
 SRCS+= event-linux.c
 
-Note that just setting OS to Linux won't work on FreeBSD due to silliness with
-the pthread implementation.
+Note that just setting the OS var to Linux won't work on FreeBSD due to
+silliness with the pthread implementation.
 
 Currently on my to do list are, in no particular order:
 
 - think about allowing a `doesn't match' regexp as well as a `does match'
 - there is quite a lot of stuff needs cleaned up
-- the linux event stuff is crap
+- the Linux event stuff is still a bit crap
 - I'm not altogether happy with the context rules
-- the man pages are crap and need redone
+- there was something else but I've forgotten it :-/. It'll come back to me.
 
 Feedback is welcome.
 
