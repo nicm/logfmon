@@ -20,7 +20,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pthread.h>
 #include <syslog.h>
 #include <errno.h>
 
