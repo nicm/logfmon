@@ -59,7 +59,6 @@ void parse_line(char *, struct file *);
 void usage(void);
 void *exec_thread(void *);
 void *pipe_thread(void *);
-struct kevent *make_kev_list(int *);
 
 void sighandler(int sig)
 {
@@ -215,7 +214,6 @@ void parse_line(char *line, struct file *file)
   pthread_t thread;
   struct rule *rule;
   struct context *context;
-  int match;
   struct pipeargs *args;
 
   if(strlen(line) < 17)
@@ -235,8 +233,7 @@ void parse_line(char *line, struct file *file)
     if(rule->tags->head != NULL && !find_tag(rule->tags, file->tag))
       continue;
 
-    match = regexec(rule->re, test, 10, matches, 0);
-    if(match != 0)
+    if(regexec(rule->re, test, 10, matches, 0) != 0)
       continue;
 
     switch(rule->action)
