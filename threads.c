@@ -16,38 +16,28 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef LOGFMON_H
-#define LOGFMON_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
-#include <signal.h>
+#include "logfmon.h"
+#include "threads.h"
+#include "log.h"
 
-#include <sys/types.h>
+void *pclose_thread(void *arg) 
+{ 
+  pclose((FILE *) arg);
 
-#define CONFFILE  "/etc/logfmon.conf"
-#define CACHEFILE "/etc/logfmon.cache"
-#define PIDFILE "/var/run/logfmon.pid"
+  return NULL;
+}
 
-#define CHECKTIMEOUT 10
-#define DEFAULTTIMEOUT 5
-#define REOPENTIMEOUT 1
+void *exec_thread(void *arg)
+{
+  system((char *) arg);
 
-int debug;
+  free(arg);
 
-volatile sig_atomic_t reload_conf;
-volatile sig_atomic_t exit_now;
+  return NULL;
+}
 
-extern char *mail_cmd;
-extern int mail_time;
-
-extern uid_t uid;
-extern gid_t gid;
-
-extern char *conf_file;
-extern char *cache_file;
-extern char *pid_file;
-
-extern int now_daemon;
-
-extern char *__progname;
-
-#endif

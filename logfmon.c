@@ -39,6 +39,7 @@
 #include "event.h"
 #include "tags.h"
 #include "cache.h"
+#include "threads.h"
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -60,8 +61,6 @@ void sighandler(int);
 char *repl_matches(char *, char *, regmatch_t *);
 void parse_line(char *, struct file *);
 void usage(void);
-void *exec_thread(void *);
-void *pipe_thread(void *);
 
 void sighandler(int sig)
 {
@@ -87,39 +86,6 @@ int load_conf(void)
   fclose(yyin);
 
   return 0;
-}
-
-void *pipe_thread(void *arg)
-{
-  struct pipeargs *args;
-  FILE *fd;
-
-  args = (struct pipeargs *) arg;
-
-  fd = popen(args->cmd, "w");
-  if(fd == NULL)
-    error("%s: %s", args->cmd, strerror(errno));
-  else
-  {
-    fprintf(fd, "%s\n", args->line);
-    pclose(fd);
-  }
-
-  free(args->line);
-  free(args->cmd);
-
-  free(args);
-
-  return NULL;
-}
-
-void *exec_thread(void *arg)
-{
-  system((char *) arg);
-
-  free(arg);
-
-  return NULL;
 }
 
 char *repl_matches(char *line, char *src, regmatch_t *matches)
@@ -217,7 +183,7 @@ void parse_line(char *line, struct file *file)
   pthread_t thread;
   struct rule *rule;
   struct context *context;
-  struct pipeargs *args;
+  FILE *fd;
 
   if(strlen(line) < 17)
     return;
@@ -260,8 +226,7 @@ void parse_line(char *line, struct file *file)
 	if(str == NULL || *str == '\0')
 	{
 	  error("empty command for exec");
-	  if(str != NULL)
-	    free(str);
+	  free(str);
 	}
 	else
 	{
@@ -282,19 +247,22 @@ void parse_line(char *line, struct file *file)
 	if(str == NULL || *str == '\0')
 	{
 	  error("empty command for pipe");
-	  if(str != NULL)
-	    free(str);
+	  free(str);
 	}
 	else
 	{
-	  args = xmalloc(sizeof(struct pipeargs));
-	  
-	  args->cmd = str;
-	  args->line = xmalloc(strlen(line) + 1);
-	  strcpy(args->line, line);
-	  
-	  if(pthread_create(&thread, NULL, pipe_thread, args) != 0)
-	    die("pthread_create: %s", strerror(errno));
+	  fd = popen(str, "w");
+	  if(fd == NULL)
+	    error("%s: %s", str, strerror(errno));
+	  else
+	  {
+	    fprintf(fd, "%s\n", line);
+	    
+	    if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
+	      die("pthread_create: %s", strerror(errno));
+
+	    free(str);
+	  }
 	}
 	
 	return;

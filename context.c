@@ -23,12 +23,14 @@
 #include <syslog.h>
 #include <errno.h>
 #include <time.h>
+#include <pthread.h>
 
 #include "logfmon.h"
 #include "xmalloc.h"
 #include "log.h"
 #include "context.h"
 #include "rules.h"
+#include "threads.h"
 
 void init_contexts(struct contexts *contexts)
 {
@@ -165,6 +167,7 @@ int pipe_context(struct context *context, char *cmd)
 {
   FILE *fd;
   struct message *message;
+  pthread_t thread;
 
   if(cmd == NULL || *cmd == '\0')
   {
@@ -180,7 +183,9 @@ int pipe_context(struct context *context, char *cmd)
     }
   for(message = context->messages.tail; message != NULL; message = message->last)
     fprintf(fd, "%s\n", message->msg);
-  pclose(fd);
-  
+
+  if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
+    die("pthread_create: %s", strerror(errno));
+
   return 0;
 }
