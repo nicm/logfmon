@@ -314,7 +314,8 @@ void parse_line(char *line, struct file *file)
 	    error("%s: %s", str, strerror(errno));
 	  else
 	  {
-	    fprintf(fd, "%s\n", line);
+	    fwrite(line, strlen(line), 1, fd);
+	    fputc('\n', fd);
 	    
 	    if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
 	      die("pthread_create: %s", strerror(errno));
@@ -522,7 +523,7 @@ int main(int argc, char **argv)
 
   if(gid != 0)
   {
-    if(geteuid())
+    if(geteuid() != 0)
       error("need root privileges to set group");
     else
     {
@@ -533,7 +534,7 @@ int main(int argc, char **argv)
 
   if(uid != 0)
   {
-    if(geteuid())
+    if(geteuid() != 0)
       error("need root privileges to set user");
     else
     {

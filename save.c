@@ -84,11 +84,12 @@ void *save_thread(void *arg)
 
 	for(save = file->saves.tail; save != NULL; save = save->last)
 	{
-	  fprintf(fd, "%s\n", save->msg);
+	  fwrite(save->msg, strlen(save->msg), 1, fd);
+	  fputc('\n', fd);
 	  msgs++;
 	}
 
-	fprintf(fd,"\n");
+	fputc('\n', fd);
 
 	clear_messages(&file->saves);
       }
