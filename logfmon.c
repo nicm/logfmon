@@ -24,6 +24,7 @@
 #include <errno.h> 
 #include <signal.h>
 #include <grp.h>
+#include <ctype.h>
 
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -100,7 +101,7 @@ char *repl_one(char *src, char *repl)
 
   while(*src != '\0')
   {
-    if(*src != '$')
+    if(*src != '$' || *(src + 1) != '1')
     {
       *(buf + pos) = *src++;
       
@@ -114,22 +115,7 @@ char *repl_one(char *src, char *repl)
       continue;
     }
 
-    src++;
-    if(*src != '1')
-    {
-      *(buf + pos) = *src++;
-      
-      pos++;
-      while(len <= pos)
-      {
-	len *= 2;
-	buf = xrealloc(buf, len);
-      }
-      
-      continue;
-    }
-
-    src++;
+    src += 2;
 
     while(len <= pos + rlen)
     {
@@ -158,7 +144,7 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
     
   while(*src != '\0')
   {
-    if(*src != '$')
+    if(*src != '$' || !isdigit(*(src + 1)) || isdigit(*(src + 2)))
     {
       *(buf + pos) = *src++;
       
@@ -172,61 +158,32 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
       continue;
     }
 
-    src++;
-    if(*src == '\0')
+    num = atoi(++src);
+    mlen = matches[num].rm_eo - matches[num].rm_so;
+
+    if(mlen > 0)
+    {
+      while(len <= pos + mlen)
+      {
+	len *= 2;
+	buf = xrealloc(buf, len);
+      }
+      
+      strncpy(buf + pos, line + matches[num].rm_so, mlen);
+      pos += mlen;
+      
+      src++;
+    }
+    else
     {
       *(buf + pos) = '$';
-
+      
       pos++;
       while(len <= pos)
       {
 	len *= 2;
 	buf = xrealloc(buf, len);
       }
-
-      continue;
-    }
-
-    if(*src >= '0' && *src <= '9')
-    {
-      num = *src++ - '0';
-      mlen = matches[num].rm_eo - matches[num].rm_so;
-
-      if(mlen > 0)
-      {
-	while(len <= pos + mlen)
-	{
-	  len *= 2;
-	  buf = xrealloc(buf, len);
-	}
-
-	strncpy(buf + pos, line + matches[num].rm_so, mlen);
-	pos += mlen;
-      }
-      else
-      {
-	while(len <= pos + 2)
-	{
-	  len *= 2;
-	  buf = xrealloc(buf, len);
-	}
-	*(buf + pos) = '$';
-	pos++;
-	*(buf + pos) = num + '0';
-	pos++;
-      }
-    }
-    else
-    {
-      while(len <= pos + 2)
-      {
-	len *= 2;
-	buf = xrealloc(buf, len);
-      }
-      *(buf + pos) = '$';
-      pos++;
-      *(buf + pos) = *src++;
-      pos++;
     }
   }
   *(buf + pos) = '\0';

@@ -115,4 +115,4 @@ uninstall:
 		${RM} ${RMFLAGS} ${DESTDIR}/man/man5/${PROG}.conf.5.gz
 
 clean:
-		${RM} ${RMFLAGS} ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz *~
+		${RM} ${RMFLAGS} ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz *~ *.ln
