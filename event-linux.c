@@ -21,7 +21,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <signal.h>
 #include <fcntl.h>
+#include <stdint.h>
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -36,35 +38,69 @@
 
 int ep = -1;
 
-void *sigaction(int sig, siginfo_t *siginfo, void *ctxt)
+int *reopen_list = NULL;
+int reopen_len = 0;
+
+void sigacthandler(int, siginfo_t *, void *);
+
+void sigacthandler(int sig, siginfo_t *siginfo, void *ucontext)
 {
+  int fd, pos;
+
+  if(sig != SIGIO || reopen_len == 0)
+    return;
+
+  fd = siginfo->si_fd;
+
+  for(;;)
+  {
+    for(pos = 0; pos < reopen_len; pos++)
+    {
+      if(reopen_list[pos] == fd)
+	return;
+      
+      if(reopen_list[pos] == -1)
+      {
+	reopen_list[pos] = fd;
+	return;
+      }
+    }
+    
+    reopen_len *= 2;
+    reopen_list = realloc(reopen_list, sizeof(int) * reopen_len);
+  }
 }
 
 void init_events(void)
 {
   struct file *file;
   struct epoll_event epev;
-  int eplen;
+  int eplen, pos;
   struct sigaction sigact;
 
-  eplen = count_open_files();
+  eplen = count_files();
  
+  if(eplen == 0)
+    return;
+
   if(ep == -1)
   {
     ep = epoll_create(eplen > 0 ? eplen : 5);
     if(ep == -1)
       die("epoll_create: %s", strerror(errno));
 
-    sigact.sa_sigaction = sigaction;
-    sigact.sa_mask = 0;
+    sigact.sa_sigaction = sigacthandler;
+    sigemptyset(&sigact.sa_mask);
     sigact.sa_flags = SA_SIGINFO;
     if(sigaction(SIGIO, &sigact, NULL) == -1) 
       die("sigaction: %s", strerror(errno));
+
+    reopen_len = eplen;
+    reopen_list = xrealloc(reopen_list, sizeof(int) * reopen_len);
+    for(pos = 0; pos < reopen_len; pos++)
+      reopen_list[pos] = -1;
   }
-  
-  if(eplen == 0)
-    return;
-  
+    
   epev.events = EPOLLIN | EPOLLPRI;
 
   for(file = files.head; file != NULL; file = file->next)
@@ -88,12 +124,26 @@ struct file *get_event(int *event, int timeout)
 {
   struct file *file;
   struct epoll_event epev;
-  int rc;
+  int rc, pos;
 
   *event = EVENT_NONE;
 
   if(ep == -1)
     return NULL;
+
+  for(pos = 0; pos < reopen_len; pos++)
+  {
+    if(pos != -1)
+    {
+      file = find_file_by_fd(reopen_list[pos]);
+      reopen_list[pos] = -1;
+      if(file != NULL)
+      {
+	*event = EVENT_REOPEN;
+	return file;
+      }
+    }
+  }
 
   rc = epoll_wait(ep, &epev, 1, timeout * 1000);
 
@@ -111,7 +161,7 @@ struct file *get_event(int *event, int timeout)
     return NULL;
   }
 
-  file = find_file_by_fn(epev.data.fd);
+  file = find_file_by_fd(epev.data.fd);
   if(file == NULL)
     return NULL;
 

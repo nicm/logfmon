@@ -19,7 +19,6 @@
 #ifndef LOG_H
 #define LOG_H
 
-void log(int, char *, ...);
 void die(char *, ...);
 void error(char *, ...);
 void warn(char *, ...);

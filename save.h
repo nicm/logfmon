@@ -35,7 +35,7 @@ struct saves
   struct save *tail;
 };
 
-extern pthread_mutex_t *save_mutex;
+extern pthread_mutex_t save_mutex;
 
 void *save_thread(void *);
 

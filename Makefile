@@ -44,7 +44,7 @@ INSTALL= install
 INSTALLBIN= -g bin -o root -m 555
 INSTALLMAN= -g bin -o root -m 444
 
-INCDIRS= -I/usr/local/include
+INCDIRS= -I- -I. -I/usr/local/include
 
 LDFLAGS+= -L/usr/local/lib
 
@@ -55,6 +55,8 @@ LDFLAGS+= -pthread
 .else
 LIBS+= -lpthread
 .endif
+
+DISTFILES= *.[chyl] ${PROG}.conf Makefile *.[1-9] INSTALL make-linux.sh
 
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}
@@ -76,7 +78,7 @@ ${PROG}:	${OBJS}
 		${CC} ${LDFLAGS} -o ${PROG} ${LIBS} ${OBJS}
 
 dist:		clean
-		${TAR} ${TARFLAGS} -f ${PROG}-${VERSION}.tar.gz *.[chyl] ${PROG}.conf Makefile *.[1-9] INSTALL make-linux.sh
+		${TAR} ${TARFLAGS} -f ${PROG}-${VERSION}.tar.gz ${DISTFILES}
 
 depend:
 		${MKDEP} ${MKDEPFLAGS} ${CFLAGS} ${SRCS}

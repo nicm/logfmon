@@ -127,6 +127,21 @@ void clear_files(void)
   files.head = files.tail = NULL;
 }
 
+int count_files(void)
+{
+  struct file *file;
+  int num;
+
+  if(files.head == NULL)
+    return 0;
+
+  num = 0;
+  for(file = files.head; file != NULL; file = file->next)
+    num++;
+
+  return num;
+}
+
 int count_open_files(void)
 {
   struct file *file;
@@ -238,7 +253,7 @@ struct file *find_file_by_path(char *path)
   return NULL;
 }
 
-struct file *find_file_by_fn(int fn)
+struct file *find_file_by_fd(int fd)
 {
   struct file *file;
 
@@ -247,7 +262,7 @@ struct file *find_file_by_fn(int fn)
 
   for(file = files.head; file != NULL; file = file->next)
   {
-    if(file->fd != NULL && fileno(file->fd) == fn)
+    if(file->fd != NULL && fileno(file->fd) == fd)
       return file;
   }
 

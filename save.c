@@ -29,7 +29,7 @@
 #include "log.h"
 #include "file.h"
 
-pthread_mutex_t *save_mutex;
+pthread_mutex_t save_mutex;
 
 void *save_thread(void *arg)
 {
@@ -62,7 +62,7 @@ void *save_thread(void *arg)
     if(debug)
       info("processing saved messages. executing: %s", mail_cmd);
 
-    pthread_mutex_lock(save_mutex);
+    pthread_mutex_lock(&save_mutex);
 
     fd = popen(mail_cmd, "w");
     if(fd == NULL)
@@ -92,7 +92,7 @@ void *save_thread(void *arg)
     }
     pclose(fd);
 
-    pthread_mutex_unlock(save_mutex);
+    pthread_mutex_unlock(&save_mutex);
 	
     if(debug)
       info("processed %d unmatched messages", msgs);

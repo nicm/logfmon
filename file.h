@@ -49,13 +49,14 @@ extern struct files files;
 
 int add_file(char *, char *);
 void clear_files(void);
+int count_files(void);
 int count_open_files(void);
 int count_closed_files(void);
 int open_files(void);
 void close_files(void);
 struct file *find_file_by_tag(char *);
 struct file *find_file_by_path(char *);
-struct file *find_file_by_fn(int);
+struct file *find_file_by_fd(int);
 void check_files(void);
 
 #endif

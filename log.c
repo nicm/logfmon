@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "logfmon.h"
 #include "log.h"
@@ -60,15 +61,6 @@ void info(char *fmt, ...)
 
   va_start(ap, fmt);
   vlog(LOG_INFO, fmt, ap);
-  va_end(ap);
-}
-
-void log(int pri, char *fmt, ...)
-{
-  va_list ap;
-
-  va_start(ap, fmt);
-  vlog(pri, fmt, ap);
   va_end(ap);
 }
 

@@ -7,8 +7,8 @@ if [ "$1" == "clean" ]; then
     exit
 fi
 
-CFLAGS="$CFLAGS -Wall -W -Wmissing-prototypes -Wmissing-declarations \
-    -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare"
+CFLAGS="-I- -I. $CFLAGS -Wall -W -Wmissing-prototypes -Wmissing-declarations \
+    -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare -D_GNU_SOURCE"
 
 yacc -d parse.y
 lex lex.l

@@ -429,7 +429,7 @@ int main(int argc, char **argv)
   now_daemon = 1;
   info("started");
 
-  pthread_mutex_init(save_mutex, NULL);
+  pthread_mutex_init(&save_mutex, NULL);
 
   if(pthread_create(&thread, NULL, save_thread, NULL) != 0)
     die("pthread_create: %s", strerror(errno));
@@ -456,7 +456,7 @@ int main(int argc, char **argv)
     {
       info("reloading configuration");
 
-      pthread_mutex_lock(save_mutex);
+      pthread_mutex_lock(&save_mutex);
 
       clear_rules();
       clear_files(); /* closes too */
@@ -469,7 +469,7 @@ int main(int argc, char **argv)
 	exit(1);
       }
 
-      pthread_mutex_unlock(save_mutex);
+      pthread_mutex_unlock(&save_mutex);
 
       reload_conf = 0;
     }
