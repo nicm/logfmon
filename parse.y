@@ -358,6 +358,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
+
 	rule = add_rule(ACTION_EXEC, $3, $4);
 
 	if(rule == NULL)
@@ -371,6 +374,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TAG STRING TOKPIPE STRING
       {
 	struct rule *rule;
+
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
 
 	rule = add_rule(ACTION_PIPE, $3, $4);
 
@@ -386,6 +392,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
+
 	rule = add_rule(ACTION_IGNORE, $3, $4);
 
 	if(rule == NULL)
@@ -397,6 +406,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
       {
 	struct rule *rule;
+
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
 
 	if(*$6 == '\0')
 	  die("context key cannot be empty string");
@@ -419,6 +431,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
+
 	if(*$6 == '\0')
 	  die("context key cannot be empty string");
 
@@ -439,6 +454,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
       {
 	struct rule *rule;
+
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
 
 	if(*$6 == '\0')
 	  die("context key cannot be empty string");
@@ -484,6 +502,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
       {
 	struct rule *rule;
 
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
+
 	rule = add_rule(ACTION_APPEND, $3, $4);
 
 	if(rule == NULL)
@@ -497,6 +518,9 @@ rule: TOKMATCH STRING TOKEXEC STRING
     | TOKMATCH TOKIN TAG STRING TOKCLOSE STRING TOKPIPE STRING
       {
 	struct rule *rule;
+
+	if(*$3 == '\0')
+	  die("tag cannot be empty string");
 
 	rule = add_rule(ACTION_CLOSE, $3, $4);
 
@@ -513,6 +537,12 @@ rule: TOKMATCH STRING TOKEXEC STRING
 
 file: TOKFILE STRING TOKTAG TAG
       {
+	if(*$2 == '\0')
+	  die("path cannot be empty string");
+
+	if(*$4 == '\0')
+	  die("tag cannot be empty string");
+
 	if(add_file($2, $4))
 	  exit(1);
 	free($2);
@@ -522,6 +552,10 @@ file: TOKFILE STRING TOKTAG TAG
       {
 	unsigned int num;
 	char tag[13];
+
+	if(*$2 == '\0')
+	  die("path cannot be empty string");
+
 	for(num = 1; num > 0; num++)
 	{
 	  snprintf(tag,13,"__%u",num);
