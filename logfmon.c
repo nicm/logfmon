@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <errno.h> 
 #include <signal.h>
+#include <grp.h>
 
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -467,8 +468,8 @@ int main(int argc, char **argv)
 
   if(uid != 0)
   {
-    if(seteuid(uid) != 0 || setuid(uid) != 0)
-      die("failed to drop user privileges");
+    if(setuid(uid) != 0 || seteuid(uid) != 0)
+      die("failed to drop user privileges %s", strerror(errno));
   }
   
   now_daemon = 1;
