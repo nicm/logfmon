@@ -537,7 +537,7 @@ int main(int argc, char **argv)
 
   /*signal(SIGCHLD, SIG_IGN);*/
 
-  if(!debug && pid_file != NULL && *pid_file != '\0')
+  if(pid_file != NULL && *pid_file != '\0')
   {
     fd = fopen(pid_file, "w");
     if(fd == NULL)
@@ -671,7 +671,7 @@ int main(int argc, char **argv)
   }
   
   close_files();
-  if(!debug && pid_file != NULL && *pid_file != '\0')
+  if(pid_file != NULL && *pid_file != '\0')
     unlink(pid_file);
 
   return 0;

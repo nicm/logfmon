@@ -55,7 +55,7 @@ int save_cache(void)
   }
    
   for(file = files.head; file != NULL; file = file->next)
-    fprintf(fd, "%d %s %lld %lld\n", strlen(file->path), file->path, file->size, file->offset);
+    fprintf(fd, "%d %s %lld %lld\n", strlen(file->path), file->path, (long long) file->size, (long long) file->offset);
 
   fclose(fd);
 
@@ -119,8 +119,8 @@ int load_cache(void)
       {
 	if(sb.st_size >= size)
 	{
-	  file->size = offset; /* this is correct: size is updated incrementally */
-	  file->offset = offset;
+	  file->size = (off_t) offset; /* this is correct: size is updated incrementally */
+	  file->offset = (off_t) offset;
 	}
       }
       if(debug)

@@ -199,7 +199,7 @@ void open_files(void)
       {
 	if(file->offset > 0)
 	{
-	  if(fsetpos(file->fd, &(file->offset)) != 0)
+	  if(fseek(file->fd, (long) file->offset, SEEK_SET) != 0)
 	    error("fsetpos: %s", strerror(errno));
 	}
       }
