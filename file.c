@@ -43,6 +43,7 @@ int add_file(char *path, char *tag)
   file->length = 0;
 
   file->size = 0;
+  file->offset = 0;
 
   file->saves.head = file->saves.tail = NULL;
   file->contexts.head = file->contexts.tail = NULL;
@@ -180,8 +181,33 @@ int count_closed_files(void)
   return num;
 }
 
-int open_files(int *failed)
-{
+void open_files(void)
+{ 
+  struct file *file;
+
+  if(files.head == NULL)
+    return;
+  
+  for(file = files.head; file != NULL; file = file->next)
+  {
+    if(file->fd == NULL)
+    {
+      file->fd = fopen(file->path, "r");
+      if(file->fd == NULL)
+	error("%s: %s", file->path, strerror(errno));
+      else
+      {
+	if(file->offset > 0)
+	  fsetpos(file->fd, &(file->offset));
+      }
+    }
+  }
+  
+  return;
+}
+
+int reopen_files(int *failed)
+{ 
   struct file *file;
   int num;
 
@@ -206,6 +232,7 @@ int open_files(int *failed)
       else
       {
 	file->size = 0;
+	file->offset = 0;
 	num++;
       }
     }
@@ -213,7 +240,7 @@ int open_files(int *failed)
   
   return num;
 }
-
+  
 void close_files(void)
 {
   struct file *file;

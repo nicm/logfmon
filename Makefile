@@ -7,7 +7,7 @@ VERSION= 0.4
 OS!= uname
 
 PROG= logfmon
-SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c context.c messages.c tags.c parse.y lex.l
+SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c context.c messages.c tags.c cache.c parse.y lex.l
 
 .if ${OS} == "Linux"
 SRCS+= event-linux.c

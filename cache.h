@@ -16,51 +16,10 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef FILE_H
-#define FILE_H
+#ifndef CACHE_H
+#define CACHE_H
 
-#include "context.h"
-#include "messages.h"
-
-struct file
-{
-  char *path;
-  char *tag;
-
-  FILE *fd;
-
-  char *buffer;
-  size_t length;
-
-  off_t size;
-  off_t offset;
-
-  struct contexts contexts;
-  struct messages saves;
-
-  struct file *next;
-  struct file *last;
-};
-
-struct files
-{
-  struct file *head;
-  struct file *tail;
-};
-
-extern struct files files;
-
-int add_file(char *, char *);
-void clear_files(void);
-int count_files(void);
-int count_open_files(void);
-int count_closed_files(void);
-void open_files(void);
-int reopen_files(int *);
-void close_files(void);
-struct file *find_file_by_tag(char *);
-struct file *find_file_by_path(char *);
-struct file *find_file_by_fd(int);
-void check_files(void);
+int save_cache(void);
+int load_cache(void);
 
 #endif

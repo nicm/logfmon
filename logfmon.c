@@ -38,6 +38,7 @@
 #include "context.h"
 #include "event.h"
 #include "tags.h"
+#include "cache.h"
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -49,6 +50,7 @@ uid_t uid;
 gid_t gid;
 
 char *conf_file;
+char *cache_file;
 
 int now_daemon;
 
@@ -412,7 +414,7 @@ int main(int argc, char **argv)
 
   time_t now, prev;
 
-  int event, timeout, failed;
+  int event, timeout, failed, dirty;
   ssize_t len;
   size_t last, pos;
 
@@ -421,10 +423,11 @@ int main(int argc, char **argv)
   now_daemon = 0;
   
   conf_file = CONFFILE;
+  cache_file = NULL;
 
   debug = 0;
 
-  while((opt = getopt(argc, argv, "df:")) != EOF)
+  while((opt = getopt(argc, argv, "df:c:")) != EOF)
   {
     switch(opt)
     {
@@ -434,6 +437,10 @@ int main(int argc, char **argv)
       case 'f':
 	conf_file = xmalloc(strlen(optarg) + 1);
 	strcpy(conf_file, optarg);
+	break;
+      case 'c':
+	cache_file = xmalloc(strlen(optarg) + 1);
+	strcpy(cache_file, optarg);
 	break;
       case '?':
       default:
@@ -462,8 +469,13 @@ int main(int argc, char **argv)
   if(files.head == NULL)
     die("no files specified");
 
+  if(cache_file == NULL)
+    cache_file = CACHEFILE;
+
   /*if(rules == NULL)
     die("no rules found");*/
+
+  load_cache();
 
   setpriority(PRIO_PROCESS, getpid(), 1);
 
@@ -494,7 +506,7 @@ int main(int argc, char **argv)
 	die("failed to drop user privileges %s", strerror(errno));
     }
   }
-  
+
   now_daemon = 1;
   info("started");
 
@@ -519,11 +531,18 @@ int main(int argc, char **argv)
 
   prev = time(NULL) + CHECKTIMEOUT;
 
+  open_files();
+  init_events();
+
+  dirty = 0;
+
   while(!exit_now)
   {
     if(reload_conf)
     {
       info("reloading configuration");
+
+      save_cache();
 
       pthread_mutex_lock(&save_mutex);
 
@@ -540,10 +559,16 @@ int main(int argc, char **argv)
 
       pthread_mutex_unlock(&save_mutex);
 
+      load_cache();
+      open_files();
+      init_events();
+
       reload_conf = 0;
+
+      dirty = 0;
     }
 
-    if(open_files(&failed) > 0)
+    if(reopen_files(&failed) > 0)
       init_events();
 
     if(failed > 0)
@@ -557,6 +582,7 @@ int main(int argc, char **argv)
     if(now >= prev)
     {
       check_files();
+      save_cache();
       prev = now + CHECKTIMEOUT;
     }
 
@@ -568,6 +594,8 @@ int main(int argc, char **argv)
       case EVENT_REOPEN:
 	fclose(file->fd);
 	file->fd = NULL;
+
+	dirty = 1;
 	break;
       case EVENT_READ:
 	for(;;)
@@ -605,6 +633,9 @@ int main(int argc, char **argv)
 	memmove(file->buffer, file->buffer + last, file->length - last);
 	file->length -= last;
 
+	file->offset += last;
+
+	dirty = 1;
 	break;
     }
   }

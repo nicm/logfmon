@@ -82,6 +82,13 @@ set: TOKSET OPTMAILCMD STRING
 	 free(mail_cmd);
        mail_cmd = $3;
      }
+   | TOKSET OPTCACHEFILE STRING
+     {
+       if(cache_file == NULL)
+	 cache_file == $3;
+       else
+	 free($3);
+     }
    | TOKSET OPTMAILTIME TIME
      {
        if($3 < 10)

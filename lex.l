@@ -167,6 +167,7 @@
                         }
 mailcmd                 return OPTMAILCMD;
 mailtime                return OPTMAILTIME;
+cachefile               return OPTCACHEFILE;
 user                    return OPTUSER;
 group                   return OPTGROUP;
 not                     return TOKNOT;

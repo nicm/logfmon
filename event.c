@@ -76,6 +76,7 @@ struct file *get_event(int *event, int timeout)
   struct file *file;
   struct kevent kev;
   struct timespec ts;
+  off_t size;
   int rc;
 
   *event = EVENT_NONE;
@@ -115,7 +116,11 @@ struct file *get_event(int *event, int timeout)
       if(kev.data < 0)
 	*event = EVENT_REOPEN;
       else
+      {
+	fgetpos(file->fd, &size);
+	file->size = size + kev.data;
 	*event = EVENT_READ;
+      }
       return file;
   }
 
