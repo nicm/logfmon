@@ -27,7 +27,9 @@
 #include "rules.h"
 #include "log.h"
 #include "file.h"
- 
+
+extern int yylineno; 
+
 int yyparse(void);
 void yyerror(const char *);
 int yywrap(void);
@@ -35,7 +37,7 @@ int yylex(void);
 
 void yyerror(const char *str)
 {
-  die("%s", str);
+  die("%s at line %d", str, yylineno);
 }
   
 int yywrap(void)
@@ -77,10 +79,16 @@ set: TOKSET OPTMAILCMD STRING
      }
    | TOKSET OPTMAILTIME TIME
      {
+       if($3 < 10)
+	 yyerror("mail time must be at least 10 seconds");
+
        mail_time = $3;
      }
    | TOKSET OPTMAILTIME NUMBER
      {
+       if($3 < 10)
+	 yyerror("mail time must be at least 10 seconds");
+
        mail_time = $3;
      }
    ;
@@ -127,10 +135,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$4 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($6 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $2);
 
@@ -147,10 +155,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$4 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($6 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $2);
 
@@ -167,10 +175,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$4 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($6 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $2);
 
@@ -250,10 +258,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
@@ -270,10 +278,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
@@ -290,10 +298,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
@@ -311,10 +319,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, NULL, $4);
 
@@ -359,7 +367,7 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	rule = add_rule(ACTION_EXEC, $3, $4);
 
@@ -376,7 +384,7 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	rule = add_rule(ACTION_PIPE, $3, $4);
 
@@ -393,7 +401,7 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	rule = add_rule(ACTION_IGNORE, $3, $4);
 
@@ -408,13 +416,13 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, $3, $4);
 
@@ -432,13 +440,13 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, $3, $4);
 
@@ -456,13 +464,13 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, $3, $4);
 
@@ -481,10 +489,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$6 == '\0')
-	  die("context key cannot be empty string");
+	  yyerror("context key cannot be empty string");
 
 	if($8 == 0)
-	  die("expiry time cannot be zero");
+	  yyerror("expiry time cannot be zero");
 
 	rule = add_rule(ACTION_OPEN, $3, $4);
 
@@ -503,7 +511,7 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	rule = add_rule(ACTION_APPEND, $3, $4);
 
@@ -520,7 +528,7 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	if(*$3 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	rule = add_rule(ACTION_CLOSE, $3, $4);
 
@@ -538,10 +546,10 @@ rule: TOKMATCH STRING TOKEXEC STRING
 file: TOKFILE STRING TOKTAG TAG
       {
 	if(*$2 == '\0')
-	  die("path cannot be empty string");
+	  yyerror("path cannot be empty string");
 
 	if(*$4 == '\0')
-	  die("tag cannot be empty string");
+	  yyerror("tag cannot be empty string");
 
 	if(add_file($2, $4))
 	  exit(1);
@@ -554,7 +562,7 @@ file: TOKFILE STRING TOKTAG TAG
 	char tag[13];
 
 	if(*$2 == '\0')
-	  die("path cannot be empty string");
+	  yyerror("path cannot be empty string");
 
 	for(num = 1; num > 0; num++)
 	{

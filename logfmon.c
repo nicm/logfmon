@@ -344,8 +344,7 @@ void parse_line(char *line, struct file *file)
 
 	str = repl_matches(test, rule->params.cmd, matches);
 
- 	if(pipe_context(context, str) == 1)
-	  error("%s: %s", str, strerror(errno));
+ 	pipe_context(context, str);
 	
 	free(str);
 
@@ -358,7 +357,7 @@ void parse_line(char *line, struct file *file)
   if(debug)
     info("unmatched: (%s) %s", file->tag, test);
  
-    if(*mail_cmd != '\0')
+    if(mail_cmd != NULL && *mail_cmd != '\0')
       add_message(&file->saves, line);
 }
 
@@ -416,9 +415,6 @@ int main(int argc, char **argv)
     error("%s: %s", conf_file, strerror(errno));
     return 1;
   }
-
-  if(mail_time < 10)
-    die("mail time must be at least 10 seconds");
 
   if(mail_cmd == NULL)
     mail_cmd = "/usr/bin/mail root";
