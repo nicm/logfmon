@@ -37,7 +37,7 @@ together and mailed every 15 minutes, or whatever alternative time is specified
 in the configuration file.
 .Pp
 Messages may also be collected into contexts and piped to a command after a
-final message is found. See
+final message is found or a number of messages is reached. See
 .Xr logfmon.conf 5
 for more details of this.
 .Pp
@@ -66,4 +66,4 @@ configuration file
 .Sh CAVEATS
 If
 .Nm
-is killed and restarted, it will rescan the entire log files, even if some of the messages have been dealt with before.
+is killed and restarted or the configuration is reloaded via a HUP signal, it will rescan the entire log files, even if some of the messages have been dealt with before.
