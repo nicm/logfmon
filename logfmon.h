@@ -36,11 +36,11 @@
 
 int debug;
 
-volatile sig_atomic_t reload_conf;
-volatile sig_atomic_t exit_now;
+extern volatile sig_atomic_t reload_conf;
+extern volatile sig_atomic_t exit_now;
 
 extern char *mail_cmd;
-extern int mail_time;
+extern unsigned int mail_time;
 
 extern uid_t uid;
 extern gid_t gid;

@@ -155,7 +155,7 @@ void check_contexts(struct contexts *contexts)
       if(debug)
 	info("context %s expired", last->key);
       if(last->rule != NULL && last->rule->params.cmd != NULL)
-	pipe_context(last, last->rule->params.cmd);
+	(void) pipe_context(last, last->rule->params.cmd);
       delete_context(contexts, last);
     }
   }
@@ -181,12 +181,15 @@ int pipe_context(struct context *context, char *cmd)
   if(fd == NULL)
   {
     error("%s: %s", cmd, strerror(errno));
+    free(cmd);
     return 1;
   }
   for(message = context->messages.tail; message != NULL; message = message->last)
   {
-    fwrite(message->msg, strlen(message->msg), 1, fd);
-    fputc('\n', fd);
+    if(fwrite(message->msg, strlen(message->msg), 1, fd) != 1)
+      break;
+    if(fputc('\n', fd) == EOF)
+      break;
   }
 
   if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)

@@ -86,7 +86,7 @@ struct file *get_event(int *event, int timeout)
     }
 
     num++;
-    if(num > ((double) timeout) / 0.1)
+    if(num > timeout * 10)
     {
       *event = EVENT_TIMEOUT;
       return NULL;

@@ -34,7 +34,7 @@ void die(char *fmt, ...)
   vlog(LOG_ERR, fmt, ap);
   va_end(ap);
 
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 void error(char *fmt, ...)
@@ -69,7 +69,7 @@ void vlog(int pri, char *fmt, va_list ap)
   if(debug || !now_daemon)
   {
     fprintf(stderr, "%s: ", __progname);
-    vfprintf(stderr, fmt, ap);
+    (void) vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
   }
   else

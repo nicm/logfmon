@@ -68,7 +68,7 @@ int add_file(char *path, char *tag)
 
     return 1;
   }
-  fclose(fd);
+  (void) fclose(fd);
 
   file->path = (char *) xmalloc(strlen(path) + 1);
   strcpy(file->path, path);
@@ -266,7 +266,7 @@ void close_files(void)
   {
     if(file->fd != NULL)
     {
-      fclose(file->fd);
+      (void) fclose(file->fd);
 
       file->fd = NULL;
       file->length = 0;

@@ -44,8 +44,11 @@
 extern FILE *yyin;
 extern int yyparse(void);
 
+volatile sig_atomic_t reload_conf;
+volatile sig_atomic_t exit_now;
+
 char *mail_cmd;
-int mail_time;
+unsigned int mail_time;
 
 uid_t uid;
 gid_t gid;
@@ -81,9 +84,9 @@ int load_conf(void)
   if(yyin == NULL)
     return 1;
 
-  yyparse();
+  (void) yyparse();
 
-  fclose(yyin);
+  (void) fclose(yyin);
 
   return 0;
 }
@@ -271,8 +274,8 @@ void parse_line(char *line, struct file *file)
 	    error("%s: %s", str, strerror(errno));
 	  else
 	  {
-	    fwrite(line, strlen(line), 1, fd);
-	    fputc('\n', fd);
+	    (void) fwrite(line, strlen(line), 1, fd);
+	    (void) fputc('\n', fd);
 	    
 	    if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
 	      die("pthread_create: %s", strerror(errno));
@@ -299,7 +302,7 @@ void parse_line(char *line, struct file *file)
 	  continue;
 	}
 
-	add_context(&file->contexts, str, rule);
+	(void) add_context(&file->contexts, str, rule);
 
 	free(str);
 
@@ -323,7 +326,7 @@ void parse_line(char *line, struct file *file)
 	}
 	free(str);
 
-	add_message(&context->messages, line);
+	(void) add_message(&context->messages, line);
 
 	if(context->rule->params.ent_max == 0)
 	  continue;
@@ -334,7 +337,7 @@ void parse_line(char *line, struct file *file)
 	    info("context %s reached limit of %d entries", context->key, context->rule->params.ent_max);
 	  
 	  if(context->rule->params.ent_cmd != NULL)
-	    pipe_context(context, context->rule->params.ent_cmd);
+	    (void) pipe_context(context, context->rule->params.ent_cmd);
 	  
 	  delete_context(&file->contexts, context);
 	}
@@ -363,7 +366,7 @@ void parse_line(char *line, struct file *file)
 	{
 	  str = repl_matches(test, rule->params.cmd, matches);
 	  
-	  pipe_context(context, str);
+	  (void) pipe_context(context, str);
 	  
 	  free(str);
 	}
@@ -379,9 +382,11 @@ void parse_line(char *line, struct file *file)
  
   if(mail_cmd != NULL && *mail_cmd != '\0')
   {
-    pthread_mutex_lock(&save_mutex);
-    add_message(&file->saves, line);
-    pthread_mutex_unlock(&save_mutex);
+    if(pthread_mutex_lock(&save_mutex) == 0)
+    {
+      (void) add_message(&file->saves, line);
+      (void) pthread_mutex_unlock(&save_mutex);
+    }
   }
 }
 
@@ -389,7 +394,7 @@ void usage(void)
 {
   printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n", __progname);
 
-  exit(1);
+  exit(EXIT_FAILURE);
 }
 
 int main(int argc, char **argv)
@@ -399,7 +404,7 @@ int main(int argc, char **argv)
 
   time_t now, prev;
 
-  int event, timeout, failed, dirty;
+  int event, timeout, failed, dirty, err;
   ssize_t len;
   size_t last, pos;
 
@@ -485,7 +490,7 @@ int main(int argc, char **argv)
   /*if(rules == NULL)
     die("no rules found");*/
 
-  setpriority(PRIO_PROCESS, getpid(), 1);
+  (void) setpriority(PRIO_PROCESS, getpid(), 1);
 
   if(!debug)
   {
@@ -518,24 +523,31 @@ int main(int argc, char **argv)
   now_daemon = 1;
   info("started");
 
-  load_cache();
+  (void) load_cache();
 
   reload_conf = 0;
   exit_now = 0;
 
-  pthread_mutex_init(&save_mutex, NULL);
+  err = pthread_mutex_init(&save_mutex, NULL);
+  if(err != 0)
+    die("pthread_mutex_init: %s", strerror(err));
 
-  if(pthread_create(&thread, NULL, save_thread, NULL) != 0)
-    die("pthread_create: %s", strerror(errno));
+  err = pthread_create(&thread, NULL, save_thread, NULL);
+  if(err != 0)
+    die("pthread_create: %s", strerror(err));
 
   if(!debug)
   {
-    signal(SIGINT, SIG_IGN);
-    signal(SIGQUIT, SIG_IGN);
+    if(signal(SIGINT, SIG_IGN) == SIG_ERR)
+      die("signal: %s", strerror(errno));
+    if(signal(SIGQUIT, SIG_IGN) == SIG_ERR)
+      die("signal: %s", strerror(errno));
   }
 
-  signal(SIGHUP, sighandler);
-  signal(SIGTERM, sighandler);
+  if(signal(SIGHUP, sighandler) == SIG_ERR)
+    die("signal: %s", strerror(errno));
+  if(signal(SIGTERM, sighandler) == SIG_ERR)
+    die("signal: %s", strerror(errno));
 
   /*signal(SIGCHLD, SIG_IGN);*/
 
@@ -546,8 +558,8 @@ int main(int argc, char **argv)
       error("%s: %s", pid_file, strerror(errno));
     else
     {
-      fprintf(fd, "%ld\n", (long) getpid());
-      fclose(fd);
+      (void) fprintf(fd, "%ld\n", (long) getpid());
+      (void) fclose(fd);
     }
   }
 
@@ -557,6 +569,8 @@ int main(int argc, char **argv)
   init_events();
 
   dirty = 0;
+  failed = 0;
+  len = 0;
 
   while(!exit_now)
   {
@@ -564,26 +578,28 @@ int main(int argc, char **argv)
     {
       info("reloading configuration");
 
-      save_cache();
+      (void) save_cache();
 
-      pthread_mutex_lock(&save_mutex);
+      err = pthread_mutex_lock(&save_mutex);
+      if(err != 0)
+	die("pthread_mutex_lock: %s", strerror(err));
 
-      clear_rules();
-      clear_files(); /* closes too */
+      (void) clear_rules();
+      (void) clear_files(); /* closes too */
       
       if(load_conf() != 0)
       {
 	error("%s: %s", conf_file, strerror(errno));
 	error("exited");
 	
-	exit(1);
+	exit(EXIT_FAILURE);
       }
 
-      pthread_mutex_unlock(&save_mutex);
+      (void) pthread_mutex_unlock(&save_mutex);
 
-      load_cache();
-      open_files();
-      init_events();
+      (void) load_cache();
+      (void) open_files();
+      (void) init_events();
 
       reload_conf = 0;
 
@@ -606,7 +622,7 @@ int main(int argc, char **argv)
       check_files();
       if(dirty)
       {
-	save_cache();
+	(void) save_cache();
 	dirty = 0;
       }
       prev = now + CHECKTIMEOUT;
@@ -618,7 +634,7 @@ int main(int argc, char **argv)
     switch(event)
     {
       case EVENT_REOPEN:
-	fclose(file->fd);
+	(void) fclose(file->fd);
 	file->fd = NULL;
 	file->timer = time(NULL) + REOPENTIMEOUT;
 
@@ -642,7 +658,7 @@ int main(int argc, char **argv)
 
 	if(len == -1)
 	{
-	  fclose(file->fd);
+	  (void) fclose(file->fd);
 	  file->fd = NULL;	  
 	}
 
@@ -672,7 +688,7 @@ int main(int argc, char **argv)
   
   close_files();
   if(pid_file != NULL && *pid_file != '\0')
-    unlink(pid_file);
+    (void) unlink(pid_file);
 
   /* let's be tidy; easier to check for leaks too */
   clear_rules();
@@ -687,9 +703,9 @@ int main(int argc, char **argv)
   if(mail_cmd != NULL)
     free(mail_cmd);
 
-  pthread_mutex_destroy(&save_mutex);
+  (void) pthread_mutex_destroy(&save_mutex);
 
   info("terminated");
 
-  return 0;
+  return EXIT_SUCCESS;
 }

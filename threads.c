@@ -34,7 +34,7 @@ void *pclose_thread(void *arg)
 
 void *exec_thread(void *arg)
 {
-  system((char *) arg);
+  (void) system((char *) arg);
 
   free(arg);
 
