@@ -101,7 +101,7 @@ void *save_thread(void *arg)
       break;
 
     pthread_mutex_lock(save_mutex);
-
+    
     num = 0;
     file = files;
     while(file != NULL)
@@ -111,7 +111,7 @@ void *save_thread(void *arg)
 
       file = file->next;
     }
-
+    
     if(num > 0)
     {
       if(debug)
@@ -150,6 +150,7 @@ void *save_thread(void *arg)
 	pclose(fd);
       }
     }
+
     pthread_mutex_unlock(save_mutex);
   }
 

@@ -347,6 +347,8 @@ int main(int argc, char **argv)
     {
       info("reloading configuration");
 
+      pthread_mutex_lock(save_mutex);
+
       clear_rules();
       clear_files(); /* closes too */
       
@@ -357,6 +359,8 @@ int main(int argc, char **argv)
 	
 	exit(1);
       }
+
+      pthread_mutex_unlock(save_mutex);
 
       reload_conf = 0;
     }
