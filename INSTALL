@@ -36,11 +36,22 @@ On OpenBSD, I add these lines to /etc/rc.local to run logfmon on startup:
         	echo -n ' logfmon';     /usr/local/sbin/logfmon
 	fi
 
-If you change the configuration, send a HUP to a running logfmon to make it
-reload. Note that this will cause all log files to be reread in their
-entirity. I don't find this a problem since I rotate logs quite aggressively
-and my logs are not added to rapidly, but I'll probably look into fixing
-it sometime later.
+For FreeBSD, an example rc.d script is included in the rc.d/ directory. It's
+only been tested on FreeBSD 5.3. If you use it, you need to either edit it
+or put your logfmon.conf in /usr/local/etc and include a line eg:
+
+	set cachefile "/usr/local/etc/logfmon.cache"
+
+Version 0.5 now keeps a cache file. This is enabled by default but not well
+tested. Disable it by setting the cachefile option to "" in your logfmon.conf.
+If enabled, it means that restarting logfmon or sending it a HUP should not
+reparse lines it has already seen. If disabled, the behaviour is the same as
+before. NOTE that at the moment, saved messages and contexts are not cached
+and so will not be reparsed and emailed when the cache is enabled. Also, any
+commands that are in the middle of running will die when logfmon is killed
+and since the messages that kicked them off aren't seen again, they may not
+be executed. In practice, unless you are restarting logfmon every day this
+isn't really much of a worry but just so you know :-).
 
 At the moment, the program assumes each log line has a 15 character date,
 followed by a space, the hostname, another space and the message, for example:
@@ -73,13 +84,7 @@ SRCS+= event-linux.c
 Note that just setting the OS var to Linux won't work on FreeBSD due to
 silliness with the pthread implementation.
 
-Currently on my to do list are, in no particular order:
-
-- there is quite a lot of stuff needs cleaned up
-- the Linux event stuff is still a bit crap
-- I'm not altogether happy with the context rules
-
-Feedback is welcome.
+Feedback and suggestions are welcome.
 
 Nicholas Marriott
 nicm__@ntlworld.com

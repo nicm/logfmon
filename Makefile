@@ -2,7 +2,7 @@
 
 .SUFFIXES: .c .o .y .l .h .8 .8.gz .5 .5.gz
 
-VERSION= 0.4
+VERSION= 0.5
 
 OS!= uname
 
@@ -66,7 +66,7 @@ LDFLAGS+= -pthread
 LIBS+= -lpthread
 .endif
 
-DISTFILES= *.[chyl] ${PROG}.conf Makefile *.[1-9] INSTALL make-linux.sh
+DISTFILES= *.[chyl] ${PROG}.conf Makefile *.[1-9] INSTALL make-linux.sh rc.d/logfmon.sh
 
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}
