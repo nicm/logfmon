@@ -23,6 +23,10 @@
 
 #define CONFFILE  "/etc/logfmon.conf"
 
+#define CHECKTIMEOUT 10
+#define DEFAULTTIMEOUT 5
+#define REOPENTIMEOUT 1
+
 /* temporary struct for passing to thread */
 struct pipeargs
 {

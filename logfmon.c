@@ -375,7 +375,7 @@ int main(int argc, char **argv)
 
   time_t now, prev;
 
-  int event;
+  int event, timeout;
   ssize_t len;
   size_t last, pos;
 
@@ -455,7 +455,7 @@ int main(int argc, char **argv)
   reload_conf = 0;
   exit_now = 0;
 
-  prev = time(NULL) + 5;
+  prev = time(NULL) + CHECKTIMEOUT;
 
   while(!exit_now)
   {
@@ -483,15 +483,20 @@ int main(int argc, char **argv)
 
     if(open_files() > 0)
       init_events();
-    
-    file = get_event(&event,5);
+
+    if(count_closed_files() > 0)
+      timeout = REOPENTIMEOUT;
+    else
+      timeout = DEFAULTTIMEOUT;
+   
+    file = get_event(&event,timeout);
 
     now = time(NULL);
-    if(event == EVENT_TIMEOUT || now > prev)
+    if(now >= prev)
     {
       check_files();
       
-      prev = now + 5;
+      prev = now + CHECKTIMEOUT;
     }
 
     if(file == NULL)

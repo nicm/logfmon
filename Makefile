@@ -7,7 +7,13 @@ VERSION= 0.2
 OS!= uname
 
 PROG= logfmon
-SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c context.c messages.c event.c parse.y lex.l
+SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c context.c messages.c parse.y lex.l
+
+.if ${OS} == "Linux"
+SRCS+= event-linux.c
+.else
+SRCS+= event.c
+.endif
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 
@@ -23,6 +29,10 @@ CFLAGS+= -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
+
+.if ${OS} == "Linux"
+CFLAGS+= -D_GNU_SOURCE
+.endif
 
 MKDEP= mkdep
 MKDEPFLAGS= 
