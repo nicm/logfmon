@@ -448,7 +448,7 @@ int main(int argc, char **argv)
   reload_conf = 0;
   exit_now = 0;
 
-  prev = time(NULL) + 10;
+  prev = time(NULL) + 5;
 
   while(!exit_now)
   {
@@ -484,7 +484,7 @@ int main(int argc, char **argv)
     {
       check_files();
       
-      prev = now + 10;
+      prev = now + 5;
     }
 
     if(file == NULL)
