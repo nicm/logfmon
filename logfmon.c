@@ -394,7 +394,11 @@ void parse_line(char *line, struct file *file)
     info("unmatched: (%s) %s", file->tag, test);
  
     if(mail_cmd != NULL && *mail_cmd != '\0')
+    {
+      pthread_mutex_lock(&save_mutex);
       add_message(&file->saves, line);
+      pthread_mutex_unlock(&save_mutex);
+    }
 }
 
 void usage(void)
@@ -517,6 +521,8 @@ int main(int argc, char **argv)
 
   load_cache();
 
+  pthread_mutex_init(&save_mutex, NULL);
+
   if(pthread_create(&thread, NULL, save_thread, NULL) != 0)
     die("pthread_create: %s", strerror(errno));
 
@@ -561,6 +567,8 @@ int main(int argc, char **argv)
 
       save_cache();
 
+      pthread_mutex_lock(&save_mutex);
+
       clear_rules();
       clear_files(); /* closes too */
       
@@ -571,6 +579,8 @@ int main(int argc, char **argv)
 	
 	exit(1);
       }
+
+      pthread_mutex_unlock(&save_mutex);
 
       load_cache();
       open_files();

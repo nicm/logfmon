@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <errno.h>
 
 #include "logfmon.h"
@@ -27,6 +28,8 @@
 #include "xmalloc.h"
 #include "log.h"
 #include "file.h"
+
+pthread_mutex_t save_mutex;
 
 void *save_thread(void *arg)
 {
@@ -62,6 +65,8 @@ void *save_thread(void *arg)
     if(debug)
       info("processing saved messages. executing: %s", mail_cmd);
 
+    pthread_mutex_lock(&save_mutex);
+
     fd = popen(mail_cmd, "w");
     if(fd == NULL)
     {
@@ -73,7 +78,6 @@ void *save_thread(void *arg)
 
     for(file = files.tail; file != NULL; file = file->last)
     {
-      pthread_mutex_lock(&(file->saves.mutex));
       if(file->saves.head != NULL)
       {
 	fprintf(fd, "Unmatched messages for file %s, tag %s:\n\n", file->path, file->tag);
@@ -86,15 +90,12 @@ void *save_thread(void *arg)
 
 	fprintf(fd,"\n");
 
-	pthread_mutex_unlock(&(file->saves.mutex));
-
 	clear_messages(&file->saves);
       }
-      else
-	pthread_mutex_unlock(&(file->saves.mutex));
     }
-
     pclose(fd);
+
+    pthread_mutex_unlock(&save_mutex);
 	
     if(debug)
       info("processed %d unmatched messages", msgs);

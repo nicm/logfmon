@@ -46,7 +46,7 @@ int add_file(char *path, char *tag)
   file->offset = 0;
 
   init_messages(&file->saves);
-  file->contexts.head = file->contexts.tail = NULL;
+  init_contexts(&file->contexts);
 
   if(find_file_by_path(path) != NULL)
   {

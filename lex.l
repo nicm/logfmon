@@ -40,7 +40,7 @@
                           tag = xmalloc(len);
 
                           yylval.tags = xmalloc(sizeof(struct tags));
-                          yylval.tags->head = yylval.tags->tail = NULL;
+                          init_tags(yylval.tags);
     
                           while(!done && (ch = input()))
                           {

@@ -33,6 +33,7 @@ struct tags
   struct tag *tail;
 };
 
+void init_tags(struct tags *);
 int add_tag(struct tags *, char *);
 int check_tags(struct tags *);
 void clear_tags(struct tags *);

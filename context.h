@@ -44,6 +44,7 @@ struct contexts
   struct context *tail;
 };
 
+void init_contexts(struct contexts *);
 int add_context(struct contexts *, char *, struct rule *);
 void delete_context(struct contexts *, struct context *);
 void clear_contexts(struct contexts *);

@@ -49,7 +49,7 @@ struct rule *add_rule(int action, struct tags *tags, char *re, char *not_re)
   if(tags == NULL)
   {
     rule->tags = xmalloc(sizeof(struct tags));
-    rule->tags->head = rule->tags->tail = NULL;
+    init_tags(rule->tags);
   }
   else
     rule->tags = tags;

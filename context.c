@@ -31,13 +31,18 @@
 #include "context.h"
 #include "rules.h"
 
+void init_contexts(struct contexts *contexts)
+{
+  contexts->head = contexts->tail = NULL;
+}
+
 int add_context(struct contexts *contexts, char *key, struct rule *rule)
 {
   struct context *context;
 
   context = (struct context *) xmalloc(sizeof(struct context));
 
-  context->messages.head = context->messages.tail = NULL;
+  init_messages(&context->messages);
 
   context->rule = rule;
   context->expiry = time(NULL) + rule->params.expiry;

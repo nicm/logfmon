@@ -30,6 +30,11 @@
 #include "file.h"
 #include "log.h"
 
+void init_tags(struct tags *tags)
+{
+  tags->head = tags->tail = NULL;
+}
+
 int add_tag(struct tags *tags, char *name)
 {
   struct tag *tag;
