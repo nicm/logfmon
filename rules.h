@@ -44,9 +44,16 @@ struct rule
   struct ruleparams params;
  
   struct rule *next;
+  struct rule *last;
 };
 
-extern struct rule *rules;
+struct rules
+{
+  struct rule *head;
+  struct rule *tail;
+};
+
+extern struct rules rules;
 
 struct rule *add_rule(int, char *, char *);
 void clear_rules(void);

@@ -32,59 +32,12 @@
 
 pthread_mutex_t *save_mutex;
 
-struct save *add_save(struct save *saves, char *msg)
-{
-  struct save *save, *new;
-
-  new = (struct save *) xmalloc(sizeof(struct save));
-
-  new->next = NULL;
-
-  new->msg = (char *) xmalloc(strlen(msg) + 1);
-  strcpy(new->msg, msg);
-
-  pthread_mutex_lock(save_mutex);
-  if(saves == NULL)
-    saves = new;
-  else
-  {
-    save = saves;
-    while(save->next != NULL)
-      save = save->next;
-    save->next = new;
-  }  
-  pthread_mutex_unlock(save_mutex);
-
-  return saves;
-}
-
-struct save *clear_saves(struct save *saves)
-{
-  struct save *save, *last;
-
-  if(saves == NULL)
-    return NULL;
-
-  save = saves;
-  while(save != NULL)
-  {
-    last = save;
-
-    save = save->next;
-
-    free(last->msg);
-    free(last);
-  }
-
-  return NULL;
-}
-
 void *save_thread(void *arg)
 {
-  int num;
-  struct save *save;
+  struct message *save;
   struct file *file;
   FILE *fd;
+  int msgs;
 
   arg = NULL;
 
@@ -98,58 +51,52 @@ void *save_thread(void *arg)
     if(exit_now)
       break;
 
-    pthread_mutex_lock(save_mutex);
-    
-    num = 0;
-    file = files;
-    while(file != NULL)
+    for(file = files.head; file != NULL; file = file->next)
     {
-      if(file->saves != NULL)
-	num++;
-
-      file = file->next;
+      if(file->saves.head != NULL)
+	break;
     }
     
-    if(num > 0)
+    if(file == NULL)
+      continue;
+
+    if(debug)
+      info("processing saved messages. executing: %s", mail_cmd);
+
+    pthread_mutex_lock(save_mutex);
+
+    fd = popen(mail_cmd, "w");
+    if(fd == NULL)
     {
-      if(debug)
-	info("processing saved messages. executing: %s", mail_cmd);
-      fd = popen(mail_cmd, "w");
-      if(fd == NULL)
-	error("%s: %s", mail_cmd, strerror(errno));
-      else
+      error("%s: %s", mail_cmd, strerror(errno));
+      continue;
+    }
+
+    msgs = 0;
+
+    for(file = files.tail; file != NULL; file = file->last)
+    {
+      if(file->saves.head != NULL)
       {
-	num = 0;
+	fprintf(fd, "Unmatched messages for file %s, tag %s:\n\n", file->path, file->tag);
 
-	file = files;
-	while(file != NULL)
+	for(save = file->saves.tail; save != NULL; save = save->last)
 	{
-	  if(file->saves != NULL)
-	  {
-	    fprintf(fd, "Unmatched messages for file %s, tag %s:\n\n", file->path, file->tag);
-
-	    save = file->saves;
-	    while(save != NULL)
-	    {
-	      fprintf(fd, "%s\n", save->msg);
-	      save = save->next;
-	      num++;
-	    }
-
-	    fprintf(fd,"\n");
-
-	    file->saves = clear_saves(file->saves);
-	  }
-
-	  file = file->next;
+	  fprintf(fd, "%s\n", save->msg);
+	  msgs++;
 	}
-	if(debug)
-	  info("processed %d unmatched messages", num);
-	pclose(fd);
+
+	fprintf(fd,"\n");
+
+	clear_messages(&file->saves);
       }
     }
+    pclose(fd);
 
     pthread_mutex_unlock(save_mutex);
+	
+    if(debug)
+      info("processed %d unmatched messages", msgs);
   }
 
   return NULL;

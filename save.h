@@ -26,12 +26,16 @@ struct save
   char *msg;
 
   struct save *next;
+  struct save *last;
+};
+
+struct saves
+{
+  struct save *head;
+  struct save *tail;
 };
 
 extern pthread_mutex_t *save_mutex;
-
-struct save *add_save(struct save *, char *);
-struct save *clear_saves(struct save *);
 
 void *save_thread(void *);
 

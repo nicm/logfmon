@@ -19,7 +19,8 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include "save.h"
+#include "context.h"
+#include "messages.h"
 
 struct file
 {
@@ -31,14 +32,20 @@ struct file
   char *buffer;
   size_t length;
 
-  struct context *contexts;
-
-  struct save *saves;
+  struct contexts contexts;
+  struct messages saves;
 
   struct file *next;
+  struct file *last;
 };
 
-extern struct file *files;
+struct files
+{
+  struct file *head;
+  struct file *tail;
+};
+
+extern struct files files;
 
 int add_file(char *, char *);
 void clear_files(void);

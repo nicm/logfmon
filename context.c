@@ -31,171 +31,118 @@
 #include "context.h"
 #include "rules.h"
 
-struct context *add_context(struct context *contexts, char *key, struct rule *rule)
+int add_context(struct contexts *contexts, char *key, struct rule *rule)
 {
-  struct context *context, *new;
+  struct context *context;
 
-  new = (struct context *) xmalloc(sizeof(struct context));
+  context = (struct context *) xmalloc(sizeof(struct context));
 
-  new->next = NULL;
+  context->next = NULL;
 
-  new->cmsgs = NULL;
-  new->rule = rule;
+  context->messages.head = context->messages.tail = NULL;
 
-  new->expiry = time(NULL) + rule->params.expiry;
+  context->rule = rule;
+  context->expiry = time(NULL) + rule->params.expiry;
 
-  new->key = (char *) xmalloc(strlen(key) + 1);
-  strcpy(new->key, key);
+  context->key = (char *) xmalloc(strlen(key) + 1);
+  strcpy(context->key, key);
 
-  if(contexts == NULL)
-    contexts = new;
+  if(contexts->head == NULL)
+  {
+    context->next = context->last = NULL;
+    contexts->head = contexts->tail = context;
+  }
   else
   {
-    context = contexts;
-    while(context->next != NULL)
-      context = context->next;
-    context->next = new;
+    contexts->head->last = context;
+    context->next = contexts->head;
+    contexts->head = context;
   }  
 
-  return contexts;
+  return 0;
 }
 
-struct context *delete_context(struct context *contexts, char *key)
+void delete_context(struct contexts *contexts, struct context *context)
 {
-  struct context *context, *last;
+  if(contexts->head == NULL)
+    return;
 
-  if(contexts == NULL)
-    return NULL;
-
-  if(strcmp(contexts->key, key) == 0)
+  if(context == contexts->head)
   {
-    context = contexts;
-    contexts = contexts->next;
+    contexts->head = context->next;
+    if(contexts->head != NULL)
+      contexts->head->last = NULL;
   }
-  else
+  if(context == contexts->tail)
   {
-    last = contexts;
-    context = contexts->next;
-    while(context != NULL)
-    {
-      if(strcmp(context->key, key) == 0)
-	break;
-
-      last = context;
-    }
-
-    last->next = context->next;
+    contexts->tail = context->last;
+    if(contexts->tail != NULL)
+      contexts->tail->next = NULL;
   }
 
-  clear_msgs(context->cmsgs);
+  if(context->next != NULL)
+    context->next->last = context->last;
+  if(context->last != NULL)
+    context->last->next = context->next;
+
+  clear_messages(&context->messages);
   
   free(context->key);
   free(context);
-
-  return contexts;
 }
 
-struct context *clear_contexts(struct context *contexts)
+void clear_contexts(struct contexts *contexts)
 {
   struct context *context, *last;
 
-  if(contexts == NULL)
-    return NULL;
+  if(contexts->head == NULL)
+    return;
 
-  context = contexts;
+  context = contexts->head;
   while(context != NULL)
   {
     last = context;
-
     context = context->next;
 
-    clear_msgs(last->cmsgs);
+    clear_messages(&last->messages);
   
     free(last->key);
     free(last);
   }
 
-  return NULL;
+  return;
 }
 
-struct context *find_context(struct context *contexts, char *key)
+struct context *find_context_by_key(struct contexts *contexts, char *key)
 {
   struct context *context;
 
-  if(contexts == NULL)
+  if(contexts->head == NULL)
     return NULL;
 
-  context = contexts;
-  while(context != NULL)
+  for(context = contexts->head; context != NULL; context = context->next)
   {
     if(strcmp(context->key, key) == 0)
       return context;
-
-    context = context->next;
   }
 
   return NULL;
 }
 
-struct contextmsg *add_msg(struct contextmsg *cmsgs, char *msg)
-{
-  struct contextmsg *cmsg, *new;
-
-  new = (struct contextmsg *) xmalloc(sizeof(struct contextmsg));
-
-  new->next = NULL;
-
-  new->msg = (char *) xmalloc(strlen(msg) + 1);
-  strcpy(new->msg, msg);
-
-  if(cmsgs == NULL)
-    cmsgs = new;
-  else
-  {
-    cmsg = cmsgs;
-    while(cmsg->next != NULL)
-      cmsg = cmsg->next;
-    cmsg->next = new;
-  }  
-
-  return cmsgs;
-}
-
-struct contextmsg *clear_msgs(struct contextmsg *cmsgs)
-{
-  struct contextmsg *cmsg, *last;
-
-  if(cmsgs == NULL)
-    return NULL;
-
-  cmsg = cmsgs;
-  while(cmsg != NULL)
-  {
-    last = cmsg;
-
-    cmsg = cmsg->next;
-
-    free(last->msg);
-    free(last);
-  }
-
-  return NULL;
-}
-
-struct context *check_contexts(struct context *contexts)
+void check_contexts(struct contexts *contexts)
 {
   struct context *context, *last;
   time_t now;
 
-  if(contexts == NULL)
-    return NULL;
+  if(contexts->head == NULL)
+    return;
 
   now = time(NULL);
-  context = contexts;
+  
+  context = contexts->head;
   while(context != NULL)
   {
     last = context;
-
     context = context->next;
 
     if(now >= last->expiry)
@@ -204,31 +151,26 @@ struct context *check_contexts(struct context *contexts)
 	info("context %s expired", last->key);
       if(last->rule != NULL && last->rule->params.cmd != NULL)
       {
-	if(pipe_context(last->rule->params.cmd, last))
+	if(pipe_context(last, last->rule->params.cmd))
 	  error("%s: %s", last->rule->params.cmd, strerror(errno));
       }
-      contexts = delete_context(contexts, last->key);
+      delete_context(contexts, last);
     }
   }
 
-  return contexts;
+  return;
 }
 
-int pipe_context(char *cmd, struct context *context)
+int pipe_context(struct context *context, char *cmd)
 {
   FILE *fd;
-  struct contextmsg *cmsg;
+  struct message *message;
 
   fd = popen(cmd, "w");
   if(fd == NULL)
     return 1;
-  cmsg = context->cmsgs;
-  while(cmsg != NULL)
-  {
-    fprintf(fd, "%s\n", cmsg->msg);
-    
-    cmsg = cmsg->next;
-  }
+  for(message = context->messages.tail; message != NULL; message = message->last)
+    fprintf(fd, "%s\n", message->msg);
   pclose(fd);
   
   return 0;

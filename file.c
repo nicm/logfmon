@@ -28,28 +28,26 @@
 #include "save.h"
 #include "context.h"
 
-struct file *files;
+struct files files = { NULL, NULL };
 
 int add_file(char *path, char *tag)
 {
-  struct file *file, *new;
+  struct file *file;
   FILE *fd;
 
-  new = (struct file *) xmalloc(sizeof(struct file));
+  file = (struct file *) xmalloc(sizeof(struct file));
 
-  new->next = NULL;
+  file->fd = NULL;
 
-  new->fd = NULL;
+  file->buffer = NULL;
+  file->length = 0;
 
-  new->buffer = NULL;
-  new->length = 0;
-
-  new->saves = NULL;
-  new->contexts = NULL;
+  file->saves.head = file->saves.tail = NULL;
+  file->contexts.head = file->contexts.tail = NULL;
 
   if(find_file_by_path(path) != NULL)
   {
-    free(new);
+    free(file);
 
     error("%s: duplicate file", path);
 
@@ -59,7 +57,7 @@ int add_file(char *path, char *tag)
   fd = fopen(path, "r");
   if(fd == NULL)
   {
-    free(new);
+    free(file);
 
     error("%s: %s", path, strerror(errno));
 
@@ -67,33 +65,35 @@ int add_file(char *path, char *tag)
   }
   fclose(fd);
 
-  new->path = (char *) xmalloc(strlen(path) + 1);
-  strcpy(new->path, path);
+  file->path = (char *) xmalloc(strlen(path) + 1);
+  strcpy(file->path, path);
 
   if(find_file_by_tag(tag) != NULL)
   {
-    free(new);
-    free(new->path);
+    free(file);
+    free(file->path);
 
     error("%s: duplicate tag", tag);
 
     return 1;
   }
    
-  new->tag = (char *) xmalloc(strlen(tag) + 1);
-  strcpy(new->tag, tag);
+  file->tag = (char *) xmalloc(strlen(tag) + 1);
+  strcpy(file->tag, tag);
 
   if(debug)
-    info("file=%s, tag=%s", new->path, new->tag);
+    info("file=%s, tag=%s", file->path, file->tag);
 
-  if(files == NULL)
-    files = new;
+  if(files.head == NULL)
+  {
+    file->next = file->last = NULL;
+    files.head = files.tail = file;
+  }
   else
   {
-    file = files;
-    while(file->next != NULL)
-      file = file->next;
-    file->next = new;
+    files.head->last = file;
+    file->next = files.head;
+    files.head = file;
   }  
 
   return 0;
@@ -103,20 +103,19 @@ void clear_files(void)
 {
   struct file *file, *last;
 
-  close_files();
-
-  if(files == NULL)
+  if(files.head == NULL)
     return;
 
-  file = files;
+  close_files();
+
+  file = files.head;
   while(file != NULL)
   {
     last = file;
-
     file = file->next;
 
-    clear_contexts(last->contexts);
-    clear_saves(last->saves);
+    clear_contexts(&last->contexts);
+    clear_messages(&last->saves);
 
     free(last->buffer);
     free(last->path);
@@ -124,7 +123,7 @@ void clear_files(void)
     free(last);
   }
 
-  files = NULL;
+  files.head = files.tail = NULL;
 }
 
 int count_open_files(void)
@@ -132,16 +131,14 @@ int count_open_files(void)
   struct file *file;
   int num;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return 0;
 
   num = 0;
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(file->fd != NULL)
       num++;
-    file = file->next;
   }
 
   return num;
@@ -152,16 +149,14 @@ int count_closed_files(void)
   struct file *file;
   int num;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return 0;
 
   num = 0;
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(file->fd == NULL)
       num++;
-    file = file->next;
   }
 
   return num;
@@ -172,12 +167,11 @@ int open_files(void)
   struct file *file;
   int num;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return 0;
 
   num = 0;
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(file->fd == NULL)
     {
@@ -187,8 +181,6 @@ int open_files(void)
       else
 	num++;
     }
-    
-    file = file->next;
   }
 
   return num;
@@ -198,11 +190,10 @@ void close_files(void)
 {
   struct file *file;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return;
 
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(file->fd != NULL)
     {
@@ -211,8 +202,6 @@ void close_files(void)
       file->fd = NULL;
       file->length = 0;
     }
-    
-    file = file->next;
   }
 }
 
@@ -220,16 +209,13 @@ struct file *find_file_by_tag(char *tag)
 {
   struct file *file;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return NULL;
 
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(strcmp(file->tag, tag) == 0)
       return file;
-
-    file = file->next;
   }
 
   return NULL;
@@ -239,16 +225,13 @@ struct file *find_file_by_path(char *path)
 {
   struct file *file;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return NULL;
 
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(strcmp(file->path, path) == 0)
       return file;
-
-    file = file->next;
   }
 
   return NULL;
@@ -258,16 +241,13 @@ struct file *find_file_by_fn(int fn)
 {
   struct file *file;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return NULL;
 
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(file->fd != NULL && fileno(file->fd) == fn)
       return file;
-
-    file = file->next;
   }
 
   return NULL;
@@ -277,14 +257,9 @@ void check_files(void)
 {
   struct file *file;
 
-  if(files == NULL)
+  if(files.head == NULL)
     return;
 
-  file = files;
-  while(file != NULL)
-  {
-    file->contexts = check_contexts(file->contexts);
-
-    file = file->next;
-  }
+  for(file = files.head; file != NULL; file = file->next)
+    check_contexts(&file->contexts);
 }

@@ -22,33 +22,33 @@
 #include <time.h>
 
 #include "rules.h"
+#include "messages.h"
 
 struct context
 {
   char *key;
 
   time_t expiry;
+
   struct rule *rule;
 
-  struct contextmsg *cmsgs;
+  struct messages messages;
   
   struct context *next;
+  struct context *last;
 };
 
-struct contextmsg
+struct contexts
 {
-  char *msg;
-
-  struct contextmsg *next;
+  struct context *head;
+  struct context *tail;
 };
 
-struct context *add_context(struct context *, char *, struct rule *);
-struct context *delete_context(struct context *, char *);
-struct context *clear_contexts(struct context *);
-struct context *find_context(struct context *, char *);
-struct context *check_contexts(struct context *);
-struct contextmsg *add_msg(struct contextmsg *, char *);
-struct contextmsg *clear_msgs(struct contextmsg *);
-int pipe_context(char *, struct context *);
+int add_context(struct contexts *, char *, struct rule *);
+void delete_context(struct contexts *, struct context *);
+void clear_contexts(struct contexts *);
+struct context *find_context_by_key(struct contexts *, char *);
+void check_contexts(struct contexts *);
+int pipe_context(struct context *, char *);
 
 #endif

@@ -200,7 +200,7 @@ void parse_line(char *line, struct file *file)
   if(*test == '\0')
     return;
 
-  for(rule = rules; rule != NULL; rule = rule->next)
+  for(rule = rules.head; rule != NULL; rule = rule->next)
   {
     if(rule->tag != NULL && strcmp(rule->tag, file->tag) != 0)
       continue;
@@ -237,14 +237,14 @@ void parse_line(char *line, struct file *file)
 	if(debug)
 	  info("matched: (%s) %s -- opening: %s", file->tag, test, str);      
 
-	if(find_context(file->contexts, str) != NULL)
+	if(find_context_by_key(&file->contexts, str) != NULL)
 	{
 	  if(debug)
 	    info("ignoring open; found existing context %s", str);
 	  continue;
 	}
 
-	file->contexts = add_context(file->contexts, str, rule);
+	add_context(&file->contexts, str, rule);
 
 	free(str);
 
@@ -258,7 +258,7 @@ void parse_line(char *line, struct file *file)
 	if(debug)
 	  info("matched: (%s) %s -- appending: %s", file->tag, test, str);
 
-	context = find_context(file->contexts, str);
+	context = find_context_by_key(&file->contexts, str);
 	free(str);
 	if(context == NULL)
 	{
@@ -267,7 +267,7 @@ void parse_line(char *line, struct file *file)
 	  continue;
 	}
 
-	context->cmsgs = add_msg(context->cmsgs, line);
+	add_message(&context->messages, line);
 
 	continue;
       case ACTION_CLOSE:
@@ -279,7 +279,7 @@ void parse_line(char *line, struct file *file)
 	if(debug)
 	  info("matched: (%s) %s -- closing: %s", file->tag, test, str);
 	
-	context = find_context(file->contexts, str);
+	context = find_context_by_key(&file->contexts, str);
 	free(str);
 	if(context == NULL)
 	{
@@ -293,12 +293,12 @@ void parse_line(char *line, struct file *file)
 
 	str = repl_matches(test, rule->params.cmd, matches);
 
-	if(pipe_context(str, context))
+	if(pipe_context(context, str))
 	  error("%s: %s", str, strerror(errno));
 	
 	free(str);
 
-	file->contexts = delete_context(file->contexts, context->key);
+	delete_context(&file->contexts, context);
 	
 	continue;
     }
@@ -307,7 +307,7 @@ void parse_line(char *line, struct file *file)
   if(debug)
     info("unmatched: (%s) %s", file->tag, test);
     
-  file->saves = add_save(file->saves, line);
+  add_message(&file->saves, line);
 }
 
 struct kevent *make_kev_list(int *kevlen)
@@ -322,8 +322,7 @@ struct kevent *make_kev_list(int *kevlen)
   kevlist = xmalloc(sizeof(struct kevent) * *kevlen);
 
   kevptr = kevlist;
-  file = files;
-  while(file != NULL)
+  for(file = files.head; file != NULL; file = file->next)
   {
     if(file->fd != NULL)
     {
@@ -332,8 +331,6 @@ struct kevent *make_kev_list(int *kevlen)
       EV_SET(kevptr, fileno(file->fd), EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
       kevptr++;
     }
-
-    file = file->next;
   }
 
   return kevlist;
@@ -390,8 +387,8 @@ int main(int argc, char **argv)
     }
   }
 
-  rules = NULL;
-  files = NULL;
+  rules.head = rules.tail = NULL;
+  files.head = files.tail = NULL;
 
   mail_time = 900;
   mail_cmd = NULL;
@@ -405,7 +402,7 @@ int main(int argc, char **argv)
   if(mail_cmd == NULL)
     mail_cmd = "/usr/bin/mail root";
   
-  if(files == NULL)
+  if(files.head == NULL)
     die("no files specified");
 
   /*if(rules == NULL)

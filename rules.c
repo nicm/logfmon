@@ -26,46 +26,46 @@
 #include "log.h"
 #include "file.h"
 
-struct rule *rules;
+struct rules rules = { NULL, NULL };
 
 struct rule *add_rule(int action, char *tag, char *re)
 {
-  struct rule *rule, *new;
+  struct rule *rule;
 
-  new = (struct rule *) xmalloc(sizeof(struct rule));
+  rule = (struct rule *) xmalloc(sizeof(struct rule));
 
-  new->next = NULL;
+  rule->next = NULL;
 
-  new->action = action;
+  rule->action = action;
 
-  new->params.cmd = NULL;
-  new->params.key = NULL;
-  new->params.expiry = 0;
+  rule->params.cmd = NULL;
+  rule->params.key = NULL;
+  rule->params.expiry = 0;
 
   if(tag != NULL)
   {
     if(find_file_by_tag(tag) == NULL)
     {
-      free(new);
+      free(rule);
 
       error("%s: unknown tag", tag);
 
       return NULL;
     }
 
-    new->tag = (char *) xmalloc(strlen(tag) + 1);
-    strcpy(new->tag, tag);
+    rule->tag = (char *) xmalloc(strlen(tag) + 1);
+    strcpy(rule->tag, tag);
   }
   else
-    new->tag = NULL;
+    rule->tag = NULL;
 
-  new->re = (regex_t *) xmalloc(sizeof(regex_t));
+  rule->re = (regex_t *) xmalloc(sizeof(regex_t));
 
-  if(regcomp(new->re, re, 0) != 0)
+  if(regcomp(rule->re, re, 0) != 0)
   {
-    free(new->re);
-    free(new->tag);
-    free(new);
+    free(rule->re);
+    free(rule->tag);
+    free(rule);
 
     error("%s: bad regexp", re);
 
@@ -73,36 +73,38 @@ struct rule *add_rule(int action, char *tag, char *re)
   }
 
   if(debug)
-    info("match=%s, action=%d, tag=%s", re, new->action, new->tag);
+    info("match=%s, action=%d, tag=%s", re, rule->action, rule->tag);
 
-  if(rules == NULL)
-    rules = new;
+  if(rules.head == NULL)
+  {
+    rule->next = rule->last = NULL;
+    rules.head = rules.tail = rule;
+  }
   else
   {
-    rule = rules;
-    while(rule->next != NULL)
-      rule = rule->next;
-    rule->next = new;
+    rules.head->last = rule;
+    rule->next = rules.head;
+    rules.head = rule;
   }  
 
-  return new;
+  return rule;
 }
 
 void clear_rules(void)
 {
   struct rule *rule, *last;
 
-  if(rules == NULL)
+  if(rules.head == NULL)
     return;
 
-  rule = rules;
+  rule = rules.head;
   while(rule != NULL)
   {
     last = rule;
-
     rule = rule->next;
 
     regfree(last->re);
+
     free(last->re);
     free(last->tag);
     free(last->params.cmd);
@@ -110,6 +112,6 @@ void clear_rules(void)
     free(last);
   }
 
-  rules = NULL;
+  rules.head = rules.tail = NULL;
 }
 
