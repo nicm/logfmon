@@ -60,7 +60,7 @@ LDFLAGS+= -L/usr/local/lib
 
 LIBS= -lm
 
-.if ${OS} == "FreeBSD"
+.if ${OS} == "OpenBSD" || ${OS} == "FreeBSD"
 LDFLAGS+= -pthread
 .else
 LIBS+= -lpthread
