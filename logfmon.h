@@ -42,6 +42,9 @@ volatile sig_atomic_t exit_now;
 extern char *mail_cmd;
 extern int mail_time;
 
+extern uid_t uid;
+extern gid_t gid;
+
 extern char *conf_file;
 
 extern int now_daemon;

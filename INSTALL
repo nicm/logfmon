@@ -55,9 +55,6 @@ initially started, it will report it to stderr and exit immediately.
 
 Currently on my to do list are, in no particular order:
 
-- allow a uid/gid to run as to be specified
-- let a context to be piped to a command when it reaches a certain number
-  of entries
 - think about allowing a `doesn't match' regexp as well as a `does match'
 - there is quite a lot of stuff needs cleaned up
 - the linux event stuff is crap

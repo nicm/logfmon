@@ -94,6 +94,8 @@
                         }
 mailcmd                 return OPTMAILCMD;
 mailtime                return OPTMAILTIME;
+user                    return OPTUSER;
+group                   return OPTGROUP;
 in			return TOKIN;
 file			return TOKFILE;
 tag			return TOKTAG;

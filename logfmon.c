@@ -43,6 +43,9 @@ extern int yyparse(void);
 char *mail_cmd;
 int mail_time;
 
+uid_t uid;
+gid_t gid;
+
 char *conf_file;
 
 int now_daemon;
@@ -430,6 +433,9 @@ int main(int argc, char **argv)
   mail_time = 900;
   mail_cmd = NULL;
 
+  uid = 0;
+  gid = 0;
+
   if(load_conf() != 0)
   {
     error("%s: %s", conf_file, strerror(errno));
@@ -453,6 +459,18 @@ int main(int argc, char **argv)
       die("daemon: %s", strerror(errno));
   }
 
+  if(gid != 0)
+  {
+    if(setgroups(1, &gid) != 0 || setegid(gid) != 0 || setgid(gid) != 0)
+      die("failed to drop group privileges");
+  }
+
+  if(uid != 0)
+  {
+    if(seteuid(uid) != 0 || setuid(uid) != 0)
+      die("failed to drop user privileges");
+  }
+  
   now_daemon = 1;
   info("started");
 

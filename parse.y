@@ -22,6 +22,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pwd.h>
+#include <grp.h>
+#include <unistd.h>
 
 #include "logfmon.h"
 #include "rules.h"
@@ -48,7 +51,7 @@ int yywrap(void)
 
 %token TOKMATCH TOKIGNORE TOKEXEC TOKSET TOKFILE TOKIN TOKTAG TOKALL
 %token TOKOPEN TOKAPPEND TOKCLOSE TOKPIPE TOKEXPIRE TOKWHEN
-%token OPTMAILCMD OPTMAILTIME
+%token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP
 
 %union 
 {
@@ -90,6 +93,68 @@ set: TOKSET OPTMAILCMD STRING
 	 yyerror("mail time must be at least 10 seconds");
 
        mail_time = $3;
+     }
+   | TOKSET OPTUSER STRING
+     {
+       struct passwd *pw;
+
+       if(geteuid())
+	 die("need root privileges for alternative user");
+
+       pw = getpwnam($3);
+       if(pw == NULL)
+	 die("unknown user %s", $3);
+
+       uid = pw->pw_uid;
+
+       endpwent();
+       free($3);
+     }
+   | TOKSET OPTUSER NUMBER
+     {
+       struct passwd *pw;
+
+       if(geteuid())
+	 die("need root privileges for alternative user");
+
+       pw = getpwuid($3);
+       if(pw == NULL)
+	 die("unknown uid %d", $3);
+
+       uid = pw->pw_uid;
+
+       endpwent();
+     }
+   | TOKSET OPTGROUP STRING
+     {
+       struct group *gr;
+
+       if(geteuid())
+	 die("need root privileges for alternative group");
+
+       gr = getgrnam($3);
+       if(gr == NULL)
+	 die("unknown group %s", $3);
+
+       gid = gr->gr_gid;
+
+       endgrent();
+       free($3);
+     }
+   | TOKSET OPTGROUP NUMBER
+     {
+       struct group *gr;
+
+       if(geteuid())
+	 die("need root privileges for alternative group");
+
+       gr = getgrgid($3);
+       if(gr == NULL)
+	 die("unknown group %s", $3);
+
+       gid = gr->gr_gid;
+
+       endgrent();
      }
    ;
 
