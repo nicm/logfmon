@@ -350,8 +350,9 @@ void parse_line(char *line, struct file *file)
 
   if(debug)
     info("unmatched: (%s) %s", file->tag, test);
-    
-  add_message(&file->saves, line);
+ 
+    if(*mail_cmd != '\0')
+      add_message(&file->saves, line);
 }
 
 void usage(void)
@@ -388,7 +389,7 @@ int main(int argc, char **argv)
 	debug = 1;
 	break;
       case 'f':
-	conf_file = malloc(strlen(optarg) + 1);
+	conf_file = xmalloc(strlen(optarg) + 1);
 	strcpy(conf_file, optarg);
 	break;
       case '?':
