@@ -560,11 +560,6 @@ int main(int argc, char **argv)
 
   while(!exit_now)
   {
-    /*
-    if(fopen("q", "r") != NULL)
-      exit_now = 1;
-    */
-
     if(reload_conf)
     {
       info("reloading configuration");
