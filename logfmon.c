@@ -84,9 +84,9 @@ int load_conf(void)
   if(yyin == NULL)
     return 1;
 
-  (void) yyparse();
+  yyparse();
 
-  (void) fclose(yyin);
+  fclose(yyin);
 
   return 0;
 }
@@ -274,8 +274,8 @@ void parse_line(char *line, struct file *file)
 	    error("%s: %s", str, strerror(errno));
 	  else
 	  {
-	    (void) fwrite(line, strlen(line), 1, fd);
-	    (void) fputc('\n', fd);
+	    fwrite(line, strlen(line), 1, fd);
+	    fputc('\n', fd);
 	    
 	    if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
 	      die("pthread_create: %s", strerror(errno));
@@ -302,7 +302,7 @@ void parse_line(char *line, struct file *file)
 	  continue;
 	}
 
-	(void) add_context(&file->contexts, str, rule);
+	add_context(&file->contexts, str, rule);
 
 	free(str);
 
@@ -326,7 +326,7 @@ void parse_line(char *line, struct file *file)
 	}
 	free(str);
 
-	(void) add_message(&context->messages, line);
+	add_message(&context->messages, line);
 
 	if(context->rule->params.ent_max == 0)
 	  continue;
@@ -337,7 +337,7 @@ void parse_line(char *line, struct file *file)
 	    info("context %s reached limit of %d entries", context->key, context->rule->params.ent_max);
 	  
 	  if(context->rule->params.ent_cmd != NULL)
-	    (void) pipe_context(context, context->rule->params.ent_cmd);
+	    pipe_context(context, context->rule->params.ent_cmd);
 	  
 	  delete_context(&file->contexts, context);
 	}
@@ -366,7 +366,7 @@ void parse_line(char *line, struct file *file)
 	{
 	  str = repl_matches(test, rule->params.cmd, matches);
 	  
-	  (void) pipe_context(context, str);
+	  pipe_context(context, str);
 	  
 	  free(str);
 	}
@@ -384,8 +384,8 @@ void parse_line(char *line, struct file *file)
   {
     if(pthread_mutex_lock(&save_mutex) == 0)
     {
-      (void) add_message(&file->saves, line);
-      (void) pthread_mutex_unlock(&save_mutex);
+      add_message(&file->saves, line);
+      pthread_mutex_unlock(&save_mutex);
     }
   }
 }
@@ -490,7 +490,7 @@ int main(int argc, char **argv)
   /*if(rules == NULL)
     die("no rules found");*/
 
-  (void) setpriority(PRIO_PROCESS, getpid(), 1);
+  setpriority(PRIO_PROCESS, getpid(), 1);
 
   if(!debug)
   {
@@ -523,7 +523,7 @@ int main(int argc, char **argv)
   now_daemon = 1;
   info("started");
 
-  (void) load_cache();
+  load_cache();
 
   reload_conf = 0;
   exit_now = 0;
@@ -558,8 +558,8 @@ int main(int argc, char **argv)
       error("%s: %s", pid_file, strerror(errno));
     else
     {
-      (void) fprintf(fd, "%ld\n", (long) getpid());
-      (void) fclose(fd);
+      fprintf(fd, "%ld\n", (long) getpid());
+      fclose(fd);
     }
   }
 
@@ -578,14 +578,19 @@ int main(int argc, char **argv)
     {
       info("reloading configuration");
 
-      (void) save_cache();
+      save_cache();
 
       err = pthread_mutex_lock(&save_mutex);
       if(err != 0)
-	die("pthread_mutex_lock: %s", strerror(err));
+       {
+	 error("pthread_mutex_lock: %s", strerror(err));
+	 error("exited");
+	 
+	 exit(EXIT_FAILURE);
+       }
 
-      (void) clear_rules();
-      (void) clear_files(); /* closes too */
+      clear_rules();
+      clear_files(); /* closes too */
       
       if(load_conf() != 0)
       {
@@ -595,11 +600,11 @@ int main(int argc, char **argv)
 	exit(EXIT_FAILURE);
       }
 
-      (void) pthread_mutex_unlock(&save_mutex);
+      pthread_mutex_unlock(&save_mutex);
 
-      (void) load_cache();
-      (void) open_files();
-      (void) init_events();
+      load_cache();
+      open_files();
+      init_events();
 
       reload_conf = 0;
 
@@ -622,7 +627,7 @@ int main(int argc, char **argv)
       check_files();
       if(dirty)
       {
-	(void) save_cache();
+	save_cache();
 	dirty = 0;
       }
       prev = now + CHECKTIMEOUT;
@@ -634,7 +639,7 @@ int main(int argc, char **argv)
     switch(event)
     {
       case EVENT_REOPEN:
-	(void) fclose(file->fd);
+	fclose(file->fd);
 	file->fd = NULL;
 	file->timer = time(NULL) + REOPENTIMEOUT;
 
@@ -658,7 +663,7 @@ int main(int argc, char **argv)
 
 	if(len == -1)
 	{
-	  (void) fclose(file->fd);
+	  fclose(file->fd);
 	  file->fd = NULL;	  
 	}
 
@@ -688,7 +693,7 @@ int main(int argc, char **argv)
   
   close_files();
   if(pid_file != NULL && *pid_file != '\0')
-    (void) unlink(pid_file);
+    unlink(pid_file);
 
   /* let's be tidy; easier to check for leaks too */
   clear_rules();
@@ -703,7 +708,7 @@ int main(int argc, char **argv)
   if(mail_cmd != NULL)
     free(mail_cmd);
 
-  (void) pthread_mutex_destroy(&save_mutex);
+  pthread_mutex_destroy(&save_mutex);
 
   info("terminated");
 

@@ -62,7 +62,7 @@ int save_cache(void)
   for(file = files.head; file != NULL; file = file->next)
     fprintf(fd, "%d %s %lld %lld\n", (int) strlen(file->path), file->path, (long long) file->size, (long long) file->offset);
 
-  (void) fclose(fd);
+  fclose(fd);
 
   if(rename(name, cache_file) == -1)
     error("rename: %s", strerror(errno));
@@ -150,7 +150,7 @@ int load_cache(void)
   if(path != NULL)
     free(path);
 
-  (void) fclose(fd);
+  fclose(fd);
 
   return 0;
 }

@@ -69,7 +69,7 @@ void vlog(int pri, char *fmt, va_list ap)
   if(debug || !now_daemon)
   {
     fprintf(stderr, "%s: ", __progname);
-    (void) vfprintf(stderr, fmt, ap);
+    vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
   }
   else

@@ -45,7 +45,7 @@ void *save_thread(void *arg)
     if(debug)
       info("sleeping for %d seconds", mail_time);
 
-    (void) sleep(mail_time);
+    sleep(mail_time);
 
     if(exit_now)
       break;
@@ -92,14 +92,14 @@ void *save_thread(void *arg)
 	  msgs++;
 	}
 
-	(void) fputc('\n', fd);
+	fputc('\n', fd);
 
 	clear_messages(&file->saves);
       }
     }
     pclose(fd);
 
-    (void) pthread_mutex_unlock(&save_mutex);
+    pthread_mutex_unlock(&save_mutex);
 	
     if(debug)
       info("processed %d unmatched messages", msgs);
