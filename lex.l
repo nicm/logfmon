@@ -23,6 +23,15 @@
 #include "y.tab.h"
 %}
 %%
+[0-9]+[hm]              {
+                          char ch;
+
+                          ch = *(yytext + strlen(yytext));
+                          *(yytext + strlen(yytext)) = '\0';
+                          yylval.number=atoi(yytext);
+                          yylval.number *= (ch == 'h' ? 3600 : 60);
+                          return TIME;
+                        } 
 [0-9]+                  {
                           yylval.number=atoi(yytext);
                           return NUMBER;
@@ -82,7 +91,10 @@ match                   return TOKMATCH;
 ignore                  return TOKIGNORE;
 exec                    return TOKEXEC;
 open                    return TOKOPEN;
+expire                  return TOKEXPIRE;
 append                  return TOKAPPEND;
+close                   return TOKCLOSE;
+pipe                    return TOKPIPE;
 \*			return TOKALL;
 [A-Za-z0-9_-]+ 		{
                           yylval.string = (char *) xmalloc(strlen(yytext) + 1);

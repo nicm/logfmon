@@ -115,8 +115,8 @@ void clear_files(void)
 
     file = file->next;
 
-    clear_contexts(file->contexts);
-    clear_saves(file->saves);
+    clear_contexts(last->contexts);
+    clear_saves(last->saves);
 
     free(last->buffer);
     free(last->path);

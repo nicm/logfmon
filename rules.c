@@ -28,7 +28,7 @@
 
 struct rule *rules;
 
-int add_rule(int action, char *param, char *re, char *tag)
+struct rule *add_rule(int action, char *tag, char *re)
 {
   struct rule *rule, *new;
 
@@ -38,24 +38,19 @@ int add_rule(int action, char *param, char *re, char *tag)
 
   new->action = action;
 
-  if(param != NULL)
-  {
-    new->param = (char *) xmalloc(strlen(param) + 1);
-    strcpy(new->param, param);
-  }
-  else
-    new->param = NULL;
+  new->params.cmd = NULL;
+  new->params.key = NULL;
+  new->params.expiry = 0;
 
   if(tag != NULL)
   {
     if(find_file_by_tag(tag) == NULL)
     {
-      free(new->param);
       free(new);
 
       error("%s: unknown tag", tag);
 
-      return 1;
+      return NULL;
     }
 
     new->tag = (char *) xmalloc(strlen(tag) + 1);
@@ -69,17 +64,16 @@ int add_rule(int action, char *param, char *re, char *tag)
   if(regcomp(new->re, re, 0) != 0)
   {
     free(new->re);
-    free(new->param);
     free(new->tag);
     free(new);
 
     error("%s: bad regexp", re);
 
-    return 1;
+    return NULL;
   }
 
   if(debug)
-    info("match=%s, action=%d, param=%s, tag=%s", re, new->action, new->param, new->tag);
+    info("match=%s, action=%d, tag=%s", re, new->action, new->tag);
 
   if(rules == NULL)
     rules = new;
@@ -91,7 +85,7 @@ int add_rule(int action, char *param, char *re, char *tag)
     rule->next = new;
   }  
 
-  return 0;
+  return new;
 }
 
 void clear_rules(void)
@@ -110,8 +104,9 @@ void clear_rules(void)
 
     regfree(last->re);
     free(last->re);
-    free(last->param);
     free(last->tag);
+    free(last->params.cmd);
+    free(last->params.key);
     free(last);
   }
 

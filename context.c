@@ -23,13 +23,14 @@
 #include <pthread.h>
 #include <syslog.h>
 #include <errno.h>
+#include <time.h>
 
 #include "logfmon.h"
 #include "xmalloc.h"
 #include "log.h"
 #include "context.h"
 
-struct context *add_context(struct context *contexts, char *key)
+struct context *add_context(struct context *contexts, char *key, time_t expiry)
 {
   struct context *context, *new;
 
@@ -38,6 +39,8 @@ struct context *add_context(struct context *contexts, char *key)
   new->next = NULL;
 
   new->cmsgs = NULL;
+
+  new->expiry = time(NULL) + expiry;
 
   new->key = (char *) xmalloc(strlen(key) + 1);
   strcpy(new->key, key);
@@ -134,10 +137,45 @@ struct context *find_context(struct context *contexts, char *key)
 
 struct contextmsg *add_msg(struct contextmsg *cmsgs, char *msg)
 {
-  return NULL;
+  struct contextmsg *cmsg, *new;
+
+  new = (struct contextmsg *) xmalloc(sizeof(struct contextmsg));
+
+  new->next = NULL;
+
+  new->msg = (char *) xmalloc(strlen(msg) + 1);
+  strcpy(new->msg, msg);
+
+  if(cmsgs == NULL)
+    cmsgs = new;
+  else
+  {
+    cmsg = cmsgs;
+    while(cmsg->next != NULL)
+      cmsg = cmsg->next;
+    cmsg->next = new;
+  }  
+
+  return cmsgs;
 }
 
 struct contextmsg *clear_msgs(struct contextmsg *cmsgs)
 {
+  struct contextmsg *cmsg, *last;
+
+  if(cmsgs == NULL)
+    return NULL;
+
+  cmsg = cmsgs;
+  while(cmsg != NULL)
+  {
+    last = cmsg;
+
+    cmsg = cmsg->next;
+
+    free(last->msg);
+    free(last);
+  }
+
   return NULL;
 }

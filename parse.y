@@ -43,7 +43,8 @@ int yywrap(void)
 } 
 %}
 
-%token TOKMATCH TOKIGNORE TOKEXEC TOKSET TOKFILE TOKIN TOKTAG TOKALL TOKOPEN TOKAPPEND
+%token TOKMATCH TOKIGNORE TOKEXEC TOKSET TOKFILE TOKIN TOKTAG TOKALL
+%token TOKOPEN TOKAPPEND TOKCLOSE TOKPIPE TOKEXPIRE
 %token OPTMAILCMD OPTMAILTIME
 
 %union 
@@ -53,6 +54,7 @@ int yywrap(void)
 }
 
 %token <number> NUMBER
+%token <number> TIME
 %token <string> STRING
 %token <string> TAG
 
@@ -80,88 +82,202 @@ set: TOKSET OPTMAILCMD STRING
 
 rule: TOKMATCH STRING TOKEXEC STRING
       {
-	if(add_rule(ACTION_EXEC, $4, $2, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_EXEC, NULL, $2);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.cmd = $4;
+
 	free($2);
-	free($4);
       }
     | TOKMATCH STRING TOKIGNORE
       {
-	if(add_rule(ACTION_IGNORE, NULL, $2, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_IGNORE, NULL, $2);
+
+	if(rule == NULL)
 	  exit(1);
+
 	free($2);
       }
-    | TOKMATCH STRING TOKOPEN STRING
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME
       {
-	if(add_rule(ACTION_OPEN, $4, $2, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, NULL, $2);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.key = $4;
+	rule->params.expiry = $6;
+
 	free($2);
-	free($4);
       }
     | TOKMATCH STRING TOKAPPEND STRING
       {
-	if(add_rule(ACTION_APPEND, $4, $2, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_APPEND, NULL, $2);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.key = $4;
+
 	free($2);
-	free($4);
+      }
+    | TOKMATCH STRING TOKCLOSE STRING TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_CLOSE, NULL, $2);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $4;
+	rule->params.cmd = $6;
+
+	free($2);
       }
     | TOKMATCH TOKIN TOKALL STRING TOKEXEC STRING
       {
-	if(add_rule(ACTION_EXEC, $6, $4, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_EXEC, NULL, $4);
+
+	if(rule == NULL)
 	  exit(1);
-	free($4);
-	free($6);
+
+	rule->params.key = $4;
+	rule->params.cmd = $6;
       }
     | TOKMATCH TOKIN TOKALL STRING TOKIGNORE
       {
-	if(add_rule(ACTION_IGNORE, NULL, $4, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_IGNORE, NULL, $4);
+
+	if(rule == NULL)
 	  exit(1);
+
 	free($4);
       }
-    | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING
+    | TOKMATCH TOKIN TOKALL STRING TOKOPEN STRING TOKEXPIRE TIME
       {
-	if(add_rule(ACTION_OPEN, $6, $4, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, NULL, $4);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.expiry = $8;
+
 	free($4);
-	free($6);
       }
     | TOKMATCH TOKIN TOKALL STRING TOKAPPEND STRING
       {
-	if(add_rule(ACTION_APPEND, $6, $4, NULL))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_APPEND, NULL, $4);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.key = $6;
+	
 	free($4);
-	free($6);
+      }
+    | TOKMATCH TOKIN TOKALL STRING TOKCLOSE STRING TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_CLOSE, NULL, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.cmd = $8;
+
+	free($4);
       }
     | TOKMATCH TOKIN TAG STRING TOKEXEC STRING
       {
-	if(add_rule(ACTION_EXEC, $6, $4, $3))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_EXEC, $3, $4);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.cmd = $6;
+
 	free($3);
 	free($4);
-	free($6);
       }
     | TOKMATCH TOKIN TAG STRING TOKIGNORE
       {
-	if(add_rule(ACTION_IGNORE, NULL, $4, $3))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_IGNORE, $3, $4);
+
+	if(rule == NULL)
 	  exit(1);
+
 	free($3);
 	free($4);
       }
-    | TOKMATCH TOKIN TAG STRING TOKOPEN STRING
+    | TOKMATCH TOKIN TAG STRING TOKOPEN STRING TOKEXPIRE TIME
       {
-	if(add_rule(ACTION_OPEN, $6, $4, $3))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_OPEN, $3, $4);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.expiry = $8;
+
 	free($3);
 	free($4);
-	free($6);
       }
     | TOKMATCH TOKIN TAG STRING TOKAPPEND STRING
       {
-	if(add_rule(ACTION_APPEND, $6, $4, $3))
+	struct rule *rule;
+
+	rule = add_rule(ACTION_APPEND, $3, $4);
+
+	if(rule == NULL)
 	  exit(1);
+
+	rule->params.key = $6;
+
 	free($3);
 	free($4);
-	free($6);
+      }
+    | TOKMATCH TOKIN TAG STRING TOKCLOSE STRING TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_CLOSE, $3, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $6;
+	rule->params.cmd = $8;
+
+	free($3);
+	free($4);
       }
     ;
 

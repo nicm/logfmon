@@ -19,9 +19,13 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
+#include <time.h>
+
 struct context
 {
   char *key;
+
+  time_t expiry;
 
   struct contextmsg *cmsgs;
   
@@ -35,7 +39,7 @@ struct contextmsg
   struct contextmsg *next;
 };
 
-struct context *add_context(struct context *, char *);
+struct context *add_context(struct context *, char *, time_t);
 struct context *delete_context(struct context *, char *);
 struct context *clear_contexts(struct context *);
 struct context *find_context(struct context *contexts, char *key);

@@ -188,6 +188,9 @@ void parse_line(char *line, struct file *file)
   struct context *context;
   int match;
 
+  FILE *fd;
+  struct contextmsg *cmsg;
+
   if(strlen(line) < 17)
     return;
 
@@ -216,10 +219,10 @@ void parse_line(char *line, struct file *file)
 	  info("matched: (%s) %s -- ignoring", file->tag, test);
       	return;
       case ACTION_EXEC:
-	if(rule->param == NULL || *(rule->param) == '\0')
+	if(rule->params.cmd == NULL || *(rule->params.cmd) == '\0')
 	  return;
 
-	str = repl_matches(test, rule->param, matches);
+	str = repl_matches(test, rule->params.cmd, matches);
 	
 	if(debug)
 	  info("matched: (%s) %s -- executing: %s", file->tag, test, str);      
@@ -229,10 +232,10 @@ void parse_line(char *line, struct file *file)
     
 	return;
       case ACTION_OPEN:
-	if(rule->param == NULL || *(rule->param) == '\0')
+	if(rule->params.key == NULL || *(rule->params.key) == '\0')
 	  return;
 
-	str = repl_matches(test, rule->param, matches);
+	str = repl_matches(test, rule->params.key, matches);
 
 	if(find_context(file->contexts, str) != NULL)
 	{
@@ -241,30 +244,78 @@ void parse_line(char *line, struct file *file)
 	}
 
 	if(debug)
-	  info("matched: (%s) %s -- opening: %s", test, str);      
+	  info("matched: (%s) %s -- opening: %s", file->tag, test, str);      
 
-	file->contexts = add_context(file->contexts, str);
-	
-	return;
+	file->contexts = add_context(file->contexts, str, rule->params.expiry);
+
+	free(str);
+
+	continue;
       case ACTION_APPEND:
-	if(rule->param == NULL || *(rule->param) == '\0')
+	if(rule->params.key == NULL || *(rule->params.key) == '\0')
 	  return;
 
-	str = repl_matches(test, rule->param, matches);
+	str = repl_matches(test, rule->params.key, matches);
 
 	context = find_context(file->contexts, str);
 	if(context == NULL)
 	{
-	  info("missing context %s for append", test, str);
+	  info("missing context %s for append", str);
+	  free(str);
 	  continue;
 	}
 
 	if(debug)
-	  info("matched: (%s) %s -- appending: %s", str);      
+	  info("matched: (%s) %s -- appending: %s", file->tag, test, str);
 
 	context->cmsgs = add_msg(context->cmsgs, line);
 
-	return;
+	free(str);
+
+	continue;
+      case ACTION_CLOSE:
+	if(rule->params.key == NULL || *(rule->params.key) == '\0')
+	  return;
+	
+	str = repl_matches(test, rule->params.key, matches);
+
+	context = find_context(file->contexts, str);
+	free(str);
+	if(context == NULL)
+	{
+	  info("missing context %s for close", str);
+	  continue;
+	}
+
+	if(debug)
+	  info("matched: (%s) %s -- closing: %s", file->tag, test, str);
+
+	if(rule->params.cmd == NULL)
+	  continue;
+
+	str = repl_matches(test, rule->params.cmd, matches);
+
+	fd = popen(str, "w");
+	if(fd == NULL)
+	{
+	  error("%s: %s", str, strerror(errno));
+	  free(str);
+	  continue;
+	}
+	cmsg = context->cmsgs;
+	while(cmsg != NULL)
+	{
+	  fprintf(fd, "%s\n", cmsg->msg);
+	  
+	  cmsg = cmsg->next;
+	}
+	pclose(fd);
+	
+	free(str);
+
+	file->contexts = delete_context(file->contexts, context->key);
+	
+	continue;
     }
   }
 
@@ -398,7 +449,7 @@ int main(int argc, char **argv)
   signal(SIGHUP, sighandler);
   signal(SIGTERM, sighandler);
 
-  signal(SIGCHLD, SIG_IGN);
+  /*signal(SIGCHLD, SIG_IGN);*/
 
   reload_conf = 0;
   exit_now = 0;
@@ -456,7 +507,7 @@ int main(int argc, char **argv)
 
     if(rc == -1)
     {
-      if(!debug && errno == EINTR)
+      if(errno == EINTR) /* && !debug) */
 	continue;
       
       error("kevent: %s", strerror(errno));

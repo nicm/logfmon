@@ -25,6 +25,14 @@
 #define ACTION_EXEC 1
 #define ACTION_OPEN 2
 #define ACTION_APPEND 3
+#define ACTION_CLOSE 4
+
+struct ruleparams
+{
+  char *cmd;
+  char *key;
+  time_t expiry;
+};
 
 struct rule
 {
@@ -33,14 +41,14 @@ struct rule
   regex_t *re;
 
   int action;
-  char *param;
-
+  struct ruleparams params;
+ 
   struct rule *next;
 };
 
 extern struct rule *rules;
 
-int add_rule(int, char *, char *, char *);
+struct rule *add_rule(int, char *, char *);
 void clear_rules(void);
 
 #endif
