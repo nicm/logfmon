@@ -93,6 +93,19 @@ rule: TOKMATCH STRING TOKEXEC STRING
 
 	free($2);
       }
+    | TOKMATCH STRING TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_PIPE, NULL, $2);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.cmd = $4;
+
+	free($2);
+      }
     | TOKMATCH STRING TOKIGNORE
       {
 	struct rule *rule;
@@ -172,6 +185,18 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	rule->params.key = $4;
 	rule->params.cmd = $6;
       }
+    | TOKMATCH TOKIN TOKALL STRING TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_PIPE, NULL, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.key = $4;
+	rule->params.cmd = $6;
+      }
     | TOKMATCH TOKIN TOKALL STRING TOKIGNORE
       {
 	struct rule *rule;
@@ -244,6 +269,20 @@ rule: TOKMATCH STRING TOKEXEC STRING
 	struct rule *rule;
 
 	rule = add_rule(ACTION_EXEC, $3, $4);
+
+	if(rule == NULL)
+	  exit(1);
+
+	rule->params.cmd = $6;
+
+	free($3);
+	free($4);
+      }
+    | TOKMATCH TOKIN TAG STRING TOKPIPE STRING
+      {
+	struct rule *rule;
+
+	rule = add_rule(ACTION_PIPE, $3, $4);
 
 	if(rule == NULL)
 	  exit(1);

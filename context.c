@@ -58,8 +58,6 @@ int add_context(struct contexts *contexts, char *key, struct rule *rule)
     contexts->head = context;
   }  
 
-  //error("*** new context %s: next=%p last=%p; head=%p tail=%p",context->key,context->next,context->last,contexts->head,contexts->tail);
-
   return 0;
 }
 

@@ -16,45 +16,15 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef RULES_H
-#define RULES_H
+#ifndef EVENT_H
+#define EVENT_H
 
-#include <regex.h>
+#define EVENT_NONE 0
+#define EVENT_TIMEOUT 1
+#define EVENT_REOPEN 2
+#define EVENT_READ 3
 
-#define ACTION_IGNORE 0
-#define ACTION_EXEC 1
-#define ACTION_PIPE 2
-#define ACTION_OPEN 3
-#define ACTION_APPEND 4
-#define ACTION_CLOSE 5
-
-struct rule
-{
-  char *tag;
-
-  regex_t *re;
-
-  int action;
-  struct 
-  {
-    char *cmd;
-    char *key;
-    time_t expiry;
-  } params;
- 
-  struct rule *next;
-  struct rule *last;
-};
-
-struct rules
-{
-  struct rule *head;
-  struct rule *tail;
-};
-
-extern struct rules rules;
-
-struct rule *add_rule(int, char *, char *);
-void clear_rules(void);
+void init_events(void);
+struct file *get_event(int *, int timeout);
 
 #endif

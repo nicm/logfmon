@@ -26,9 +26,7 @@
 #include <signal.h>
 
 #include <sys/types.h>
-#include <sys/event.h>
 #include <sys/resource.h>
-#include <sys/wait.h>
 
 #include "logfmon.h"
 #include "xmalloc.h"
@@ -37,6 +35,7 @@
 #include "log.h"
 #include "file.h"
 #include "context.h"
+#include "event.h"
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -54,6 +53,7 @@ char *repl_matches(char *, char *, regmatch_t *);
 void parse_line(char *, struct file *);
 void usage(void);
 void *exec_thread(void *);
+void *pipe_thread(void *);
 struct kevent *make_kev_list(int *);
 
 void sighandler(int sig)
@@ -80,6 +80,28 @@ int load_conf(void)
   fclose(yyin);
 
   return 0;
+}
+
+void *pipe_thread(void *arg)
+{
+  struct { char *cmd; char *line; } *args;
+  FILE *fd;
+
+  args = (struct { char *cmd; char *line; } *) arg;
+
+  fd = popen(args->cmd, "w");
+  if(fd == NULL)
+    error("%s: %s", args->cmd, strerror(errno));
+  else
+  {
+    fprintf(fd, "%s\n", args->line);
+    pclose(fd);
+  }
+
+  free(args->line);
+  free(args->cmd);
+
+  return NULL;
 }
 
 void *exec_thread(void *arg)
@@ -187,6 +209,7 @@ void parse_line(char *line, struct file *file)
   struct rule *rule;
   struct context *context;
   int match;
+  struct { char *cmd; char *line; } arg;
 
   if(strlen(line) < 17)
     return;
@@ -222,9 +245,26 @@ void parse_line(char *line, struct file *file)
 	str = repl_matches(test, rule->params.cmd, matches);
 	
 	if(debug)
-	  info("matched: (%s) %s -- executing: %s", file->tag, test, str);      
-    
+	  info("matched: (%s) %s -- executing: %s", file->tag, test, str);
+   
 	if(pthread_create(&thread, NULL, exec_thread, str) != 0)
+	  die("pthread_create: %s", strerror(errno));
+    
+	return;
+      case ACTION_PIPE:
+	if(rule->params.cmd == NULL || *(rule->params.cmd) == '\0')
+	  return;
+
+	str = repl_matches(test, rule->params.cmd, matches);
+
+	if(debug)
+	  info("matched: (%s) %s -- piping: %s", file->tag, test, str);
+
+	arg.cmd = str;
+	arg.line = xmalloc(strlen(line) + 1);
+	strcpy(line, arg.line);
+	
+	if(pthread_create(&thread, NULL, pipe_thread, &arg) != 0)
 	  die("pthread_create: %s", strerror(errno));
     
 	return;
@@ -310,39 +350,11 @@ void parse_line(char *line, struct file *file)
   add_message(&file->saves, line);
 }
 
-struct kevent *make_kev_list(int *kevlen)
-{
-  struct file *file;
-  struct kevent *kevlist, *kevptr;
-  
-  *kevlen = count_open_files() * 2;
-  if(*kevlen == 0)
-    return NULL;
-
-  kevlist = xmalloc(sizeof(struct kevent) * *kevlen);
-
-  kevptr = kevlist;
-  for(file = files.head; file != NULL; file = file->next)
-  {
-    if(file->fd != NULL)
-    {
-      EV_SET(kevptr, fileno(file->fd), EVFILT_VNODE, EV_ADD | EV_CLEAR, NOTE_RENAME | NOTE_DELETE, 0, NULL);
-      kevptr++;
-      EV_SET(kevptr, fileno(file->fd), EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-      kevptr++;
-    }
-  }
-
-  return kevlist;
-}
-
 void usage(void)
 {
   printf("usage: %s [-d] [-f file]\n", __progname);
 
   exit(1);
-
-  /* NOTREACHED */
 }
 
 int main(int argc, char **argv)
@@ -352,18 +364,12 @@ int main(int argc, char **argv)
 
   time_t now, prev;
 
-  int rc;
+  int event;
   ssize_t len;
   size_t last, pos;
 
   struct file *file;
-
-  int kq;  
-  struct timespec ts;
-  struct kevent kev;
-  struct kevent *kevlist;
-  int kevlen;
-  
+ 
   now_daemon = 0;
   
   conf_file = CONFFILE;
@@ -438,10 +444,6 @@ int main(int argc, char **argv)
   reload_conf = 0;
   exit_now = 0;
 
-  kq = kqueue();
-  if(kq == -1)
-    die("kqueue: %s", strerror(errno));
-
   prev = time(NULL) + 10;
 
   while(!exit_now)
@@ -469,62 +471,28 @@ int main(int argc, char **argv)
     }
 
     if(open_files() > 0)
-    {
-      kevlist = make_kev_list(&kevlen);
-      if(kevent(kq, kevlist, kevlen, NULL, 0, NULL))
-      {
-	error("kevent: %s", strerror(errno));
-	error("exited");
-	
-	exit(1);
-      }
-      free(kevlist);
-    }
-
-    ts.tv_nsec = 0;
-    ts.tv_sec = 10;
-    rc = kevent(kq, NULL, 0, &kev, 1, &ts);
-
-    if(rc == -1)
-    {
-      if(errno == EINTR) /* && !debug) */
-	continue;
-      
-      error("kevent: %s", strerror(errno));
-      error("exited");
-      
-      exit(1);
-    }
+      init_events();
+    
+    file = get_event(&event,5);
 
     now = time(NULL);
-    if(rc == 0 || now > prev)
+    if(event == EVENT_TIMEOUT || now > prev)
     {
       check_files();
-
-      prev = time(NULL) + 10;      
+      
+      prev = now + 10;
     }
 
-    if(rc == 0)
-      continue;
-
-    file = find_file_by_fn(kev.ident);
     if(file == NULL)
       continue;
 
-    switch(kev.filter)
+    switch(event)
     {
-      case EVFILT_VNODE:
+      case EVENT_REOPEN:
 	fclose(file->fd);
 	file->fd = NULL;
 	break;
-      case EVFILT_READ:
-	if(kev.data < 0)
-	{
-	  fclose(file->fd);
-	  file->fd = NULL;
-	  break;
-	}
-	
+      case EVENT_READ:
 	for(;;)
 	{
 	  file->buffer = xrealloc(file->buffer, file->length + 256);
@@ -555,11 +523,6 @@ int main(int argc, char **argv)
 	file->length -= last;
 
 	break;
-      default:
-	error("unexpected result from kevent");
-	error("exited");
-	    
-	exit(1);
     }
   }
   
