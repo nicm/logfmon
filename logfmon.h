@@ -23,6 +23,9 @@
 
 #include <sys/types.h>
 
+#define MAILTIME 900
+#define MAILCMD "/usr/bin/mail root"
+
 #define CONFFILE  "/etc/logfmon.conf"
 #define CACHEFILE "/etc/logfmon.cache"
 #define PIDFILE "/var/run/logfmon.pid"

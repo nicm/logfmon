@@ -410,7 +410,7 @@ int main(int argc, char **argv)
   now_daemon = 0;
 
   pid_file = NULL;
-  conf_file = CONFFILE;
+  conf_file = NULL;
   cache_file = NULL;
 
   debug = 0;
@@ -443,11 +443,17 @@ int main(int argc, char **argv)
   rules.head = rules.tail = NULL;
   files.head = files.tail = NULL;
 
-  mail_time = 900;
+  mail_time = MAILTIME;
   mail_cmd = NULL;
 
   uid = 0;
   gid = 0;
+
+  if(conf_file == NULL)
+  {
+    conf_file = xmalloc(strlen(CONFFILE) + 1);
+    strcpy(conf_file, CONFFILE);
+  }
 
   if(load_conf() != 0)
   {
@@ -456,16 +462,25 @@ int main(int argc, char **argv)
   }
 
   if(mail_cmd == NULL)
-    mail_cmd = "/usr/bin/mail root";
+  {
+    mail_cmd = xmalloc(strlen(MAILCMD) + 1);
+    strcpy(mail_cmd, MAILCMD);
+  }
   
   if(files.head == NULL)
     die("no files specified");
 
   if(cache_file == NULL)
-    cache_file = CACHEFILE;
+  {
+    cache_file = xmalloc(strlen(CACHEFILE) + 1);
+    strcpy(cache_file, CACHEFILE);
+  }
 
   if(pid_file == NULL)
-    pid_file = PIDFILE;
+  {
+    pid_file = xmalloc(strlen(PIDFILE) + 1);
+    strcpy(pid_file, PIDFILE);
+  }
 
   /*if(rules == NULL)
     die("no rules found");*/
@@ -505,6 +520,9 @@ int main(int argc, char **argv)
 
   load_cache();
 
+  reload_conf = 0;
+  exit_now = 0;
+
   pthread_mutex_init(&save_mutex, NULL);
 
   if(pthread_create(&thread, NULL, save_thread, NULL) != 0)
@@ -533,9 +551,6 @@ int main(int argc, char **argv)
     }
   }
 
-  reload_conf = 0;
-  exit_now = 0;
-
   prev = time(NULL) + CHECKTIMEOUT;
 
   open_files();
@@ -545,6 +560,11 @@ int main(int argc, char **argv)
 
   while(!exit_now)
   {
+    /*
+    if(fopen("q", "r") != NULL)
+      exit_now = 1;
+    */
+
     if(reload_conf)
     {
       info("reloading configuration");
@@ -658,6 +678,23 @@ int main(int argc, char **argv)
   close_files();
   if(pid_file != NULL && *pid_file != '\0')
     unlink(pid_file);
+
+  /* let's be tidy; easier to check for leaks too */
+  clear_rules();
+  clear_files();
+
+  if(conf_file != NULL)
+    free(conf_file);
+  if(cache_file != NULL)
+    free(cache_file);
+  if(pid_file != NULL)
+    free(pid_file);
+  if(mail_cmd != NULL)
+    free(mail_cmd);
+
+  pthread_mutex_destroy(&save_mutex);
+
+  info("terminated");
 
   return 0;
 }
