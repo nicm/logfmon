@@ -7,7 +7,7 @@ VERSION= 0.1
 OS!= uname
 
 PROG= logfmon
-SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c parse.y lex.l
+SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c context.c parse.y lex.l
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 

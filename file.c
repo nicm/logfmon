@@ -25,6 +25,7 @@
 #include "file.h"
 #include "xmalloc.h"
 #include "log.h"
+#include "save.h"
 
 struct file *files;
 
@@ -111,6 +112,8 @@ void clear_files(void)
     last = file;
 
     file = file->next;
+
+    clear_saves(file->saves);
 
     free(last->buffer);
     free(last->path);

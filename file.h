@@ -31,6 +31,8 @@ struct file
   char *buffer;
   size_t length;
 
+  struct context *contexts;
+
   struct save *saves;
 
   struct file *next;

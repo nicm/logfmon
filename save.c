@@ -32,8 +32,6 @@
 
 pthread_mutex_t *save_mutex;
 
-struct save *clear_saves(struct save *);
-
 struct save *add_save(struct save *saves, char *msg)
 {
   struct save *save, *new;

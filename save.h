@@ -31,6 +31,8 @@ struct save
 extern pthread_mutex_t *save_mutex;
 
 struct save *add_save(struct save *, char *);
+struct save *clear_saves(struct save *);
+
 void *save_thread(void *);
 
 #endif
