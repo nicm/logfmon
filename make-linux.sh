@@ -8,7 +8,7 @@ if [ "$1" == "clean" ]; then
 fi
 
 CC=gcc
-CFLAGS="-I- -I. -I/usr/local/include $CFLAGS \
+CFLAGS="-I- -I. -I/usr/local/include $CFLAGS -D_LARGEFILE_SOURCE \
         -Wall -W -Wmissing-prototypes -Wmissing-declarations \
         -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare"
 LDFLAGS="-L/usr/local/lib"

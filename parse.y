@@ -67,7 +67,7 @@ int yywrap(void)
 %token <number> NUMBER
 %token <number> TIME
 %token <string> STRING
-%token <tags> TAGS;
+%token <tags> TAGS
 
 %%
 
