@@ -51,7 +51,7 @@ int save_cache(void)
     return 1;
   }
   
-  fd = fopen(name,"w+");
+  fd = fopen(name, "w+");
   if(fd == NULL)
   {
     error("%s: %s", name, strerror(errno));
@@ -65,7 +65,12 @@ int save_cache(void)
   fclose(fd);
 
   if(rename(name, cache_file) == -1)
+  {
     error("rename: %s", strerror(errno));
+    unlink(name);
+    free(name);
+    return 1;
+  }
 
   free(name);
 
@@ -77,7 +82,7 @@ int load_cache(void)
   struct file *file;
   struct stat sb;
   FILE *fd;
-  char *path, format[32];
+  char *path, format[24];
   int length;
   off_t size;
   off_t offset;
@@ -89,9 +94,10 @@ int load_cache(void)
   if(debug)
     info("loading cache");
 
-  fd = fopen(cache_file,"r");
+  fd = fopen(cache_file, "r");
   if(fd == NULL)
   {
+    /* info is probably correct */
     info("%s: %s", cache_file, strerror(errno));
     return 1;
   }
@@ -105,25 +111,24 @@ int load_cache(void)
     if(fscanf(fd, "%d ", &length) < 1)
       break;
 
-    if(path != NULL)
-      free(path);
+    free(path);
     path = malloc((size_t) length + 1); /* not xmalloc */
     if(path == NULL)
     {
       error("malloc: %s (cache: length = %d)", strerror(errno), length);
-      break;
+      goto error;
     }
 
     result = snprintf(format, sizeof(format), "%%%dc %%lld %%lld", length);
     if(result < 0 || result > (int) sizeof(format))
     {
       error("cannot load entire cache file; possibly corrupted");
-      break;
+      goto error;
     }
     if(fscanf(fd, format, path, &size, &offset) < 3)
     {
       error("cannot load entire cache file; possibly corrupted");
-      break;
+      goto error;
     }
     path[length] = '\0';
 
@@ -147,10 +152,14 @@ int load_cache(void)
     }
   }
 
-  if(path != NULL)
-    free(path);
-
+  free(path);
   fclose(fd);
 
   return 0;
+
+ error:
+  free(path);
+  fclose(fd);
+
+  return 1;
 }

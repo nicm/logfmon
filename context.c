@@ -48,8 +48,7 @@ int add_context(struct contexts *contexts, char *key, struct rule *rule)
   context->rule = rule;
   context->expiry = time(NULL) + rule->params.expiry;
 
-  context->key = (char *) xmalloc(strlen(key) + 1);
-  strcpy(context->key, key);
+  context->key = xstrdup(key);
 
   if(contexts->head == NULL)
   {

@@ -70,8 +70,7 @@ int add_file(char *path, char *tag)
   }
   fclose(fd);
 
-  file->path = (char *) xmalloc(strlen(path) + 1);
-  strcpy(file->path, path);
+  file->path = xstrdup(path);
 
   if(find_file_by_tag(tag) != NULL)
   {
@@ -83,8 +82,7 @@ int add_file(char *path, char *tag)
     return 1;
   }
    
-  file->tag = (char *) xmalloc(strlen(tag) + 1);
-  strcpy(file->tag, tag);
+  file->tag = xstrdup(tag);
 
   if(debug)
     info("file=%s, tag=%s", file->path, file->tag);
