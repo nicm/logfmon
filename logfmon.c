@@ -253,7 +253,7 @@ void parse_line(char *line, struct file *file)
 	  if(pthread_create(&thread, NULL, exec_thread, str) != 0)
 	    die("pthread_create: %s", strerror(errno));
 	}
-    
+
 	return;
       case ACTION_PIPE:
 	if(rule->params.cmd == NULL || *(rule->params.cmd) == '\0')
@@ -310,13 +310,14 @@ void parse_line(char *line, struct file *file)
 	  info("matched: (%s) %s -- appending: %s", file->tag, test, str);
 
 	context = find_context_by_key(&file->contexts, str);
-	free(str);
 	if(context == NULL)
 	{
 	  if(debug)
 	    info("missing context %s for append", str);
+	  free(str);
 	  continue;
 	}
+	free(str);
 
 	add_message(&context->messages, line);
 
@@ -331,11 +332,11 @@ void parse_line(char *line, struct file *file)
 	  info("matched: (%s) %s -- closing: %s", file->tag, test, str);
 	
 	context = find_context_by_key(&file->contexts, str);
-	free(str);
 	if(context == NULL)
 	{
 	  if(debug)
 	    info("missing context %s for close", str);
+	  free(str);
 	  continue;
 	}
 
