@@ -65,17 +65,17 @@ void *save_thread(void *arg)
     if(debug)
       info("processing saved messages. executing: %s", mail_cmd);
 
-    pthread_mutex_lock(&save_mutex);
-
     fd = popen(mail_cmd, "w");
     if(fd == NULL)
     {
       error("%s: %s", mail_cmd, strerror(errno));
       continue;
     }
-
+    
     msgs = 0;
-
+    
+    pthread_mutex_lock(&save_mutex);
+    
     for(file = files.tail; file != NULL; file = file->last)
     {
       if(file->saves.head != NULL)
