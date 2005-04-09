@@ -12,9 +12,10 @@ this.
 
 The Makefile requires BSD make. In Debian, FreeBSD make is part of the
 freebsd-buildutils package - installed as /usr/bin/freebsd-make - and it
-works fine. Alternatively, the make-linux.sh script should work if you
-have bash installed. Note that the Linux stuff is very poorly tested so YMMV.
-I'd appreciate feedback on problems.
+works fine. A portable BSD make is also available from the TenDRA project
+http://www.ten15.org. Alternatively, the make-linux.sh script should work
+if you have bash installed. Note that the Linux stuff is very poorly tested
+so YMMV. I'd appreciate feedback on problems.
 
 There is some weirdness with yacc on my Linux installation, in that it
 sometimes fails the first time you build with `unexpected end of file'. It
@@ -43,7 +44,7 @@ On OpenBSD, I add these lines to /etc/rc.local to run logfmon on startup:
 	fi
 
 For FreeBSD, example rc.d scripts for 4.10 and 5.3 are included in the rc.d/
-directory.If you use it, you need to either edit it or put your logfmon.conf
+directory. If you use it, you need to either edit it or put your logfmon.conf
 in /usr/local/etc and include a line eg:
 
 	set cachefile "/usr/local/etc/logfmon.cache"

@@ -7,7 +7,7 @@ if [ "$1" == "clean" ]; then
     exit
 fi
 
-CC=gcc
+CC="gcc"
 CFLAGS="-I- -I. -I/usr/local/include $CFLAGS -D_LARGEFILE_SOURCE \
         -Wall -W -Wmissing-prototypes -Wmissing-declarations \
         -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare"
