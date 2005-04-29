@@ -1,6 +1,6 @@
---- Makefile.orig	Wed Nov 17 18:55:43 2004
-+++ Makefile	Wed Nov 17 19:02:03 2004
-@@ -82,14 +82,14 @@
+--- Makefile.orig	Fri Apr 29 13:24:07 2005
++++ Makefile	Fri Apr 29 13:25:03 2005
+@@ -100,9 +100,9 @@
  		${MKDEP} ${MKDEPFLAGS} ${CFLAGS} ${SRCS}
  
  install:	all
@@ -11,6 +11,11 @@
 +		${INSTALL} ${INSTALLMAN} ${PROG}.8.gz ${DESTDIR}/usr/local/man/man8/${PROG}.8.gz
 +		${INSTALL} ${INSTALLMAN} ${PROG}.conf.5.gz ${DESTDIR}/usr/local/man/man5/${PROG}.conf.5.gz
  
+ update-ports:
+ 		md5 releases/${PROG}-${VERSION}.tar.gz > ${PORT}/distinfo.new
+@@ -114,9 +114,9 @@
+ 		${MV} ${PORT}/Makefile.new ${PORT}/Makefile
+ 
  uninstall:
 -		${RM} ${RMFLAGS} ${DESTDIR}/sbin/${PROG}
 -		${RM} ${RMFLAGS} ${DESTDIR}/man/man8/${PROG}.8.gz
@@ -20,4 +25,4 @@
 +		${RM} ${RMFLAGS} ${DESTDIR}/usr/local/man/man5/${PROG}.conf.5.gz
  
  clean:
- 		${RM} ${RMFLAGS} ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz
+ 		${RM} ${RMFLAGS} ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz *~ *.ln

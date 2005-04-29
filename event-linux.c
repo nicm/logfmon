@@ -51,7 +51,7 @@
  *      refuses to work for me altogether on files.
  *    - aio_* is not what I am looking for at all, and it would be
  *      a real pain to make it do what I want.
- *    - F_SETSIG also looks lannoying to implement, and I'm not sure
+ *    - F_SETSIG also looks annoying to implement, and I'm not sure
  *      it would do the right thing either.
  *
  * So, we are left with a very sucky manual poll with stat()
