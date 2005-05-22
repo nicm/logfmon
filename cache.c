@@ -34,6 +34,7 @@
 int save_cache(void)
 {
   struct file *file;
+  size_t len;
   FILE *fd;
   char *name;
 
@@ -43,8 +44,9 @@ int save_cache(void)
   if(debug)
     info("saving cache");
 
-  name = xmalloc(strlen(cache_file) + 5);
-  if(sprintf(name, "%s.new", cache_file) < 0)
+  len = strlen(cache_file) + 5;
+  name = xmalloc(len);
+  if(snprintf(name, len, "%s.new", cache_file) < 0)
   {
     error("sprintf: %s", strerror(errno));
     free(name);
