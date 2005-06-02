@@ -21,16 +21,16 @@
 
 struct message
 {
-  char *msg;
+        char *msg;
 
-  struct message *next;
-  struct message *last;
+        struct message *next;
+        struct message *last;
 };
 
 struct messages
 {
-  struct message *head;
-  struct message *tail;
+        struct message *head;
+        struct message *tail;
 };
 
 void init_messages(struct messages *);

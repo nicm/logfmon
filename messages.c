@@ -30,64 +30,64 @@
 
 void init_messages(struct messages *messages)
 {
-  messages->head = messages->tail = NULL;
+        messages->head = messages->tail = NULL;
 }
 
 int add_message(struct messages *messages, char *msg)
 {
-  struct message *message;
+        struct message *message;
 
-  message = (struct message *) xmalloc(sizeof(struct message));
+        message = xmalloc(sizeof(struct message));
 
-  message->msg = xstrdup(msg);
+        message->msg = xstrdup(msg);
 
-  if(messages->head == NULL)
-  {
-    message->next = message->last = NULL;
-    messages->head = messages->tail = message;
-  }
-  else
-  {
-    messages->head->last = message;
-    message->next = messages->head;
-    message->last = NULL;
-    messages->head = message;
-  }
+        if(messages->head == NULL)
+        {
+                message->next = message->last = NULL;
+                messages->head = messages->tail = message;
+        }
+        else
+        {
+                messages->head->last = message;
+                message->next = messages->head;
+                message->last = NULL;
+                messages->head = message;
+        }
 
-  return 0;
+        return 0;
 }
 
 int count_messages(struct messages *messages)
 {
-  struct message *message;
-  int num;
+        struct message *message;
+        int num;
 
-  if(messages->head == NULL)
-    return 0;
+        if(messages->head == NULL)
+                return 0;
 
-  num = 0;
-  for(message = messages->head; message != NULL; message = message->next)
-    num++;
+        num = 0;
+        for(message = messages->head; message != NULL; message = message->next)
+                num++;
 
-  return num;
+        return num;
 }
 
 void clear_messages(struct messages *messages)
 {
-  struct message *message, *last;
+        struct message *message, *last;
 
-  if(messages->head == NULL)
-    return;
+        if(messages->head == NULL)
+                return;
 
-  message = messages->head;
-  while(message != NULL)
-  {
-    last = message;
-    message = message->next;
+        message = messages->head;
+        while(message != NULL)
+        {
+                last = message;
+                message = message->next;
 
-    free(last->msg);
-    free(last);
-  }
+                free(last->msg);
+                free(last);
+        }
 
-  messages->head = messages->tail = NULL;
+        messages->head = messages->tail = NULL;
 }

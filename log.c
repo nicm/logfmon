@@ -29,40 +29,40 @@ void vlog(int, char *, va_list);
 
 void die(char *fmt, ...)
 {
-  va_list ap;
+        va_list ap;
 
-  va_start(ap, fmt);
-  vlog(LOG_ERR, fmt, ap);
-  va_end(ap);
+        va_start(ap, fmt);
+        vlog(LOG_ERR, fmt, ap);
+        va_end(ap);
 
-  if(now_daemon)
-    error("exited");
+        if(now_daemon)
+                error("exited");
 
-  exit(1);
+        exit(1);
 }
 
 void error(char *fmt, ...)
 {
-  va_list ap;
+        va_list ap;
 
-  va_start(ap, fmt);
-  vlog(LOG_ERR, fmt, ap);
-  va_end(ap);
+        va_start(ap, fmt);
+        vlog(LOG_ERR, fmt, ap);
+        va_end(ap);
 }
 
 void info(char *fmt, ...)
 {
-  va_list ap;
+        va_list ap;
 
-  va_start(ap, fmt);
-  vlog(LOG_INFO, fmt, ap);
-  va_end(ap);
+        va_start(ap, fmt);
+        vlog(LOG_INFO, fmt, ap);
+        va_end(ap);
 }
 
 void vlog(int pri, char *fmt, va_list ap)
 {
-  if(debug || !now_daemon)
-    vwarnx(fmt, ap);
-  else
-    vsyslog(LOG_DAEMON | pri, fmt, ap);
+        if(debug || !now_daemon)
+                vwarnx(fmt, ap);
+        else
+                vsyslog(LOG_DAEMON | pri, fmt, ap);
 }

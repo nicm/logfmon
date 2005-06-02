@@ -33,144 +33,153 @@
 
 int save_cache(void)
 {
-  struct file *file;
-  size_t len;
-  FILE *fd;
-  char *name;
+        struct file *file;
+        size_t len;
+        FILE *fd;
+        char *name;
 
-  if(cache_file == NULL || *cache_file == '\0')
-    return 0;
+        if(cache_file == NULL || *cache_file == '\0')
+                return 0;
 
-  if(debug)
-    info("saving cache");
+        if(debug)
+                info("saving cache");
 
-  len = strlen(cache_file) + 5;
-  name = xmalloc(len);
-  if(snprintf(name, len, "%s.new", cache_file) < 0)
-  {
-    error("sprintf: %s", strerror(errno));
-    free(name);
-    return 1;
-  }
+        len = strlen(cache_file) + 5;
+        name = xmalloc(len);
+        if(snprintf(name, len, "%s.new", cache_file) < 0)
+        {
+                error("snprintf: %s", strerror(errno));
+                free(name);
+                return 1;
+        }
 
-  fd = fopen(name, "w+");
-  if(fd == NULL)
-  {
-    error("%s: %s", name, strerror(errno));
-    free(name);
-    return 1;
-  }
+        fd = fopen(name, "w+");
+        if(fd == NULL)
+        {
+                error("%s: %s", name, strerror(errno));
+                free(name);
+                return 1;
+        }
 
-  for(file = files.head; file != NULL; file = file->next)
-  {
-    if(fprintf(fd, "%d %s %lld %lld\n", (int) strlen(file->path), file->path, (long long) file->size, (long long) file->offset) == -1)
-    {
-      (void) fclose(fd);
-      error("error writing cache");
-      unlink(name);
-      free(name);
-      return 1;
-    }
-  }
+        for(file = files.head; file != NULL; file = file->next)
+        {
+                if(fprintf(fd, "%d %s %lld %lld\n", strlen(file->path),
+                       file->path, (long long) file->size,
+                       (long long) file->offset) == -1)
+                {
+                        (void) fclose(fd);
+                        error("error writing cache");
+                        unlink(name);
+                        free(name);
+                        return 1;
+                }
+        }
 
-  (void) fclose(fd);
+        (void) fclose(fd);
 
-  if(rename(name, cache_file) == -1)
-  {
-    error("rename: %s", strerror(errno));
-    unlink(name);
-    free(name);
-    return 1;
-  }
+        if(rename(name, cache_file) == -1)
+        {
+                error("rename: %s", strerror(errno));
+                unlink(name);
+                free(name);
+                return 1;
+        }
 
-  free(name);
+        free(name);
 
-  return 0;
+        return 0;
 }
 
 int load_cache(void)
 {
-  struct file *file;
-  struct stat sb;
-  FILE *fd;
-  char *path, format[24];
-  int length;
-  off_t size;
-  off_t offset;
-  int result;
+        struct file *file;
+        struct stat sb;
+        FILE *fd;
+        char *path, format[24];
+        int length;
+        off_t size;
+        off_t offset;
+        int result;
 
-  if(cache_file == NULL || *cache_file == '\0')
-    return 0;
+        if(cache_file == NULL || *cache_file == '\0')
+                return 0;
 
-  if(debug)
-    info("loading cache");
+        if(debug)
+                info("loading cache");
 
-  fd = fopen(cache_file, "r");
-  if(fd == NULL)
-  {
-    /* info is probably correct */
-    info("%s: %s", cache_file, strerror(errno));
-    return 1;
-  }
+        fd = fopen(cache_file, "r");
+        if(fd == NULL)
+        {
+                /* info is probably correct */
+                info("%s: %s", cache_file, strerror(errno));
+                return 1;
+        }
 
-  path = NULL;
-  size = 0;
-  offset = 0;
+        path = NULL;
+        size = 0;
+        offset = 0;
 
-  while(!feof(fd))
-  {
-    if(fscanf(fd, "%d ", &length) < 1)
-      break;
+        while(!feof(fd))
+        {
+                if(fscanf(fd, "%d ", &length) < 1)
+                        break;
 
-    free(path);
-    path = malloc((size_t) length + 1); /* not xmalloc */
-    if(path == NULL)
-    {
-      error("malloc: %s (cache: length = %d)", strerror(errno), length);
-      goto error;
-    }
+                free(path);
+                path = malloc(length + 1); /* not xmalloc */
+                if(path == NULL)
+                {
+                        error("malloc: %s (cache: length = %d)",
+                            strerror(errno), length);
+                        goto error;
+                }
 
-    result = snprintf(format, sizeof(format), "%%%dc %%lld %%lld", length);
-    if(result < 0 || result > (int) sizeof(format))
-    {
-      error("cannot load entire cache file; possibly corrupted");
-      goto error;
-    }
-    if(fscanf(fd, format, path, &size, &offset) < 3)
-    {
-      error("cannot load entire cache file; possibly corrupted");
-      goto error;
-    }
-    path[length] = '\0';
+                result = snprintf(format, sizeof(format), "%%%dc %%lld %%lld",
+                    length);
+                if(result < 0 || result > (int) sizeof(format))
+                {
+                        error("cannot load entire cache file; "
+                            "possibly corrupted");
+                        goto error;
+                }
+                if(fscanf(fd, format, path, &size, &offset) < 3)
+                {
+                        error("cannot load entire cache file; "
+                            "possibly corrupted");
+                        goto error;
+                }
+                path[length] = '\0';
 
-    file = find_file_by_path(path);
-    if(file != NULL)
-    {
-      file->offset = 0;
-      if(stat(path, &sb) == -1)
-	error("%s: %s", path, strerror(errno));
-      else
-      {
-	if(sb.st_size >= size)
-	{
-	  file->offset = offset;
-	  /* this is correct: size is updated incrementally */
-	  file->size = offset;
-	}
-      }
-      if(debug)
-	info("file %s, was %lld/%lld now %lld/%lld", path, offset, size, file->offset, file->size);
-    }
-  }
+                file = find_file_by_path(path);
+                if(file != NULL)
+                {
+                        file->offset = 0;
+                        if(stat(path, &sb) == -1)
+                                error("%s: %s", path, strerror(errno));
+                        else
+                        {
+                                if(sb.st_size >= size)
+                                {
+                                        file->offset = offset;
+                                        /* this is correct: size is updated
+                                           incrementally */
+                                        file->size = offset;
+                                }
+                        }
+                        if(debug)
+                                info("file %s, was %lld/%lld now %lld/%lld",
+                                    path, offset, size,
+                                    file->offset, file->size);
+                }
+        }
 
-  free(path);
-  (void) fclose(fd);
+        free(path);
+        (void) fclose(fd);
 
-  return 0;
+        return 0;
 
  error:
-  free(path);
-  (void) fclose(fd);
+        free(path);
+        (void) fclose(fd);
 
-  return 1;
+        return 1;
 }

@@ -44,12 +44,12 @@ extern int yylex(void);
 
 void yyerror(const char *str)
 {
-  die("%s at line %d", str, yylineno);
+        die("%s at line %d", str, yylineno);
 }
 
 int yywrap(void)
 {
-  return 1;
+        return 1;
 }
 %}
 
@@ -59,9 +59,9 @@ int yywrap(void)
 
 %union
 {
-  int number;
-  char *string;
-  struct tags *tags;
+        int number;
+        char *string;
+        struct tags *tags;
 }
 
 %token <number> NUMBER
@@ -81,1773 +81,1810 @@ cmds:
 
 set: TOKSET OPTMAILCMD STRING
      {
-       if(mail_cmd != NULL)
-	 free(mail_cmd);
-       mail_cmd = $3;
+             if(mail_cmd != NULL)
+                     free(mail_cmd);
+             mail_cmd = $3;
      }
    | TOKSET OPTCACHEFILE STRING
      {
-       if(cache_file == NULL)
-	 cache_file = $3;
-       else
-	 free($3);
+             if(cache_file == NULL)
+                     cache_file = $3;
+             else
+                     free($3);
      }
    | TOKSET OPTPIDFILE STRING
      {
-       if(pid_file == NULL)
-	 pid_file = $3;
-       else
-	 free($3);
+             if(pid_file == NULL)
+                     pid_file = $3;
+             else
+                     free($3);
      }
    | TOKSET OPTMAILTIME TIME
      {
-       if($3 < 10)
-	 yyerror("mail time must be at least 10 seconds");
+             if($3 < 10)
+                     yyerror("mail time must be at least 10 seconds");
 
-       mail_time = $3;
+             mail_time = $3;
      }
    | TOKSET OPTMAILTIME NUMBER
      {
-       if($3 < 10)
-	 yyerror("mail time must be at least 10 seconds");
+             if($3 < 10)
+                     yyerror("mail time must be at least 10 seconds");
 
-       mail_time = $3;
+             mail_time = $3;
      }
    | TOKSET OPTUSER STRING
      {
-       struct passwd *pw;
+             struct passwd *pw;
 
-       pw = getpwnam($3);
-       if(pw == NULL)
-	 die("unknown user %s", $3);
+             pw = getpwnam($3);
+             if(pw == NULL)
+                     die("unknown user %s", $3);
 
-       uid = pw->pw_uid;
+             uid = pw->pw_uid;
 
-       endpwent();
-       free($3);
+             endpwent();
+             free($3);
      }
    | TOKSET OPTUSER NUMBER
      {
-       struct passwd *pw;
+             struct passwd *pw;
 
-       pw = getpwuid($3);
-       if(pw == NULL)
-	 die("unknown uid %d", $3);
+             pw = getpwuid($3);
+             if(pw == NULL)
+                     die("unknown uid %d", $3);
 
-       uid = pw->pw_uid;
+             uid = pw->pw_uid;
 
-       endpwent();
+             endpwent();
      }
    | TOKSET OPTGROUP STRING
      {
-       struct group *gr;
+             struct group *gr;
 
-       gr = getgrnam($3);
-       if(gr == NULL)
-	 die("unknown group %s", $3);
+             gr = getgrnam($3);
+             if(gr == NULL)
+                     die("unknown group %s", $3);
 
-       gid = gr->gr_gid;
+             gid = gr->gr_gid;
 
-       endgrent();
-       free($3);
+             endgrent();
+             free($3);
      }
    | TOKSET OPTGROUP NUMBER
      {
-       struct group *gr;
+             struct group *gr;
 
-       gr = getgrgid($3);
-       if(gr == NULL)
-	 die("unknown gid %s", $3);
+             gr = getgrgid($3);
+             if(gr == NULL)
+                     die("unknown gid %s", $3);
 
-       gid = gr->gr_gid;
+             gid = gr->gr_gid;
 
-       endgrent();
+             endgrent();
      }
    ;
 
 rule: /* match, exec */
       TOKMATCH STRING TOKEXEC STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_EXEC, NULL, $2, NULL);
+              rule = add_rule(ACTION_EXEC, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $4;
+              rule->params.cmd = $4;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKEXEC STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_EXEC, NULL, $2, $4);
+              rule = add_rule(ACTION_EXEC, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $6;
+              rule->params.cmd = $6;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKEXEC STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_EXEC, $3, $4, NULL);
+              rule = add_rule(ACTION_EXEC, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $6;
+              rule->params.cmd = $6;
 
-	free($4);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKEXEC STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_EXEC, $3, $4, $6);
+              rule = add_rule(ACTION_EXEC, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $8;
+              rule->params.cmd = $8;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, pipe */
     | TOKMATCH STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_PIPE, NULL, $2, NULL);
+              rule = add_rule(ACTION_PIPE, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $4;
+              rule->params.cmd = $4;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_PIPE, NULL, $2, $4);
+              rule = add_rule(ACTION_PIPE, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $6;
+              rule->params.cmd = $6;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_PIPE, $3, $4, NULL);
+              rule = add_rule(ACTION_PIPE, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $6;
+              rule->params.cmd = $6;
 
-	free($4);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_PIPE, $3, $4, $6);
+              rule = add_rule(ACTION_PIPE, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.cmd = $8;
+              rule->params.cmd = $8;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, ignore */
     | TOKMATCH STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_IGNORE, NULL, $2, NULL);
+              rule = add_rule(ACTION_IGNORE, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_IGNORE, NULL, $2, $4);
+              rule = add_rule(ACTION_IGNORE, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_IGNORE, $3, $4, NULL);
+              rule = add_rule(ACTION_IGNORE, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	free($4);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_IGNORE, $3, $4, $6);
+              rule = add_rule(ACTION_IGNORE, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, open, ignore, none */
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE
+          TIME TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE
+          NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, open, pipe, none */
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
+              rule->params.cmd = $8;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
+              rule->params.cmd = $8;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
+          TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
+          TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
-	rule->params.cmd = $12;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
+              rule->params.cmd = $12;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
+          TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
-	rule->params.cmd = $12;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
+              rule->params.cmd = $12;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, open, ignore, ignore */
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER
+          TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($9 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($9 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
 
-	rule->params.ent_max = $9;
+              rule->params.ent_max = $9;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
+          TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
+              rule->params.ent_max = $11;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER
+          TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($9 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($9 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
 
-	rule->params.ent_max = $9;
+              rule->params.ent_max = $9;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
+          TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
+              rule->params.ent_max = $11;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
+          TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
+              rule->params.ent_max = $11;
 
-	free($3);
-	free($4);
+              free($3);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
+          TOKIGNORE TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($13 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($13 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
 
-	rule->params.ent_max = $13;
+              rule->params.ent_max = $13;
 
-	free($3);
-	free($4);
-	free($6);
+              free($3);
+              free($4);
+              free($6);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
+          TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
+              rule->params.ent_max = $11;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
+          TOKIGNORE TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($13 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($13 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
 
-	rule->params.ent_max = $13;
+              rule->params.ent_max = $13;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, open, ignore, pipe */
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER
+          TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($9 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($9 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
 
-	rule->params.ent_max = $9;
-	rule->params.ent_cmd = $11;
+              rule->params.ent_max = $9;
+              rule->params.ent_cmd = $11;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
+          TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
-	rule->params.ent_cmd = $13;
+              rule->params.ent_max = $11;
+              rule->params.ent_cmd = $13;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER
+          TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($9 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($9 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
 
-	rule->params.ent_max = $9;
-	rule->params.ent_cmd = $11;
+              rule->params.ent_max = $9;
+              rule->params.ent_cmd = $11;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
+          TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
-	rule->params.ent_cmd = $13;
+              rule->params.ent_max = $11;
+              rule->params.ent_cmd = $13;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
+           TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
-	rule->params.ent_cmd = $13;
+              rule->params.ent_max = $11;
+              rule->params.ent_cmd = $13;
 
-	free($4);
+              free($4);
       }
-     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
+           TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($13 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($13 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
 
-	rule->params.ent_max = $13;
-	rule->params.ent_cmd = $15;
+              rule->params.ent_max = $13;
+              rule->params.ent_cmd = $15;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
+          TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($11 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($11 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
 
-	rule->params.ent_max = $11;
-	rule->params.ent_cmd = $13;
+              rule->params.ent_max = $11;
+              rule->params.ent_cmd = $13;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
+          TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($13 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($13 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
 
-	rule->params.ent_max = $13;
-	rule->params.ent_cmd = $15;
+              rule->params.ent_max = $13;
+              rule->params.ent_cmd = $15;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, open, pipe, pipe */
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN
+          NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($10 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($10 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
+              rule->params.cmd = $8;
 
-	rule->params.ent_max = $10;
-	rule->params.ent_cmd = $12;
+              rule->params.ent_max = $10;
+              rule->params.ent_cmd = $12;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
+          TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
-	rule->params.ent_cmd = $14;
+              rule->params.ent_max = $12;
+              rule->params.ent_cmd = $14;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN
+          NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($10 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($10 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
+              rule->params.cmd = $8;
 
-	rule->params.ent_max = $10;
-	rule->params.ent_cmd = $12;
+              rule->params.ent_max = $10;
+              rule->params.ent_cmd = $12;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE
+          STRING TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
-	rule->params.ent_cmd = $14;
+              rule->params.ent_max = $12;
+              rule->params.ent_cmd = $14;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
+          TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
-	rule->params.ent_cmd = $14;
+              rule->params.ent_max = $12;
+              rule->params.ent_cmd = $14;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
+          TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($14 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($14 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
-	rule->params.cmd = $12;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
+              rule->params.cmd = $12;
 
-	rule->params.ent_max = $14;
-	rule->params.ent_cmd = $16;
+              rule->params.ent_max = $14;
+              rule->params.ent_cmd = $16;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
+          TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
-	rule->params.ent_cmd = $14;
+              rule->params.ent_max = $12;
+              rule->params.ent_cmd = $14;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
+          TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($14 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($14 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
-	rule->params.cmd = $12;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
+              rule->params.cmd = $12;
 
-	rule->params.ent_max = $14;
-	rule->params.ent_cmd = $16;
+              rule->params.ent_max = $14;
+              rule->params.ent_cmd = $16;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, open, pipe, ignore */
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN
+          NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($10 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($10 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
+              rule->params.cmd = $8;
 
-	rule->params.ent_max = $10;
+              rule->params.ent_max = $10;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
+          TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
+              rule->params.ent_max = $12;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN
+          NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$4 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$4 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($6 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($6 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($10 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($10 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
+              rule = add_rule(ACTION_OPEN, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.expiry = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $4;
+              rule->params.expiry = $6;
+              rule->params.cmd = $8;
 
-	rule->params.ent_max = $10;
+              rule->params.ent_max = $10;
 
-	free($2);
+              free($2);
       }
-    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE
+          STRING TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, NULL, $2, $4);
+              rule = add_rule(ACTION_OPEN, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
+              rule->params.ent_max = $12;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
+          TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
+              rule->params.ent_max = $12;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
+          TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($14 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($14 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
-	rule->params.cmd = $12;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
+              rule->params.cmd = $12;
 
-	rule->params.ent_max = $14;
+              rule->params.ent_max = $14;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
+          TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$6 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$6 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($8 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($8 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($12 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($12 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, NULL);
+              rule = add_rule(ACTION_OPEN, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.expiry = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $6;
+              rule->params.expiry = $8;
+              rule->params.cmd = $10;
 
-	rule->params.ent_max = $12;
+              rule->params.ent_max = $12;
 
-	free($4);
+              free($4);
       }
-    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
+    | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
+          TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if(*$8 == '\0')
-	  yyerror("context key cannot be empty string");
+              if(*$8 == '\0')
+                      yyerror("context key cannot be empty string");
 
-	if($10 == 0)
-	  yyerror("expiry time cannot be zero");
+              if($10 == 0)
+                      yyerror("expiry time cannot be zero");
 
-	if($14 == 0)
-	  yyerror("number of entries cannot be zero");
+              if($14 == 0)
+                      yyerror("number of entries cannot be zero");
 
-	rule = add_rule(ACTION_OPEN, $3, $4, $6);
+              rule = add_rule(ACTION_OPEN, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.expiry = $10;
-	rule->params.cmd = $12;
+              rule->params.key = $8;
+              rule->params.expiry = $10;
+              rule->params.cmd = $12;
 
-	rule->params.ent_max = $14;
+              rule->params.ent_max = $14;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, append */
     | TOKMATCH STRING TOKAPPEND STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_APPEND, NULL, $2, NULL);
+              rule = add_rule(ACTION_APPEND, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
+              rule->params.key = $4;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKAPPEND STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_APPEND, NULL, $2, $4);
+              rule = add_rule(ACTION_APPEND, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
+              rule->params.key = $6;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKAPPEND STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_APPEND, $3, $4, NULL);
+              rule = add_rule(ACTION_APPEND, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
+              rule->params.key = $6;
 
-	free($4);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKAPPEND STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_APPEND, $3, $4, $6);
+              rule = add_rule(ACTION_APPEND, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
+              rule->params.key = $8;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, close, ignore */
     | TOKMATCH STRING TOKCLOSE STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_CLOSE, NULL, $2, NULL);
+              rule = add_rule(ACTION_CLOSE, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
+              rule->params.key = $4;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKCLOSE STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_CLOSE, NULL, $2, $4);
+              rule = add_rule(ACTION_CLOSE, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
+              rule->params.key = $6;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKCLOSE STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_CLOSE, $3, $4, NULL);
+              rule = add_rule(ACTION_CLOSE, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
+              rule->params.key = $6;
 
-	free($4);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKCLOSE STRING TOKIGNORE
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_CLOSE, $3, $4, $6);
+              rule = add_rule(ACTION_CLOSE, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
+              rule->params.key = $8;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
 
       /* match, close, pipe */
     | TOKMATCH STRING TOKCLOSE STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_CLOSE, NULL, $2, NULL);
+              rule = add_rule(ACTION_CLOSE, NULL, $2, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $4;
-	rule->params.cmd = $6;
+              rule->params.key = $4;
+              rule->params.cmd = $6;
 
-	free($2);
+              free($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKCLOSE STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	rule = add_rule(ACTION_CLOSE, NULL, $2, $4);
+              rule = add_rule(ACTION_CLOSE, NULL, $2, $4);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $6;
+              rule->params.cmd = $8;
 
-	free($2);
-	free($4);
+              free($2);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKCLOSE STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_CLOSE, $3, $4, NULL);
+              rule = add_rule(ACTION_CLOSE, $3, $4, NULL);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $6;
-	rule->params.cmd = $8;
+              rule->params.key = $6;
+              rule->params.cmd = $8;
 
-	free($4);
+              free($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKCLOSE STRING TOKPIPE STRING
       {
-	struct rule *rule;
+              struct rule *rule;
 
-	if($3 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($3 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	rule = add_rule(ACTION_CLOSE, $3, $4, $6);
+              rule = add_rule(ACTION_CLOSE, $3, $4, $6);
 
-	if(rule == NULL)
-	  exit(1);
+              if(rule == NULL)
+                      exit(1);
 
-	rule->params.key = $8;
-	rule->params.cmd = $10;
+              rule->params.key = $8;
+              rule->params.cmd = $10;
 
-	free($4);
-	free($6);
+              free($4);
+              free($6);
       }
     ;
 
 file: TOKFILE STRING TOKTAG TAGS
       {
-	if(*$2 == '\0')
-	  yyerror("path cannot be empty string");
+              if(*$2 == '\0')
+                      yyerror("path cannot be empty string");
 
-	if($4 == NULL)
-	  yyerror("no tags or illegal tag");
+              if($4 == NULL)
+                      yyerror("no tags or illegal tag");
 
-	if($4->head == NULL)
-	  yyerror("at least one tag must be given");
+              if($4->head == NULL)
+                      yyerror("at least one tag must be given");
 
-	if($4->head->next != NULL)
-	  yyerror("only one tag may be assigned to a file");
+              if($4->head->next != NULL)
+                      yyerror("only one tag may be assigned to a file");
 
-	if(add_file($2, $4->head->name))
-	  exit(1);
+              if(add_file($2, $4->head->name))
+                      exit(1);
 
-	free($2);
+              free($2);
 
-	clear_tags($4);
-	free($4);
+              clear_tags($4);
+              free($4);
       }
     | TOKFILE STRING
       {
-	unsigned int num;
-	char tag[13];
+              unsigned int num;
+              char tag[13];
 
-	if(*$2 == '\0')
-	  yyerror("path cannot be empty string");
+              if(*$2 == '\0')
+                      yyerror("path cannot be empty string");
 
-	for(num = 1; num > 0; num++)
-	{
-	  snprintf(tag, 13, "__%u", num);
-	  if(!find_file_by_tag(tag))
-	    break;
-	}
-	if(num > 0)
-	{
-   	  if(add_file($2, tag))
-	    exit(1);
-	}
-	else
-	  die("%s: unable to find unused tag", $2);
-	free($2);
+              for(num = 1; num > 0; num++)
+              {
+                      snprintf(tag, 13, "__%u", num);
+                      if(!find_file_by_tag(tag))
+                              break;
+              }
+              if(num > 0)
+              {
+                      if(add_file($2, tag))
+                              exit(1);
+              }
+              else
+                      die("%s: unable to find unused tag", $2);
+              free($2);
       }
     ;
 

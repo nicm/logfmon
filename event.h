@@ -21,10 +21,10 @@
 
 enum event
 {
-  EVENT_NONE,
-  EVENT_TIMEOUT,
-  EVENT_REOPEN,
-  EVENT_READ
+        EVENT_NONE,
+        EVENT_TIMEOUT,
+        EVENT_REOPEN,
+        EVENT_READ
 };
 
 void init_events(void);

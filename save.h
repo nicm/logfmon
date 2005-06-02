@@ -23,16 +23,16 @@
 
 struct save
 {
-  char *msg;
+        char *msg;
 
-  struct save *next;
-  struct save *last;
+        struct save *next;
+        struct save *last;
 };
 
 struct saves
 {
-  struct save *head;
-  struct save *tail;
+        struct save *head;
+        struct save *tail;
 };
 
 extern pthread_mutex_t save_mutex;

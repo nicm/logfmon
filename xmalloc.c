@@ -27,31 +27,31 @@
 
 char *xstrdup(char *str)
 {
-  return strcpy(xmalloc(strlen(str) + 1), str);
+        return strcpy(xmalloc(strlen(str) + 1), str);
 }
 
 void *xmalloc(size_t size)
 {
-  void *block;
+        void *block;
 
-  block = malloc(size);
+        block = malloc(size);
 
-  if(block != NULL)
-    return block;
+        if(block != NULL)
+                return block;
 
-  die("malloc: %s", strerror(errno));
+        die("malloc: %s", strerror(errno));
 
-  return NULL;
+        return NULL;
 }
 
 void *xrealloc(void *block, size_t size)
 {
-  block = realloc(block, size);
+        block = realloc(block, size);
 
-  if(block != NULL)
-    return block;
+        if(block != NULL)
+                return block;
 
-  die("realloc: %s", strerror(errno));
+        die("realloc: %s", strerror(errno));
 
-  return NULL;
+        return NULL;
 }

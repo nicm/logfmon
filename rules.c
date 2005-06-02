@@ -29,113 +29,114 @@
 
 struct rules rules = { NULL, NULL };
 
-struct rule *add_rule(enum action action, struct tags *tags, char *re, char *not_re)
+struct rule *add_rule(enum action action, struct tags *tags, char *re,
+    char *not_re)
 {
-  struct rule *rule;
+        struct rule *rule;
 
-  rule = (struct rule *) xmalloc(sizeof(struct rule));
+        rule = xmalloc(sizeof(struct rule));
 
-  rule->action = action;
+        rule->action = action;
 
-  rule->params.cmd = NULL;
-  rule->params.key = NULL;
-  rule->params.expiry = 0;
+        rule->params.cmd = NULL;
+        rule->params.key = NULL;
+        rule->params.expiry = 0;
 
-  rule->params.ent_max = 0;
-  rule->params.ent_cmd = NULL;
+        rule->params.ent_max = 0;
+        rule->params.ent_cmd = NULL;
 
-  if(tags == NULL)
-  {
-    rule->tags = xmalloc(sizeof(struct tags));
-    init_tags(rule->tags);
-  }
-  else
-    rule->tags = tags;
+        if(tags == NULL)
+        {
+                rule->tags = xmalloc(sizeof(struct tags));
+                init_tags(rule->tags);
+        }
+        else
+                rule->tags = tags;
 
-  if(check_tags(rule->tags))
-  {
-    free(rule);
-    return NULL;
-  }
+        if(check_tags(rule->tags))
+        {
+                free(rule);
+                return NULL;
+        }
 
-  rule->re = (regex_t *) xmalloc(sizeof(regex_t));
+        rule->re = xmalloc(sizeof(regex_t));
 
-  if(regcomp(rule->re, re, 0) != 0)
-  {
-    free(rule->re);
-    free(rule);
+        if(regcomp(rule->re, re, 0) != 0)
+        {
+                free(rule->re);
+                free(rule);
 
-    error("%s: bad regexp", re);
+                error("%s: bad regexp", re);
 
-    return NULL;
-  }
+                return NULL;
+        }
 
-  if(not_re != NULL)
-  {
-    rule->not_re = (regex_t *) xmalloc(sizeof(regex_t));
+        if(not_re != NULL)
+        {
+                rule->not_re = xmalloc(sizeof(regex_t));
 
-    if(regcomp(rule->not_re, not_re, 0) != 0)
-    {
-      free(rule->not_re);
-      free(rule->re);
-      free(rule);
+                if(regcomp(rule->not_re, not_re, 0) != 0)
+                {
+                        free(rule->not_re);
+                        free(rule->re);
+                        free(rule);
 
-      error("%s: bad regexp", not_re);
+                        error("%s: bad regexp", not_re);
 
-      return NULL;
-    }
-  }
-  else
-    rule->not_re = NULL;
+                        return NULL;
+                }
+        }
+        else
+                rule->not_re = NULL;
 
-  if(debug)
-    info("match=%s, action=%d", re, rule->action);
+        if(debug)
+                info("match=%s, action=%d", re, rule->action);
 
-  if(rules.head == NULL)
-  {
-    rule->next = rule->last = NULL;
-    rules.head = rules.tail = rule;
-  }
-  else
-  {
-    rules.head->last = rule;
-    rule->next = rules.head;
-    rule->last = NULL;
-    rules.head = rule;
-  }
+        if(rules.head == NULL)
+        {
+                rule->next = rule->last = NULL;
+                rules.head = rules.tail = rule;
+        }
+        else
+        {
+                rules.head->last = rule;
+                rule->next = rules.head;
+                rule->last = NULL;
+                rules.head = rule;
+        }
 
-  return rule;
+        return rule;
 }
 
 void clear_rules(void)
 {
-  struct rule *rule, *last;
+        struct rule *rule, *last;
 
-  if(rules.head == NULL)
-    return;
+        if(rules.head == NULL)
+                return;
 
-  rule = rules.head;
-  while(rule != NULL)
-  {
-    last = rule;
-    rule = rule->next;
+        rule = rules.head;
+        while(rule != NULL)
+        {
+                last = rule;
+                rule = rule->next;
 
-    clear_tags(last->tags);
-    free(last->tags);
+                clear_tags(last->tags);
+                free(last->tags);
 
-    regfree(last->re);
-    free(last->re);
+                regfree(last->re);
+                free(last->re);
 
-    if(last->not_re != NULL)
-    {
-      regfree(last->not_re);
-      free(last->not_re);
-    }
+                if(last->not_re != NULL)
+                {
+                        regfree(last->not_re);
+                        free(last->not_re);
+                }
 
-    free(last->params.cmd);
-    free(last->params.key);
-    free(last);
-  }
+                free(last->params.cmd);
+                free(last->params.key);
+                free(last);
+        }
 
-  rules.head = rules.tail = NULL;
+        rules.head = rules.tail = NULL;
 }

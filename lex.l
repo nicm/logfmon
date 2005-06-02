@@ -19,6 +19,7 @@
  */
 
 %option yylineno
+
 %{
 #include <ctype.h>
 #include <stdio.h>
@@ -31,178 +32,182 @@
 
 extern int yylex(void);
 %}
+
 %%
-\{                       {
-                          int ch, done, len, pos;
-                          char *tag;
 
-                          done = 0;
- 
-                          len = 24;
-                          pos = 0;
-                          tag = xmalloc(len);
+\{ {
+        int ch, done, len, pos;
+        char *tag;
 
-                          yylval.tags = xmalloc(sizeof(struct tags));
-                          init_tags(yylval.tags);
-    
-                          while(!done && (ch = input()))
-                          {
-                            switch(ch)
-                            {
-                              case ' ':
-                                if(pos != 0)
-				{
-				  *(tag + pos) = '\0';
-				  add_tag(yylval.tags, tag);
-				  len = 24;
-				  pos = 0;
-				  tag = xrealloc(tag, len);
-				}
-                                break;
-                              case '}':
-                                done = 1;
-                                break;
-                              default:
-                                if(ch == '-' || ch == '_' || isalpha(ch))
-                                {
-                                  *(tag + pos) = ch; 
-                                  pos++;
-                                  while(pos >= len)
-                                  {
-                                    len *= 2;
-                                    tag = xrealloc(tag, len);
-                                  }
-                                }
-                                else
-                                {
-                                  clear_tags(yylval.tags);
-                                  free(yylval.tags);
-                                  yylval.tags = NULL;
-                                  free(tag);
-                                  return TAGS;
-                                }
-                                break;
-                            }
-                          }
+        done = 0;
 
-                          if(pos > 0)
-                          {
-                            *(tag + pos) = '\0';
-			    add_tag(yylval.tags, tag);
-                          }
+        len = 24;
+        pos = 0;
+        tag = xmalloc(len);
 
-                          if(yylval.tags->head == NULL)
-                          { 
-                            free(yylval.tags);
-                            yylval.tags = NULL;
-                          }
+        yylval.tags = xmalloc(sizeof(struct tags));
+        init_tags(yylval.tags);
 
-                          free(tag);
-                          return TAGS;
+        while(!done && (ch = input()))
+        {
+                switch(ch)
+                {
+                case ' ':
+                        if(pos != 0)
+                        {
+                                *(tag + pos) = '\0';
+                                add_tag(yylval.tags, tag);
+                                len = 24;
+                                pos = 0;
+                                tag = xrealloc(tag, len);
                         }
-[0-9]+[hms]             {
-                          char ch;
+                        break;
+                case '}':
+                        done = 1;
+                        break;
+                default:
+                        if(ch == '-' || ch == '_' || isalpha(ch))
+                        {
+                                *(tag + pos) = ch;
+                                pos++;
+                                while(pos >= len)
+                                {
+                                        len *= 2;
+                                        tag = xrealloc(tag, len);
+                                }
+                        }
+                        else
+                        {
+                                clear_tags(yylval.tags);
+                                free(yylval.tags);
+                                yylval.tags = NULL;
+                                free(tag);
+                                return TAGS;
+                        }
+                        break;
+                }
+        }
 
-                          ch = *(yytext + strlen(yytext) - 1);
-                          *(yytext + strlen(yytext) - 1) = '\0';
+        if(pos > 0)
+        {
+                *(tag + pos) = '\0';
+                add_tag(yylval.tags, tag);
+        }
 
-                          yylval.number=atoi(yytext);
-                          switch(ch)
-                          {
-                            case 'h':
-                              yylval.number *= 3600;
-                              break;
-                            case 'm':
-                              yylval.number *= 60;
-                              break;
-                          }
+        if(yylval.tags->head == NULL)
+        {
+                free(yylval.tags);
+                yylval.tags = NULL;
+        }
 
-                          return TIME;
-                        } 
+        free(tag);
+        return TAGS;
+}
+[0-9]+[hms] {
+        char ch;
+
+        ch = *(yytext + strlen(yytext) - 1);
+        *(yytext + strlen(yytext) - 1) = '\0';
+
+        yylval.number=atoi(yytext);
+        switch(ch)
+        {
+        case 'h':
+                yylval.number *= 3600;
+                break;
+        case 'm':
+                yylval.number *= 60;
+                break;
+        }
+
+        return TIME;
+}
 [0-9]+                  {
-                          yylval.number=atoi(yytext);
-                          return NUMBER;
-                        }
-\"                      {
-                          int ch, pos, len, done;
+        yylval.number=atoi(yytext);
+        return NUMBER;
+}
+\" {
+        int ch, pos, len, done;
 
-                          done = 0;
-                          len  = 24;
-                          pos  = 0;
+        done = 0;
+        len  = 24;
+        pos  = 0;
 
-                          yylval.string = (char *) xmalloc(len + 1);
-    
-                          while(!done && (ch = input()))
-                          {
-                            switch(ch)
-                            {
-                              case '\\':
-                                switch(ch = input())
-                                {
-                                  case 'r':
-                                    ch = '\r';
-                                    break;
-                                  case 'n':
-                                    ch = '\n';
-                                    break;
-                                  case 't':
-                                    ch = '\t';
-                                    break;
-                                }
+        yylval.string = xmalloc(len + 1);
+
+        while(!done && (ch = input()))
+        {
+                switch(ch)
+                {
+                case '\\':
+                        switch(ch = input())
+                        {
+                        case 'r':
+                                ch = '\r';
                                 break;
-                              case '"':
-                                done = 1;
-                                continue;
-                            }
-                          
-                            *(yylval.string + pos) = ch;
-                            pos++;
-                            if(pos == len)
-                            {
-                              len *= 2;
-                              yylval.string = (char *) xrealloc(yylval.string, len + 1);
-                            } 
-                          }
-                          
-                          *(yylval.string + pos) = '\0';             
-
-                          return STRING;
+                        case 'n':
+                                ch = '\n';
+                                break;
+                        case 't':
+                                ch = '\t';
+                                break;
                         }
-mailcmd                 return OPTMAILCMD;
-mailtime                return OPTMAILTIME;
-cachefile               return OPTCACHEFILE;
-pidfile                 return OPTPIDFILE;
-user                    return OPTUSER;
-group                   return OPTGROUP;
-not                     return TOKNOT;
-in			return TOKIN;
-file			return TOKFILE;
-tag			return TOKTAG;
-set                     return TOKSET;
-match                   return TOKMATCH;
-ignore                  return TOKIGNORE;
-exec                    return TOKEXEC;
-open                    return TOKOPEN;
-expire                  return TOKEXPIRE;
-append                  return TOKAPPEND;
-close                   return TOKCLOSE;
-pipe                    return TOKPIPE;
-when                    return TOKWHEN;
-\*			{
-                          yylval.tags = xmalloc(sizeof(struct tags));
-                          init_tags(yylval.tags);
-                           
-                          return TAGS;
-                        }
-[A-Za-z0-9_-]+ 		{
-                          yylval.tags = xmalloc(sizeof(struct tags));
-                          init_tags(yylval.tags);
+                        break;
+                case '"':
+                        done = 1;
+                        continue;
+                }
 
-                          add_tag(yylval.tags, yytext);
+                *(yylval.string + pos) = ch;
+                pos++;
+                if(pos == len)
+                {
+                        len *= 2;
+                        yylval.string = (char *)
+                            xrealloc(yylval.string, len + 1);
+                }
+        }
 
-			  return TAGS;
-			}
-\#.*\n                  /* ignore comments */;
-\n                      /* ignore end of line */;
-[ \t]+                  /* ignore whitespace */;
+        *(yylval.string + pos) = '\0';
+
+        return STRING;
+}
+mailcmd return OPTMAILCMD;
+mailtime return OPTMAILTIME;
+cachefile return OPTCACHEFILE;
+pidfile return OPTPIDFILE;
+user return OPTUSER;
+group return OPTGROUP;
+not return TOKNOT;
+in return TOKIN;
+file return TOKFILE;
+tag return TOKTAG;
+set return TOKSET;
+match return TOKMATCH;
+ignore return TOKIGNORE;
+exec return TOKEXEC;
+open return TOKOPEN;
+expire return TOKEXPIRE;
+append return TOKAPPEND;
+close return TOKCLOSE;
+pipe return TOKPIPE;
+when return TOKWHEN;
+\* {
+        yylval.tags = xmalloc(sizeof(struct tags));
+        init_tags(yylval.tags);
+
+        return TAGS;
+}
+[A-Za-z0-9_-]+ {
+        yylval.tags = xmalloc(sizeof(struct tags));
+        init_tags(yylval.tags);
+
+        add_tag(yylval.tags, yytext);
+
+        return TAGS;
+}
+\#.*\n /* ignore comments */;
+\n /* ignore end of line */;
+[ \t]+ /* ignore whitespace */;
+
 %%

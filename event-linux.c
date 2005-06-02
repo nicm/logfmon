@@ -42,20 +42,20 @@
  *    deleted. fcntl with F_NOTIFY only works on directories, which
  *    is useless.
  *
- * b) Linux doesn't support any useful form of notification when a file
- *    is appended to:
+ * b) Linux doesn't support any useful form of notification when a file is
+ * appended to:
  *
  *    - select() & poll() return immediately when a file is at EOF.
- *    - epoll is poorly documented, not well supported by distros as
- *      yet (both a 2.6 kernel and a patched glibc is needed), and
- *      refuses to work for me altogether on files.
- *    - aio_* is not what I am looking for at all, and it would be
- *      a real pain to make it do what I want.
- *    - F_SETSIG also looks annoying to implement, and I'm not sure
- *      it would do the right thing either.
+ *    - epoll is poorly documented, not well supported by distros as yet (both
+ *      a 2.6 kernel and a patched glibc is needed), and refuses to work for me
+ *      altogether on files.
+ *    - aio_* is not what I am looking for at all, and it would be a real pain
+ *      to make it do what I want.
+ *    - F_SETSIG also looks annoying to implement, and I'm not sure it would do
+ *      the right thing either.
  *
- * So, we are left with a very sucky manual poll with stat()
- * which is, well, crap and I'm not very happy about at all.
+ * So, we are left with a very sucky manual poll with stat() which is, well,
+ * crap and I'm not very happy about at all.
  *
  */
 
@@ -63,62 +63,62 @@ struct file *evfile = NULL;
 
 void init_events(void)
 {
-  evfile = files.head;
+        evfile = files.head;
 }
 
 struct file *get_event(enum event *event, int timeout)
 {
-  struct stat sb;
-  int num;
+        struct stat sb;
+        int num;
 
-  num = 0;
+        num = 0;
 
-  for(;;)
-  {
-    *event = EVENT_NONE;
+        for(;;)
+        {
+                *event = EVENT_NONE;
 
-    if(usleep(100000L) == -1)
-    {
-      if(errno == EINTR)
-	return NULL;
+                if(usleep(100000L) == -1)
+                {
+                        if(errno == EINTR)
+                                return NULL;
 
-      die("usleep: %s", strerror(errno));
-    }
+                        die("usleep: %s", strerror(errno));
+                }
 
-    num++;
-    if(num > timeout * 10)
-    {
-      *event = EVENT_TIMEOUT;
-      return NULL;
-    }
+                num++;
+                if(num > timeout * 10)
+                {
+                        *event = EVENT_TIMEOUT;
+                        return NULL;
+                }
 
-    if(evfile == NULL)
-      evfile = files.head;
+                if(evfile == NULL)
+                        evfile = files.head;
 
-    for(; evfile != NULL; evfile = evfile->next)
-    {
-      if(evfile->fd != NULL)
-      {
-	if(stat(evfile->path, &sb) == -1)
-	{
-	  *event = EVENT_REOPEN;
-	  return evfile;
-	}
+                for(; evfile != NULL; evfile = evfile->next)
+                {
+                        if(evfile->fd != NULL)
+                        {
+                                if(stat(evfile->path, &sb) == -1)
+                                {
+                                        *event = EVENT_REOPEN;
+                                        return evfile;
+                                }
 
-	if(sb.st_size < evfile->size)
-	{
-	  *event = EVENT_REOPEN;
-	  return evfile;
-	}
+                                if(sb.st_size < evfile->size)
+                                {
+                                        *event = EVENT_REOPEN;
+                                        return evfile;
+                                }
 
-	if(sb.st_size > evfile->size)
-	{
-	  evfile->size = sb.st_size;
+                                if(sb.st_size > evfile->size)
+                                {
+                                        evfile->size = sb.st_size;
 
-	  *event = EVENT_READ;
-	  return evfile;
-	}
-      }
-    }
-  }
+                                        *event = EVENT_READ;
+                                        return evfile;
+                                }
+                        }
+                }
+        }
 }

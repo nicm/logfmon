@@ -29,22 +29,22 @@
 
 struct context
 {
-  char *key;
+        char *key;
 
-  time_t expiry;
+        time_t expiry;
 
-  struct rule *rule;
+        struct rule *rule;
 
-  struct messages messages;
+        struct messages messages;
 
-  struct context *next;
-  struct context *last;
+        struct context *next;
+        struct context *last;
 };
 
 struct contexts
 {
-  struct context *head;
-  struct context *tail;
+        struct context *head;
+        struct context *tail;
 };
 
 void init_contexts(struct contexts *);

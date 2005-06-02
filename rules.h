@@ -27,40 +27,40 @@
 
 enum action
 {
-  ACTION_IGNORE,
-  ACTION_EXEC,
-  ACTION_PIPE,
-  ACTION_OPEN,
-  ACTION_APPEND,
-  ACTION_CLOSE
+        ACTION_IGNORE,
+        ACTION_EXEC,
+        ACTION_PIPE,
+        ACTION_OPEN,
+        ACTION_APPEND,
+        ACTION_CLOSE
 };
 
 struct rule
 {
-  struct tags *tags;
+        struct tags *tags;
 
-  regex_t *re;
-  regex_t *not_re;
+        regex_t *re;
+        regex_t *not_re;
 
-  enum action action;
-  struct
-  {
-    char *cmd;
-    char *key;
-    time_t expiry;
+        enum action action;
+        struct
+        {
+                char *cmd;
+                char *key;
+                time_t expiry;
 
-    int ent_max;
-    char *ent_cmd;
-  } params;
+                int ent_max;
+                char *ent_cmd;
+        } params;
 
-  struct rule *next;
-  struct rule *last;
+        struct rule *next;
+        struct rule *last;
 };
 
 struct rules
 {
-  struct rule *head;
-  struct rule *tail;
+        struct rule *head;
+        struct rule *tail;
 };
 
 extern struct rules rules;

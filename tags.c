@@ -31,84 +31,84 @@
 
 void init_tags(struct tags *tags)
 {
-  tags->head = tags->tail = NULL;
+        tags->head = tags->tail = NULL;
 }
 
 int add_tag(struct tags *tags, char *name)
 {
-  struct tag *tag;
+        struct tag *tag;
 
-  tag = (struct tag *) xmalloc(sizeof(struct tag));
+        tag = xmalloc(sizeof(struct tag));
 
-  tag->name = xstrdup(name);
+        tag->name = xstrdup(name);
 
-  if(tags->head == NULL)
-  {
-    tag->next = tag->last = NULL;
-    tags->head = tags->tail = tag;
-  }
-  else
-  {
-    tags->head->last = tag;
-    tag->next = tags->head;
-    tag->last = NULL;
-    tags->head = tag;
-  }
+        if(tags->head == NULL)
+        {
+                tag->next = tag->last = NULL;
+                tags->head = tags->tail = tag;
+        }
+        else
+        {
+                tags->head->last = tag;
+                tag->next = tags->head;
+                tag->last = NULL;
+                tags->head = tag;
+        }
 
-  return 0;
+        return 0;
 }
 
 int check_tags(struct tags *tags)
 {
-  struct tag *tag;
+        struct tag *tag;
 
-  if(tags->head == NULL)
-    return 0;
+        if(tags->head == NULL)
+                return 0;
 
-  for(tag = tags->head; tag != NULL; tag = tag->next)
-  {
-    if(!find_file_by_tag(tag->name))
-    {
-      error("%s: tag does not match a file", tag->name);
-      return 1;
-    }
-  }
+        for(tag = tags->head; tag != NULL; tag = tag->next)
+        {
+                if(!find_file_by_tag(tag->name))
+                {
+                        error("%s: tag does not match a file", tag->name);
+                        return 1;
+                }
+        }
 
-  return 0;
+        return 0;
 }
 
 void clear_tags(struct tags *tags)
 {
-  struct tag *tag, *last;
+        struct tag *tag, *last;
 
-  if(tags->head == NULL)
-    return;
+        if(tags->head == NULL)
+                return;
 
-  tag = tags->head;
-  while(tag != NULL)
-  {
-    last = tag;
-    tag = tag->next;
+        tag = tags->head;
+        while(tag != NULL)
+        {
+                last = tag;
+                tag = tag->next;
 
-    free(last->name);
-    free(last);
-  }
+                free(last->name);
+                free(last);
+        }
 
-  tags->head = tags->tail = NULL;
+        tags->head = tags->tail = NULL;
 }
 
 struct tag *find_tag(struct tags *tags, char *name)
 {
-  struct tag *tag;
+        struct tag *tag;
 
-  if(tags->head == NULL)
-    return NULL;
+        if(tags->head == NULL)
+                return NULL;
 
-  for(tag = tags->head; tag != NULL; tag = tag->next)
-  {
-    if(strcmp(tag->name, name) == 0)
-      return tag;
-  }
+        for(tag = tags->head; tag != NULL; tag = tag->next)
+        {
+                if(strcmp(tag->name, name) == 0)
+                        return tag;
+        }
 
-  return NULL;
+        return NULL;
 }

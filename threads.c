@@ -27,17 +27,17 @@
 
 void *pclose_thread(void *arg)
 {
-  pclose((FILE *) arg);
+        pclose((FILE *) arg);
 
-  return NULL;
+        return NULL;
 }
 
 void *exec_thread(void *arg)
 {
-  if(system((char *) arg) == -1)
-    error("%s: %s", (char *) arg, strerror(errno));
+        if(system((char *) arg) == -1)
+                error("%s: %s", (char *) arg, strerror(errno));
 
-  free(arg);
+        free(arg);
 
-  return NULL;
+        return NULL;
 }

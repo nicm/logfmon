@@ -21,16 +21,16 @@
 
 struct tag
 {
-  char *name;
+        char *name;
 
-  struct tag *next;
-  struct tag *last;
+        struct tag *next;
+        struct tag *last;
 };
 
 struct tags
 {
-  struct tag *head;
-  struct tag *tail;
+        struct tag *head;
+        struct tag *tail;
 };
 
 void init_tags(struct tags *);

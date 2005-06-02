@@ -26,30 +26,30 @@
 
 struct file
 {
-  time_t timer;
+        time_t timer;
 
-  char *path;
-  char *tag;
+        char *path;
+        char *tag;
 
-  FILE *fd;
+        FILE *fd;
 
-  char *buffer;
-  size_t length;
+        char *buffer;
+        size_t length;
 
-  off_t size;
-  off_t offset;
+        off_t size;
+        off_t offset;
 
-  struct contexts contexts;
-  struct messages saves;
+        struct contexts contexts;
+        struct messages saves;
 
-  struct file *next;
-  struct file *last;
+        struct file *next;
+        struct file *last;
 };
 
 struct files
 {
-  struct file *head;
-  struct file *tail;
+        struct file *head;
+        struct file *tail;
 };
 
 extern struct files files;
