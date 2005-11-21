@@ -98,7 +98,7 @@ get_event(enum event *event, int timeout)
         if (file == NULL)
                 return (NULL);
 
-        switch(kev.filter) {
+        switch (kev.filter) {
         case EVFILT_VNODE:
                 *event = EVENT_REOPEN;
                 return (file);

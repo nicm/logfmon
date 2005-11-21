@@ -127,9 +127,9 @@ expire_contexts(struct file *file)
 	TAILQ_INIT(&exp_contexts);
 
 	TAILQ_FOREACH(context, &file->contexts, entry) {
-                if(now >= context->expiry) {
+                if (now >= context->expiry) {
 			log_debug("expired context: key=%s", context->key);
-                        if(context->rule != NULL &&
+                        if (context->rule != NULL &&
 			    context->rule->params.cmd != NULL)
                                 pipe_context(context,
 				    context->rule->params.cmd);
