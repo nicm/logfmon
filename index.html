@@ -1,4 +1,4 @@
-<!-- $Id -->
+<!-- $Id$ -->
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
@@ -32,7 +32,7 @@ LOGFMON(8)                                                          LOGFMON(8)
 
      <B>-c </B><I>cachefile</I>
                  Specify the cache file location. Default is
-                 <I>/etc/logfmon.cache</I>.
+                 <I>/var/db/logfmon.cache</I>.
 
                  This overrides any location specified in the configuration
                  file.
@@ -120,7 +120,7 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
              cache of the offsets and sizes of the log files to prevent dupli-
              cate processing of entries when it is restarted.  An empty string
              disables caching. Note that this option may be overridden on the
-             command line. The default setting is /etc/logfmon.cache.
+             command line. The default setting is /var/db/logfmon.cache.
 
      <B>pidfile </B><I>file</I>
              This instructs logfmon(8) to write its pid into the file speci-
