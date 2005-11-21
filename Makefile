@@ -8,7 +8,7 @@ VERSION= 0.8
 OS!= uname
 
 SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
-	parse.y lex.l action.c
+	getln.c parse.y lex.l action.c
 .if ${OS} == "Linux"
 SRCS+= event-linux.c
 .else

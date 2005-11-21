@@ -256,7 +256,6 @@ unsigned int	 count_msgs(struct context *);
 /* event.c */
 void		 init_events(void);
 struct file 	*get_event(enum event *, int timeout);
-char		*getln(FILE *, int *);
 
 /* file.c */
 struct file	*add_file(char *, char *);
@@ -269,6 +268,9 @@ void		 close_files(void);
 struct file 	*find_file_by_tag(char *);
 struct file 	*find_file_by_path(char *);
 struct file 	*find_file_by_fd(int);
+
+/* getln.h */
+char		*getln(FILE *, int *);
 
 /* log.c */
 void		 log_init(int);
