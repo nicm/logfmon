@@ -45,7 +45,7 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 
 	if (re != NULL) {
 		rule->re = xmalloc(sizeof (regex_t));
-		if (regcomp(rule->re, re, 0) != 0) {
+		if (regcomp(rule->re, re, REG_EXTENDED) != 0) {
 			free_rule(rule);
 			log_warnx("%s: bad regexp", re);
 			return (NULL);
@@ -53,7 +53,7 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 	}
 	if (not_re != NULL) {
                 rule->not_re = xmalloc(sizeof (regex_t));
-                if (regcomp(rule->not_re, not_re, 0) != 0) {
+                if (regcomp(rule->not_re, not_re, REG_EXTENDED) != 0) {
 			free_rule(rule);
                         log_warnx("%s: bad regexp", not_re);
                         return (NULL);
