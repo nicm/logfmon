@@ -21,7 +21,6 @@
 #include <sys/resource.h>
 #include <sys/queue.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <grp.h>
 #include <pthread.h>
@@ -104,98 +103,6 @@ reload_conf(void)
 	return (0);
 }
 
-char *
-repl_one(char *src, char *repl)
-{
-        char	*buf;
-        size_t	 len, pos;
-
-        len = strlen(src) + 512;
-        buf = xmalloc(len);
-        pos = 0;
-
-        while (*src != '\0') {
-                if (*src != '$' || *(src + 1) != '1') {
-                        *(buf + pos) = *src++;
-
-                        pos++;
-                        while (len <= pos) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-
-                        continue;
-                }
-
-                src += 2;
-
-                while (len <= pos + strlen(repl)) {
-                        len *= 2;
-                        buf = xrealloc(buf, len);
-                }
-
-                strncpy(buf + pos, repl, len - pos - 1);
-                pos += strlen(repl);
-        }
-
-        *(buf + pos) = '\0';
-
-        return (buf);
-}
-
-char *
-repl_matches(char *line, char *src, regmatch_t *match)
-{
-        char	*buf;
-        size_t	 len, mlen, pos;
-        int	 num;
-
-        len = strlen(src) + 512;
-        buf = xmalloc(len);
-        pos = 0;
-
-        while (*src != '\0') {
-                if (*src != '$' ||
-		    !isdigit(*(src + 1)) || isdigit(*(src + 2))) {
-                        *(buf + pos) = *src++;
-
-                        pos++;
-                        while (len <= pos) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-
-                        continue;
-                }
-
-                num = atoi(++src);
-                mlen = match[num].rm_eo - match[num].rm_so;
-
-                if (mlen > 0) {
-                        while (len <= pos + mlen) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-
-                        strncpy(buf + pos, line + match[num].rm_so, mlen);
-                        pos += mlen;
-
-                        src++;
-                } else {
-                        *(buf + pos) = '$';
-
-                        pos++;
-                        while (len <= pos) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-                }
-        }
-        *(buf + pos) = '\0';
-
-        return (buf);
-}
-
 int
 parse_line(char *line, struct file *file)
 {
@@ -249,7 +156,7 @@ parse_line(char *line, struct file *file)
                         act_open(file, t, rule, match);
 			return (0);
                 case ACT_APPEND:
-                        act_appnd(file, t, rule, match, line);
+                        act_appd(file, t, rule, match, line);
 			return (0);
                 case ACT_CLOSE:
                         act_close(file, t, rule, match);
@@ -307,10 +214,8 @@ main(int argc, char **argv)
 
 	log_init(1);
 
-        while ((opt = getopt(argc, argv, "c:df:p:")) != EOF)
-        {
-                switch (opt)
-                {
+        while ((opt = getopt(argc, argv, "c:df:p:")) != EOF) {
+                switch (opt) {
                 case 'c':
                         conf.cache_file = xstrdup(optarg);
                         break;

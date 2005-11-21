@@ -16,10 +16,103 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "logfmon.h"
+
+char *
+repl_one(char *src, char *repl)
+{
+        char	*buf;
+        size_t	 len, pos;
+
+        len = strlen(src) + 512;
+        buf = xmalloc(len);
+        pos = 0;
+
+        while (*src != '\0') {
+                if (*src != '$' || *(src + 1) != '1') {
+                        *(buf + pos) = *src++;
+
+                        pos++;
+                        while (len <= pos) {
+                                len *= 2;
+                                buf = xrealloc(buf, len);
+                        }
+
+                        continue;
+                }
+
+                src += 2;
+
+                while (len <= pos + strlen(repl)) {
+                        len *= 2;
+                        buf = xrealloc(buf, len);
+                }
+
+                strncpy(buf + pos, repl, len - pos - 1);
+                pos += strlen(repl);
+        }
+
+        *(buf + pos) = '\0';
+
+        return (buf);
+}
+
+char *
+repl_matches(char *line, char *src, regmatch_t *match)
+{
+        char	*buf;
+        size_t	 len, mlen, pos;
+        int	 num;
+
+        len = strlen(src) + 512;
+        buf = xmalloc(len);
+        pos = 0;
+
+        while (*src != '\0') {
+                if (*src != '$' ||
+		    !isdigit(*(src + 1)) || isdigit(*(src + 2))) {
+                        *(buf + pos) = *src++;
+
+                        pos++;
+                        while (len <= pos) {
+                                len *= 2;
+                                buf = xrealloc(buf, len);
+                        }
+
+                        continue;
+                }
+
+                num = atoi(++src);
+                mlen = match[num].rm_eo - match[num].rm_so;
+
+                if (mlen > 0) {
+                        while (len <= pos + mlen) {
+                                len *= 2;
+                                buf = xrealloc(buf, len);
+                        }
+
+                        strncpy(buf + pos, line + match[num].rm_so, mlen);
+                        pos += mlen;
+
+                        src++;
+                } else {
+                        *(buf + pos) = '$';
+
+                        pos++;
+                        while (len <= pos) {
+                                len *= 2;
+                                buf = xrealloc(buf, len);
+                        }
+                }
+        }
+        *(buf + pos) = '\0';
+
+        return (buf);
+}
 
 void
 act_ignore(struct file *file, char *t)
@@ -106,7 +199,7 @@ act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 }
 
 void
-act_appnd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
+act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
     char *line)
 {
         struct context	*context;

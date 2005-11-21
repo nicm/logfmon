@@ -159,12 +159,14 @@ struct conf {
 extern struct conf		 conf;
 
 /* action.c */
-void	act_ignore(struct file *, char *);
-void	act_exec(struct file *, char *, struct rule *, regmatch_t []);
-void	act_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
-void	act_open(struct file *, char *, struct rule *, regmatch_t []);
-void	act_appnd(struct file *, char *, struct rule *, regmatch_t [], char *);
-void	act_close(struct file *, char *, struct rule *, regmatch_t []);
+char	*repl_one(char *, char *);
+char	*repl_matches(char *, char *, regmatch_t *);
+void	 act_ignore(struct file *, char *);
+void	 act_exec(struct file *, char *, struct rule *, regmatch_t []);
+void	 act_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
+void	 act_open(struct file *, char *, struct rule *, regmatch_t []);
+void	 act_appd(struct file *, char *, struct rule *, regmatch_t [], char *);
+void	 act_close(struct file *, char *, struct rule *, regmatch_t []);
 
 /* cache.c */
 int		 save_cache(void);
@@ -197,9 +199,6 @@ struct file 	*find_file_by_path(char *);
 struct file 	*find_file_by_fd(int);
 
 /* logfmon.c */
-char		*repl_one(char *, char *);
-char		*repl_matches(char *, char *, regmatch_t *);
-
 /* log.c */
 void		 log_init(int);
 void    	 vlog(int, const char *, va_list);
