@@ -43,7 +43,7 @@ add_context(struct file *file, char *key, struct rule *rule)
         context->key = xstrdup(key);
 
 	log_debug("added context: key=%s", key);
-	TAILQ_INSERT_HEAD(&file->contexts, context, entry);
+	TAILQ_INSERT_TAIL(&file->contexts, context, entry);
         return (context);
 }
 
@@ -133,8 +133,7 @@ expire_contexts(struct file *file)
 			    context->rule->params.cmd != NULL)
                                 pipe_context(context,
 				    context->rule->params.cmd);
-			TAILQ_INSERT_HEAD(&exp_contexts, context,
-			    exp_entry);
+			TAILQ_INSERT_HEAD(&exp_contexts, context, exp_entry);
                 }
         }
 

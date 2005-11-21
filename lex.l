@@ -52,7 +52,7 @@ extern int yylex(void);
                                 *(name + pos) = '\0';
 				tag = xmalloc(sizeof (struct tag));
 				strncpy(tag->name, name, sizeof tag->name);
-				TAILQ_INSERT_HEAD(&yylval.tags->tags,
+				TAILQ_INSERT_TAIL(&yylval.tags->tags,
 				    tag, entry);
                                 pos = 0;
                         }
@@ -76,7 +76,7 @@ extern int yylex(void);
 		*(name + pos) = '\0';
 		tag = xmalloc(sizeof (struct tag));
 		strncpy(tag->name, name, sizeof tag->name);
-		TAILQ_INSERT_HEAD(&yylval.tags->tags, tag, entry);
+		TAILQ_INSERT_TAIL(&yylval.tags->tags, tag, entry);
         }
 
         if (TAILQ_EMPTY(&yylval.tags->tags))

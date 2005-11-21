@@ -136,7 +136,7 @@ act_appnd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 
 	msg = xmalloc(sizeof (struct msg));
 	msg->str = xstrdup(line);
-	TAILQ_INSERT_HEAD(&context->msgs, msg, entry);
+	TAILQ_INSERT_TAIL(&context->msgs, msg, entry);
 
         if (context->rule->params.ent_max == 0)
                 return (0);

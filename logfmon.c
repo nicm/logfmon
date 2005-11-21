@@ -220,7 +220,7 @@ parse_line(char *line, struct file *file)
         if (*t == '\0')
                 return;
 
-        TAILQ_FOREACH_REVERSE(rule, &conf.rules, rules, entry) {
+        TAILQ_FOREACH(rule, &conf.rules, entry) {
                 /* if tags list is empty all tags match for this rule */
                 if (TAILQ_EMPTY(&rule->tags))
 			continue;
@@ -271,7 +271,7 @@ parse_line(char *line, struct file *file)
 
 		save = xmalloc(sizeof (struct msg));
 		save->str = xstrdup(line);
-		TAILQ_INSERT_HEAD(&file->saves, save, entry);
+		TAILQ_INSERT_TAIL(&file->saves, save, entry);
 
                 if (pthread_mutex_unlock(&save_mutex) != 0)
                         fatalx("pthread_mutex_unlock failed");
@@ -488,7 +488,8 @@ main(int argc, char **argv)
                         if (ferror(file->fd) != 0) {
                                 fclose(file->fd);
                                 file->fd = NULL;
-                        }
+                        } else
+				clearerr(file->fd);
                         dirty = 1;
                         break;
                 }

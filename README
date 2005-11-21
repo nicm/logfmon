@@ -1,7 +1,9 @@
 As of 0.8, logfmon has had major restructuring. I've verified it runs on
 OpenBSD 3.7/i386, OpenBSD 3.8/i386, OpenBSD 3.8/sparc and FreeBSD 5.4/i386.
 
-Not that in 0.8, the default cache file path is /var/db/logfmon.cache.
+Two important changes in 0.8:
+	- The default cache file path is /var/db/logfmon.cache.
+	- The match regexps are now extended regexps.
 
 I haven't tested on NetBSD but on newer versions with kqueue it should work
 fine. For older NetBSDs you may have to edit the Makefile to use the Linux

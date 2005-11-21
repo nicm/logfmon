@@ -67,7 +67,7 @@ add_file(char *path, char *tag)
 	file->path = xstrdup(path);
 
 	log_debug("added file: path=%s, tag=%s", path, tag);
-	TAILQ_INSERT_HEAD(&conf.files, file, entry);
+	TAILQ_INSERT_TAIL(&conf.files, file, entry);
         return (file);
 }
 
