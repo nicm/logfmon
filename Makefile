@@ -21,7 +21,7 @@ LEX= lex
 YACC= yacc -d
 
 CC= cc
-CFLAGS+= -g -DDEBUG
+#CFLAGS+= -g -DDEBUG
 CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W -Wnested-externs
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
@@ -29,7 +29,7 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 
-DESTDIR?= /usr/local
+PREFIX?= /usr/local
 INSTALLBIN= install -g bin -o root -m 555
 INSTALLMAN= install -g bin -o root -m 444
 
@@ -43,9 +43,12 @@ LIBS+= -lpthread
 .endif
 
 TARFLAGS= -zxc -s '/.*/${PROG}-${VERSION}\/\0/'
-DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] INSTALL make-linux.sh rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
+DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] \
+	README make-linux.sh \
+	rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
 
-CLEANFILES= ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz *~ *.ln ${PROG}.core
+CLEANFILES= ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz \
+	*.[1-9].gz *~ *.ln ${PROG}.core
 
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}
@@ -70,14 +73,14 @@ depend:
 		mkdep ${CFLAGS} ${SRCS}
 
 install:	all
-		${INSTALLBIN} ${PROG} ${DESTDIR}/sbin/${PROG}
-		${INSTALLMAN} ${PROG}.8 ${DESTDIR}/man/man8/
-		${INSTALLMAN} ${PROG}.conf.5 ${DESTDIR}/man/man5/
+		${INSTALLBIN} ${PROG} ${PREFIX}/sbin/${PROG}
+		${INSTALLMAN} ${PROG}.8 ${PREFIX}/man/man8/
+		${INSTALLMAN} ${PROG}.conf.5 ${PREFIX}/man/man5/
 
 uninstall:
-		rm -f ${DESTDIR}/sbin/${PROG}
-		rm -f ${DESTDIR}/man/man8/${PROG}.8
-		rm -f ${DESTDIR}/man/man5/${PROG}.conf.5
+		rm -f ${PREFIX}/sbin/${PROG}
+		rm -f ${PREFIX}/man/man8/${PROG}.8
+		rm -f ${PREFIX}/man/man5/${PROG}.conf.5
 
 clean:
 		rm -f ${CLEANFILES}

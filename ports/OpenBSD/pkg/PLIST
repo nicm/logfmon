@@ -1,0 +1,4 @@
+@comment $Id$
+@man man/man5/logfmon.conf.5
+@man man/man8/logfmon.8
+sbin/logfmon
