@@ -1,26 +1,21 @@
-This file should probably be called README now.
+As of 0.8, logfmon has had major restructuring. I've verified it runs on
+OpenBSD 3.7/i386, OpenBSD 3.8/i386, OpenBSD 3.8/sparc and FreeBSD 5.4/i386.
 
-I've currently tested a lot on OpenBSD 3.6, a lot on FreeBSD 4.10, a
-little on Debian with Linux 2.4.18 kernel. I've also tested a little on
-Debian with Linux 2.6.9 and FreeBSD 5.3 but both of these have serious
-issues and I'm not touching them again until they are sorted out.
+Not that in 0.8, the default cache file path is /var/db/logfmon.cache.
 
-I hated NetBSD 2.0 so I didn't get as far as testing on it, but now it
-supports kqueue it should work fine. For older NetBSDs you may have to
-edit the Makefile to use the Linux event code, see below for how to do
-this.
+I haven't tested on NetBSD but on newer versions with kqueue it should work
+fine. For older NetBSDs you may have to edit the Makefile to use the Linux
+event code, see below for how to do this.
 
 The Makefile requires BSD make. In Debian, FreeBSD make is part of the
 freebsd-buildutils package - installed as /usr/bin/freebsd-make - and it
 works fine. A portable BSD make is also available from the TenDRA project
-http://www.ten15.org. Alternatively, the make-linux.sh script should work
-if you have bash installed. Note that the Linux stuff is very poorly tested
-so YMMV. I'd appreciate feedback on problems.
+http://www.ten15.org. Alternatively, the make-linux.sh script should work.
 
 There is some weirdness with yacc on my Linux installation, in that it
 sometimes fails the first time you build with `unexpected end of file'. It
 seems to work fine if you just make again (sometimes you have to do it twice
-more). It works all the time on OpenBSD and FreeBSD.
+more).
 
 To install, do:
 
@@ -44,21 +39,18 @@ On OpenBSD, I add these lines to /etc/rc.local to run logfmon on startup:
 	fi
 
 For FreeBSD, example rc.d scripts for 4.10 and 5.3 are included in the rc.d/
-directory. If you use it, you need to either edit it or put your logfmon.conf
-in /usr/local/etc and include a line eg:
+directory. If you use it, you need to put your logfmon.conf in /usr/local/etc.
 
-	set cachefile "/usr/local/etc/logfmon.cache"
-
-Version 0.5 and higher now keep a cache file. This is enabled by default but
-not well tested. Disable it by setting the cachefile option to "" in your
-logfmon.conf. If enabled, it means that restarting logfmon or sending it a
-HUP should not reparse lines it has already seen. If disabled, the behaviour
-is the same as before. NOTE that at the moment, saved messages and contexts
-are not cached and so will not be reparsed and emailed when the cache is
-enabled. Also, any commands that are in the middle of running will die when
-logfmon is killed and since the messages that kicked them off aren't seen
-again, they may not be executed. In practice, unless you are restarting
-logfmon every day this isn't really much of a worry but just so you know :-).
+Version 0.5 and higher now keep a cache file. Disable it by setting the
+cachefile option to "" in your logfmon.conf. If enabled, it means that
+restarting logfmon or sending it a HUP should not reparse lines it has
+already seen. If disabled, the behaviour is the same as before. NOTE that
+at the moment, saved messages and contexts are not cached and so will not
+be reparsed and emailed when the cache is enabled. Also, any commands that
+are in the middle of running will die when logfmon is killed and since the
+messages that kicked them off aren't seen again, they may not be executed.
+In practice, unless you are restarting logfmon every day this isn't really
+much of a worry but just so you know :-).
 
 At the moment, the program assumes each log line has a 15 character date,
 followed by a space, the hostname, another space and the message, for example:
@@ -78,9 +70,9 @@ only applies when logfmon is running. If opening a file fails when logfmon is
 initially started, it will report it to stderr and exit immediately.
 
 Note that due to a limitation of kqueue on *BSD, logfmon will refuse to run
-if the log files are not located on a UFS (or, I believe, UFS2) filesystem.
-If you really must put your log files on something else, the Linux version
-should work on *BSD too. In the Makefile, change the line:
+if the log files are not located on a UFS or UFS2 filesystem. If you really
+must put your log files on something else, the Linux version should work on
+*BSD too. In the Makefile, change the line:
 
 SRCS+= event.c
 
@@ -89,9 +81,9 @@ to:
 SRCS+= event-linux.c
 
 Note that just setting the OS var to Linux won't work on FreeBSD due to
-the silly way pthread is linked.
+the way pthread is linked.
 
 Feedback and suggestions are welcome.
 
 Nicholas Marriott
-nicm__@ntlworld.com
+nicm@users.sourceforge.net

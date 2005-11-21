@@ -5,7 +5,7 @@ COMMENT=	"monitors logfiles and performs commands"
 DISTNAME=	logfmon-0.7
 CATEGORIES=	security
 
-MAINTAINER=     Nicholas Marriott <nicm__@ntlworld.com>
+MAINTAINER=     Nicholas Marriott <nicm@users.sourceforge.net>
 
 PERMIT_PACKAGE_CDROM=	Yes
 PERMIT_PACKAGE_FTP=	Yes
