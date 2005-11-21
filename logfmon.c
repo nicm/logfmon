@@ -47,8 +47,7 @@ struct conf		 conf;
 int			 reload_conf(void);
 int			 load_conf(void);
 void			 sighandler(int);
-char 			*format_line(char *);
-void			 parse_line(char *, struct file *);
+int			 parse_line(char *, struct file *);
 void			 usage(void);
 
 void
@@ -197,7 +196,7 @@ repl_matches(char *line, char *src, regmatch_t *match)
         return (buf);
 }
 
-void
+int
 parse_line(char *line, struct file *file)
 {
         char		*t;
@@ -205,8 +204,10 @@ parse_line(char *line, struct file *file)
         regmatch_t	 match[10];
 	struct msg	*save;
 
-	if (strlen(line) < 17)
-		return;
+	if (strlen(line) < 17) {
+		log_warnx("invalid log message: %s", line);
+		return (1);
+	}
 
 	/* replace ctrl chars with _ */
 	for (t = line; *t != '\0'; t++) {
@@ -214,13 +215,14 @@ parse_line(char *line, struct file *file)
 			*t = '_';
 	}
 
-	/* skip the hostname and any subsequent spaces */
+	/* skip the hostname and any subsequent spaces and return immediately
+	   for blank log messages */
         t = strchr(line + 16, ' ');
         if (t == NULL)
-                return;
+                return (0);
 	t++;
         if (*t == '\0')
-                return;
+                return (0);
 
         TAILQ_FOREACH(rule, &conf.rules, entry) {
 		if (!has_tag(rule, file->tag.name))
@@ -236,25 +238,26 @@ parse_line(char *line, struct file *file)
                 switch (rule->action) {
                 case ACT_IGNORE:
                         act_ignore(file, t);
-			return;
+			return (0);
                 case ACT_EXEC:
                         act_exec(file, t, rule, match);
-			return;
+			return (0);
                 case ACT_PIPE:
                         act_pipe(file, t, rule, match, line);
-			return;
+			return (0);
                 case ACT_OPEN:
                         act_open(file, t, rule, match);
-			return;
+			return (0);
                 case ACT_APPEND:
                         act_appnd(file, t, rule, match, line);
-			return;
+			return (0);
                 case ACT_CLOSE:
                         act_close(file, t, rule, match);
-			return;
+			return (0);
                 }
 
-		fatal("unknown action: %d", rule->action);
+		log_warnx("unknown action: %d", rule->action);
+		return (1);
         }
 
 	/* no matching rule found */
@@ -272,6 +275,8 @@ parse_line(char *line, struct file *file)
                 if (pthread_mutex_unlock(&save_mutex) != 0)
                         fatalx("pthread_mutex_unlock failed");
         }
+
+	return (0);
 }
 
 __dead void
@@ -477,7 +482,8 @@ main(int argc, char **argv)
 					lbuf[len] = '\0';
 					buf = lbuf;
 				}
-				parse_line(buf, file);
+				if (parse_line(buf, file) != 0)
+					exit(1);
 				file->offset = ftello(file->fd);
                         }
 			free(lbuf);
@@ -499,5 +505,5 @@ main(int argc, char **argv)
 
         log_info("terminated");
 
-        return (0);
+	return (0);
 }
