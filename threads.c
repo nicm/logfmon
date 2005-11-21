@@ -122,6 +122,7 @@ save_thread(void *arg)
                 n = 0;
 		TAILQ_FOREACH(file, &conf.files, entry) {
 			LOCK_MUTEX(file->saves_mutex);
+
                         if (TAILQ_EMPTY(&file->saves)) {
 				UNLOCK_MUTEX(file->saves_mutex);
 				continue;
@@ -148,9 +149,9 @@ save_thread(void *arg)
 			if (fputc('\n', fd) == EOF)
 				log_warn("fputc");
 
+			UNLOCK_MUTEX(file->saves_mutex);
                         reset_file(file);
 
-			UNLOCK_MUTEX(file->saves_mutex);
                 }
                 UNLOCK_MUTEX(conf.files_mutex);
 

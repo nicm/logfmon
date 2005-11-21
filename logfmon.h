@@ -45,28 +45,39 @@
 #define REOPENTIMEOUT	2	/* event timeout if waiting to reopen files */
 
 #define INIT_MUTEX(mutex) do {						 \
-		if (pthread_mutex_init(&(mutex), NULL) != 0)		 \
-			fatalx("pthread_mutex_init failed");		 \
-	} while (0);
+		if (pthread_mutex_init(&(mutex), NULL) != 0) {		 \
+			log_warnx("pthread_mutex_init failed: %s:%d",	 \
+			__FILE__, __LINE__);		 		 \
+			exit(1);					 \
+		}							 \
+	} while (0)
 
 #define DESTROY_MUTEX(mutex) do {					 \
 		int	error;						 \
 		while ((error = pthread_mutex_destroy(&(mutex))) != 0) { \
 			if (error == EBUSY)				 \
 				continue;				 \
-			fatalx("pthread_mutex_destroy failed");		 \
-		} 							 \
-	} while (0);
+			log_warnx("pthread_mutex_destroy failed: %s:%d", \
+			__FILE__, __LINE__);		 		 \
+			exit(1);					 \
+		}							 \
+	} while (0)
 
 #define LOCK_MUTEX(mutex) do {						 \
-		if (pthread_mutex_lock(&(mutex)) != 0)			 \
-			fatalx("pthread_mutex_lock failed");		 \
-	} while (0);
+		if (pthread_mutex_lock(&(mutex)) != 0) {		 \
+			log_warnx("pthread_mutex_lock failed: %s:%d",	 \
+			__FILE__, __LINE__);		 		 \
+			exit(1);					 \
+		}							 \
+	} while (0)
 
 #define UNLOCK_MUTEX(mutex) do {                        		 \
-		if (pthread_mutex_unlock(&(mutex)) != 0)		 \
-			fatalx("pthread_mutex_unlock failed");		 \
-	} while (0);
+		if (pthread_mutex_unlock(&(mutex)) != 0) {		 \
+			log_warnx("pthread_mutex_unlock failed: %s:%d",	 \
+			__FILE__, __LINE__);		 		 \
+			exit(1);					 \
+		}							 \
+	} while (0)
 
 extern char			*__progname;
 
