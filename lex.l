@@ -34,7 +34,7 @@ extern int yylex(void);
 %%
 
 \{ {
-        int	 	 ch, done;
+        int	 	 done, ch;
 	unsigned int	 pos;
         char	 	 name[MAXTAGLEN];
 	struct tag	*tag;
@@ -45,8 +45,14 @@ extern int yylex(void);
         yylval.tags = xmalloc(sizeof (struct tags));
         TAILQ_INIT(&yylval.tags->tags);
 
-        while (!done && (ch = input())) {
-                switch (ch) {
+        while (!done) {
+                switch (ch = input()) {
+		case 0:
+		case EOF:
+			goto badtags;
+                case '}':
+			done = 1;
+			break;
                 case ' ':
                         if (pos > 0) {
                                 *(name + pos) = '\0';
@@ -57,17 +63,14 @@ extern int yylex(void);
                                 pos = 0;
                         }
                         break;
-                case '}':
-                        done = 1;
-                        break;
                 default:
                         if (ch == '-' || ch == '_' || isalpha(ch)) {
                                 *(name + pos) = ch;
                                 pos++;
                                 if (pos >= sizeof name)
-					goto error;
+					goto badtags;
                         } else
-				goto error;
+				goto badtags;
                         break;
                 }
         }
@@ -80,10 +83,11 @@ extern int yylex(void);
         }
 
         if (TAILQ_EMPTY(&yylval.tags->tags))
-		goto error;
+		goto badtags;
 
         return (TAGS);
-error:
+
+badtags:
 	while (!TAILQ_EMPTY(&yylval.tags->tags)) {
 		tag = TAILQ_FIRST(&yylval.tags->tags);
 		TAILQ_REMOVE(&yylval.tags->tags, tag, entry);
@@ -91,6 +95,7 @@ error:
 	}
 	free(yylval.tags);
 	yylval.tags = NULL;
+
 	return (TAGS);
 }
 [0-9]+[hms] {
@@ -99,9 +104,8 @@ error:
         ch = *(yytext + strlen(yytext) - 1);
         *(yytext + strlen(yytext) - 1) = '\0';
 
-        yylval.number=atoi(yytext);
-        switch (ch)
-        {
+        yylval.number = atoi(yytext);
+        switch (ch) {
         case 'h':
                 yylval.number *= 3600;
                 break;
@@ -117,7 +121,8 @@ error:
         return (NUMBER);
 }
 \" {
-        int ch, pos, len, done;
+	int		done, ch;
+	size_t		pos, len;
 
         done = 0;
         len  = 24;
@@ -125,10 +130,16 @@ error:
 
         yylval.string = xmalloc(len + 1);
 
-        while (!done && (ch = input())) {
-                switch (ch) {
+        while (!done) {
+                switch (ch = input()) {
+		case 0:
+		case EOF:
+			goto badstring;
                 case '\\':
                         switch (ch = input()) {
+			case 0:
+			case EOF:
+				goto badstring;
                         case 'r':
                                 ch = '\r';
                                 break;
@@ -149,14 +160,19 @@ error:
                 pos++;
                 if (pos == len) {
                         len *= 2;
-                        yylval.string = (char *)
-                            xrealloc(yylval.string, len + 1);
+                        yylval.string = xrealloc(yylval.string, len + 1);
                 }
         }
 
         *(yylval.string + pos) = '\0';
 
         return (STRING);
+
+badstring:
+	free(yylval.string);
+	yylval.string = NULL;
+
+	return (STRING);
 }
 mailcmd return (OPTMAILCMD);
 mailtime return (OPTMAILTIME);
