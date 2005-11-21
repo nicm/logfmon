@@ -220,10 +220,7 @@ parse_line(char *line, struct file *file)
                 return;
 
         TAILQ_FOREACH(rule, &conf.rules, entry) {
-                /* if tags list is empty all tags match for this rule */
-                if (TAILQ_EMPTY(&rule->tags))
-			continue;
-		if (has_tag(rule, file->tag.name) == NULL)
+		if (!has_tag(rule, file->tag.name))
                         continue;
 
                 if (regexec(rule->re, t, 10, match, 0) != 0)

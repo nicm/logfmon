@@ -111,6 +111,10 @@ has_tag(struct rule *rule, char *name)
 {
 	struct tag	*tag;
 
+	/* empty tags list means any tag matches */
+	if (TAILQ_EMPTY(&rule->tags))
+		return (1);
+
 	TAILQ_FOREACH(tag, &rule->tags, entry) {
 		if (strcmp(name, tag->name) == 0)
 			return (1);
