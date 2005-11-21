@@ -35,8 +35,8 @@ void *
 exec_thread(void *arg)
 {
 	FILE	*fd;
-	char	*cmd, *buf, *lbuf;
-	size_t	len;
+	char	*cmd, *line;
+	int	 error;
 
 	if (conf.debug) {
 		if (asprintf(&cmd, "%s 2>&1", (char *) arg) == -1)
@@ -50,19 +50,10 @@ exec_thread(void *arg)
 	if (fd == NULL)
 		log_warn((char *) arg);
 
-	lbuf = NULL;
-	while ((buf = fgetln(fd, &len)) != NULL) {
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
-			lbuf = xmalloc(len + 1);
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
-		log_warnx("%s: %s", (char *) arg, buf);
+	while ((line = getln(fd, &error)) != NULL) {
+		log_warnx("%s: %s", (char *) arg, line);
+		free(line);
 	}
-	free(lbuf);
 
 	pclose(fd);
 

@@ -114,3 +114,30 @@ get_event(enum event *event, int timeout)
 
         return (NULL);
 }
+
+/* Yay, let's make BSD suck too because Linux does */
+char *
+getln(FILE *fd, int *error)
+{
+	char	*buf, *lbuf;
+	size_t	 len;
+
+	buf = fgetln(fd, &len);
+	if (buf == NULL) {
+		if (feof(fd)) {
+			*error = 0;
+			return (NULL);
+		}
+		*error = 1;
+		return (NULL);
+	}
+
+	if (buf[len - 1] == '\n')
+		len--;
+
+	lbuf = xmalloc(len + 1);
+	memcpy(lbuf, buf, len);
+	lbuf[len] = '\0';
+
+	return (lbuf);
+}

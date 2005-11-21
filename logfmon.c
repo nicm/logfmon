@@ -188,15 +188,14 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-        int		 opt, timeout, dirty;
+        int		 opt, timeout, dirty, error;
 	unsigned int	 failed;
         pthread_t	 thread;
         time_t		 expiretime, cachetime;
         enum event	 event;
         struct file	*file;
         FILE		*fd;
-	char		*buf, *lbuf;
-        size_t		 len;
+	char		*line;
 
 	bzero(&conf, sizeof conf);
 	TAILQ_INIT(&conf.rules);
@@ -369,26 +368,16 @@ main(int argc, char **argv)
 			}
                         break;
                 case EVENT_READ:
-			lbuf = NULL;
-			while ((buf = fgetln(file->fd, &len)) != NULL) {
-				if (buf[len - 1] == '\n')
-					buf[len - 1] = '\0';
-				else {
-					lbuf = xmalloc(len + 1);
-					memcpy(lbuf, buf, len);
-					lbuf[len] = '\0';
-					buf = lbuf;
-				}
-				if (parse_line(buf, file) != 0)
+			while ((line = getln(file->fd, &error)) != NULL) {
+				if (parse_line(line, file) != 0)
 					exit(1);
+				free(line);
 				file->offset = ftello(file->fd);
                         }
-			free(lbuf);
-                        if (ferror(file->fd) != 0) {
+                        if (error == 1) {
                                 fclose(file->fd);
                                 file->fd = NULL;
-                        } else
-				clearerr(file->fd);
+                        }
                         dirty = 1;
                         break;
                 }

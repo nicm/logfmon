@@ -105,3 +105,27 @@ get_event(enum event *event, int timeout)
                 }
         }
 }
+
+char *
+getln(FILE *fd, int *error)
+{
+	char	*buf = NULL;
+	size_t	 len = 0;
+	ssize_t	 res;
+
+	res = getline(&buf, &len, fd);
+	if (res == -1) {
+		if (feof(fd)) {
+			*error = 0;
+			return (NULL);
+		}
+		*error = 1;
+		return (NULL);
+	}
+
+	len = strlen(buf);
+	if (len >= 1 && buf[len - 1] == '\n')
+		buf[len - 1] = '\0';
+
+	return (buf);
+}

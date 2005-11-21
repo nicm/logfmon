@@ -76,9 +76,9 @@
 } while (0)
 
 #define DESTROY_MUTEX(mutex) do {					\
-	int	error;						 	\
-	while ((error = pthread_mutex_destroy(&(mutex))) != 0) { 	\
-		if (error == EBUSY)				 	\
+	int	mtx_error;					 	\
+	while ((mtx_error = pthread_mutex_destroy(&(mutex))) != 0) { 	\
+		if (mtx_error == EBUSY)				 	\
 			continue;				 	\
 		log_warnx("pthread_mutex_destroy failed: %s:%d", 	\
 		__FILE__, __LINE__);		 		 	\
@@ -256,6 +256,7 @@ unsigned int	 count_msgs(struct context *);
 /* event.c */
 void		 init_events(void);
 struct file 	*get_event(enum event *, int timeout);
+char		*getln(FILE *, int *);
 
 /* file.c */
 struct file	*add_file(char *, char *);
