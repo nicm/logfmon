@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/queue.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -30,95 +31,96 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "cache.h"
-#include "context.h"
-#include "event.h"
-#include "file.h"
-#include "log.h"
 #include "logfmon.h"
-#include "rules.h"
-#include "save.h"
-#include "tags.h"
-#include "threads.h"
-#include "xmalloc.h"
 
-extern FILE *yyin;
-extern int yyparse(void);
+#ifdef DEBUG
+char	*malloc_options = "AFGJX";
+#endif
 
-volatile sig_atomic_t reload_conf;
-volatile sig_atomic_t exit_now;
+extern FILE		*yyin;
+extern int 		 yyparse(void);
 
-int debug;
+volatile sig_atomic_t	 reload;
+volatile sig_atomic_t	 quit;
+struct conf		 conf;
 
-char *mail_cmd;
-unsigned int mail_time;
+int			 reload_conf(void);
+int			 load_conf(void);
+void			 sighandler(int);
+char 			*format_line(char *);
+void			 parse_line(char *, struct file *);
+void			 usage(void);
 
-uid_t uid;
-gid_t gid;
-
-char *conf_file;
-char *cache_file;
-char *pid_file;
-
-int now_daemon;
-
-int load_conf(void);
-void sighandler(int);
-char *repl_matches(char *, char *, regmatch_t *);
-void parse_line(char *, struct file *);
-void usage(void);
-
-int action_ignore(struct file *, char *);
-int action_exec(struct file *, char *, struct rule *, regmatch_t []);
-int action_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
-int action_open(struct file *, char *, struct rule *, regmatch_t []);
-int action_append(struct file *, char *, struct rule *, regmatch_t [], char *);
-int action_close(struct file *, char *, struct rule *, regmatch_t []);
-
-void sighandler(int sig)
+void
+sighandler(int sig)
 {
-        switch(sig)
-        {
+        switch (sig) {
         case SIGTERM:
-                exit_now = 1;
+                quit = 1;
                 break;
         case SIGHUP:
-                reload_conf = 1;
+                reload = 1;
                 break;
         }
 }
 
-int load_conf(void)
+int
+load_conf(void)
 {
-        yyin = fopen(conf_file, "r");
-        if(yyin == NULL)
-                return 1;
+        yyin = fopen(conf.conf_file, "r");
+        if (yyin == NULL)
+                return (1);
 
         yyparse();
 
-        (void) fclose(yyin);
+        fclose(yyin);
 
-        return 0;
+        return (0);
 }
 
-char *repl_one(char *src, char *repl)
+int
+reload_conf(void)
 {
-        char *buf;
-        size_t len, pos;
+	log_info("reloading configuration");
+
+	save_cache();
+
+	if (pthread_mutex_lock(&save_mutex) != 0)
+		fatalx("pthread_mutex_lock failed");
+
+	free_rules();
+	free_files(); /* closes too */
+
+	if (load_conf() != 0)
+		fatal(conf.conf_file);
+
+	if (pthread_mutex_unlock(&save_mutex) != 0)
+		fatalx("pthread_mutex_unlock failed");
+
+	load_cache();
+
+	open_files();
+	init_events();
+
+	return (0);
+}
+
+char *
+repl_one(char *src, char *repl)
+{
+        char	*buf;
+        size_t	 len, pos;
 
         len = strlen(src) + 512;
         buf = xmalloc(len);
         pos = 0;
 
-        while(*src != '\0')
-        {
-                if(*src != '$' || *(src + 1) != '1')
-                {
+        while (*src != '\0') {
+                if (*src != '$' || *(src + 1) != '1') {
                         *(buf + pos) = *src++;
 
                         pos++;
-                        while(len <= pos)
-                        {
+                        while (len <= pos) {
                                 len *= 2;
                                 buf = xrealloc(buf, len);
                         }
@@ -128,40 +130,38 @@ char *repl_one(char *src, char *repl)
 
                 src += 2;
 
-                while(len <= pos + strlen(repl))
-                {
+                while (len <= pos + strlen(repl)) {
                         len *= 2;
                         buf = xrealloc(buf, len);
                 }
 
-                (void) strcpy(buf + pos, repl);
+                strncpy(buf + pos, repl, len - pos - 1);
                 pos += strlen(repl);
         }
 
         *(buf + pos) = '\0';
 
-        return buf;
+        return (buf);
 }
 
-char *repl_matches(char *line, char *src, regmatch_t *matches)
+char *
+repl_matches(char *line, char *src, regmatch_t *match)
 {
-        char *buf;
-        size_t len, mlen, pos;
-        int num;
+        char	*buf;
+        size_t	 len, mlen, pos;
+        int	 num;
 
         len = strlen(src) + 512;
         buf = xmalloc(len);
         pos = 0;
 
-        while(*src != '\0')
-        {
-                if(*src != '$' || !isdigit(*(src + 1)) || isdigit(*(src + 2)))
-                {
+        while (*src != '\0') {
+                if (*src != '$' ||
+		    !isdigit(*(src + 1)) || isdigit(*(src + 2))) {
                         *(buf + pos) = *src++;
 
                         pos++;
-                        while(len <= pos)
-                        {
+                        while (len <= pos) {
                                 len *= 2;
                                 buf = xrealloc(buf, len);
                         }
@@ -170,29 +170,23 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
                 }
 
                 num = atoi(++src);
-                mlen = matches[num].rm_eo - matches[num].rm_so;
+                mlen = match[num].rm_eo - match[num].rm_so;
 
-                if(mlen > 0)
-                {
-                        while(len <= pos + mlen)
-                        {
+                if (mlen > 0) {
+                        while (len <= pos + mlen) {
                                 len *= 2;
                                 buf = xrealloc(buf, len);
                         }
 
-                        (void) strncpy(buf + pos, line +
-                            matches[num].rm_so, mlen);
+                        strncpy(buf + pos, line + match[num].rm_so, mlen);
                         pos += mlen;
 
                         src++;
-                }
-                else
-                {
+                } else {
                         *(buf + pos) = '$';
 
                         pos++;
-                        while(len <= pos)
-                        {
+                        while (len <= pos) {
                                 len *= 2;
                                 buf = xrealloc(buf, len);
                         }
@@ -200,314 +194,133 @@ char *repl_matches(char *line, char *src, regmatch_t *matches)
         }
         *(buf + pos) = '\0';
 
-        return buf;
+        return (buf);
 }
 
-void parse_line(char *line, struct file *file)
+void
+parse_line(char *line, struct file *file)
 {
-        char *test;
-        struct rule *rule;
-        regmatch_t matches[10];
+        char		*t;
+        struct rule	*rule;
+        regmatch_t	 match[10];
+	struct msg	*save;
 
-        if(strlen(line) < 17)
+	if (strlen(line) < 17)
+		return;
+
+	for (t = line; *t != '\0'; t++) {
+		if (*t < 32)
+			*t = '_';
+	}
+
+        t = strchr(line + 16, ' ');
+        if (t == NULL)
+                return;
+	t++;
+        if (*t == '\0')
                 return;
 
-        test = strchr(line + 16, ' ');
-        if(test == NULL)
-                return;
-        test++;
-        if(*test == '\0')
-                return;
-
-        for(rule = rules.tail; rule != NULL; rule = rule->last)
-        {
-                /* if rule->tags->head is NULL all tags match for this rule */
-                if(rule->tags->head != NULL &&
-                    find_tag(rule->tags, file->tag) == NULL)
+        TAILQ_FOREACH_REVERSE(rule, &conf.rules, rules, entry) {
+                /* if tags list is empty all tags match for this rule */
+                if (TAILQ_EMPTY(&rule->tags))
+			continue;
+		if (has_tag(rule, file->tag.name) == NULL)
                         continue;
 
-                if(regexec(rule->re, test, 10, matches, 0) != 0)
+                if (regexec(rule->re, t, 10, match, 0) != 0)
                         continue;
 
-                if(rule->not_re != NULL)
-                {
-                        if(regexec(rule->not_re, test, 0, NULL, 0) == 0)
+                if (rule->not_re != NULL) {
+                        if (regexec(rule->not_re, t, 0, NULL, 0) == 0)
                                 continue;
                 }
 
-                switch(rule->action)
-                {
-                case ACTION_IGNORE:
-                        if(action_ignore(file, test) != 0)
+                switch (rule->action) {
+                case ACT_IGNORE:
+                        if (act_ignore(file, t) != 0)
                                 return;
                         continue;
-                case ACTION_EXEC:
-                        if(action_exec(file, test, rule, matches) != 0)
+                case ACT_EXEC:
+                        if (act_exec(file, t, rule, match) != 0)
                                 return;
                         continue;
-                case ACTION_PIPE:
-                        if(action_pipe(file, test, rule, matches, line) != 0)
+                case ACT_PIPE:
+                        if (act_pipe(file, t, rule, match, line) != 0)
                                 return;
                         continue;
-                case ACTION_OPEN:
-                        if(action_open(file, test, rule, matches) != 0)
+                case ACT_OPEN:
+                        if (act_open(file, t, rule, match) != 0)
                                 return;
                         continue;
-                case ACTION_APPEND:
-                        if(action_append(file, test, rule, matches, line) != 0)
+                case ACT_APPEND:
+                        if (act_appnd(file, t, rule, match, line) != 0)
                                 return;
                         continue;
-                case ACTION_CLOSE:
-                        if(action_close(file, test, rule, matches) != 0)
+                case ACT_CLOSE:
+                        if (act_close(file, t, rule, match) != 0)
                                 return;
                         continue;
                 }
         }
 
-        if(debug)
-                info("unmatched: (%s) %s", file->tag, test);
+	log_debug("unmatched: (%s) %s", file->tag.name, t);
 
-        if(mail_cmd != NULL && *mail_cmd != '\0')
-        {
-                if(pthread_mutex_lock(&save_mutex) != 0)
-                        die("pthread_mutex_lock failed");
+        if (conf.mail_cmd != NULL && *conf.mail_cmd != '\0') {
+                if (pthread_mutex_lock(&save_mutex) != 0)
+                        fatalx("pthread_mutex_lock failed");
 
-                (void) add_message(&file->saves, line);
+		save = xmalloc(sizeof (struct msg));
+		save->str = xstrdup(line);
+		TAILQ_INSERT_HEAD(&file->saves, save, entry);
 
-                if(pthread_mutex_unlock(&save_mutex) != 0)
-                        die("pthread_mutex_unlock failed");
+                if (pthread_mutex_unlock(&save_mutex) != 0)
+                        fatalx("pthread_mutex_unlock failed");
         }
 }
 
-int action_ignore(struct file *file, char *test)
+__dead void
+usage(void)
 {
-        if(debug)
-                info("matched: (%s) %s -- ignoring", file->tag, test);
-        return 1;
-}
-
-int action_exec(struct file *file, char *test, struct rule *rule,
-    regmatch_t matches[])
-{
-        char *str;
-        pthread_t thread;
-
-        str = repl_matches(test, rule->params.cmd, matches);
-
-        if(debug)
-                info("matched: (%s) %s -- executing: %s", file->tag, test, str);
-
-        if(str == NULL || *str == '\0')
-        {
-                error("empty command for exec");
-                free(str);
-        }
-        else
-        {
-                if(pthread_create(&thread, NULL, exec_thread, str) != 0)
-                        die("pthread_create failed");
-        }
-        return 1;
-}
-
-int action_pipe(struct file *file, char *test, struct rule *rule,
-    regmatch_t matches[], char *line)
-{
-        char *str;
-        pthread_t thread;
-        FILE *fd;
-
-        if(rule->params.cmd == NULL || *(rule->params.cmd) == '\0')
-                return 1;
-
-        str = repl_matches(test, rule->params.cmd, matches);
-
-        if(debug)
-                info("matched: (%s) %s -- piping: %s", file->tag, test, str);
-
-        if(str == NULL || *str == '\0')
-        {
-                error("empty command for pipe");
-                free(str);
-        }
-        else
-        {
-                fd = popen(str, "w");
-                if(fd == NULL)
-                        error("%s: %s", str, strerror(errno));
-                else
-                {
-                        if(fwrite(line, strlen(line), 1, fd) == 1)
-                                (void) fputc('\n', fd);
-
-                        if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
-                                die("pthread_create failed");
-
-                        free(str);
-                }
-        }
-        return 1;
-}
-
-int action_open(struct file *file, char *test, struct rule *rule,
-    regmatch_t matches[])
-{
-        char *str;
-
-        if(rule->params.key == NULL || *(rule->params.key) == '\0')
-                return 1;
-
-        str = repl_matches(test, rule->params.key, matches);
-
-        if(debug)
-                info("matched: (%s) %s -- opening: '%s'", file->tag, test, str);
-
-        if(find_context_by_key(&file->contexts, str) != NULL)
-        {
-                if(debug)
-                        info("ignoring open; found existing context %s", str);
-                free(str);
-                return 0;
-        }
-
-        (void) add_context(&file->contexts, str, rule);
-
-        free(str);
-
-        return 0;
-}
-
-int action_append(struct file *file, char *test, struct rule *rule,
-    regmatch_t matches[], char *line)
-{
-        char *str;
-        struct context *context;
-
-        if(rule->params.key == NULL || *(rule->params.key) == '\0')
-                return 1;
-
-        str = repl_matches(test, rule->params.key, matches);
-
-        if(debug)
-                info("matched: (%s) %s -- appending: '%s'", file->tag,
-                    test, str);
-
-        context = find_context_by_key(&file->contexts, str);
-        if(context == NULL)
-        {
-                if(debug)
-                        info("missing context %s for append", str);
-                free(str);
-                return 0;
-        }
-        free(str);
-
-        (void) add_message(&context->messages, line);
-
-        if(context->rule->params.ent_max == 0)
-                return 0;
-
-        if(count_messages(&context->messages) >= context->rule->params.ent_max)
-        {
-                if(debug)
-                        info("context %s reached limit of %d entries",
-                            context->key, context->rule->params.ent_max);
-
-                if(context->rule->params.ent_cmd != NULL)
-                        (void) pipe_context(context,
-                            context->rule->params.ent_cmd);
-
-                delete_context(&file->contexts, context);
-        }
-
-        return 0;
-}
-
-int action_close(struct file *file, char *test, struct rule *rule,
-    regmatch_t matches[])
-{
-        char *str;
-        struct context *context;
-
-        if(rule->params.key == NULL || *(rule->params.key) == '\0')
-                return 1;
-
-        str = repl_matches(test, rule->params.key, matches);
-
-        if(debug)
-                info("matched: (%s) %s -- closing: '%s'", file->tag, test, str);
-
-        context = find_context_by_key(&file->contexts, str);
-        if(context == NULL)
-        {
-                if(debug)
-                        info("missing context %s for close", str);
-                free(str);
-                return 0;
-        }
-        free(str);
-
-        if(rule->params.cmd != NULL && *(rule->params.cmd) != '\0')
-        {
-                str = repl_matches(test, rule->params.cmd, matches);
-
-                (void) pipe_context(context, str);
-
-                free(str);
-        }
-
-        delete_context(&file->contexts, context);
-
-        return 0;
-}
-
-void usage(void)
-{
-        (void) printf("usage: %s [-d] "
-            "[-f conffile] [-c cachefile] [-p pidfile]\n", __progname);
+	printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n",
+	    __progname);
 
         exit(1);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-        int opt;
-        pthread_t thread;
+        int		 opt, timeout, dirty;
+	unsigned int	 failed;
+        pthread_t	 thread;
+        time_t		 expiretime, cachetime;
+        enum event	 event;
+        struct file	*file;
+        FILE		*fd;
+	char		*buf, *lbuf;
+        size_t		 len;
 
-        time_t now, prev;
+	bzero(&conf, sizeof conf);
+	TAILQ_INIT(&conf.rules);
+	TAILQ_INIT(&conf.files);
 
-        int timeout, failed, dirty;
-        enum event event;
-        ssize_t len;
-        size_t last, pos;
+	log_init(1);
 
-        struct file *file;
-
-        FILE *fd;
-
-        now_daemon = 0;
-
-        pid_file = NULL;
-        conf_file = NULL;
-        cache_file = NULL;
-
-        debug = 0;
-
-        while((opt = getopt(argc, argv, "c:df:p:")) != EOF)
+        while ((opt = getopt(argc, argv, "c:df:p:")) != EOF)
         {
-                switch(opt)
+                switch (opt)
                 {
                 case 'c':
-                        cache_file = xstrdup(optarg);
+                        conf.cache_file = xstrdup(optarg);
                         break;
                 case 'd':
-                        debug = 1;
+                        conf.debug = 1;
                         break;
                 case 'f':
-                        conf_file = xstrdup(optarg);
+                        conf.conf_file = xstrdup(optarg);
                         break;
                 case 'p':
-                        pid_file = xstrdup(optarg);
+                        conf.pid_file = xstrdup(optarg);
                         break;
                 case '?':
                 default:
@@ -515,252 +328,179 @@ int main(int argc, char **argv)
                 }
         }
 
-        mail_time = MAILTIME;
-        mail_cmd = NULL;
+	conf.mail_time = MAILTIME;
+	conf.mail_cmd = NULL;
 
-        rules.head = rules.tail = NULL;
-        files.head = files.tail = NULL;
+	if (conf.conf_file == NULL)
+                conf.conf_file = xstrdup(CONFFILE);
 
-        uid = 0;
-        gid = 0;
-
-        if(conf_file == NULL)
-                conf_file = xstrdup(CONFFILE);
-
-        if(load_conf() != 0)
-        {
-                error("%s: %s", conf_file, strerror(errno));
-                return 1;
+        if (load_conf() != 0) {
+                log_warn(conf.conf_file);
+		exit(1);
         }
 
-        if(mail_cmd == NULL)
-                mail_cmd = xstrdup(MAILCMD);
+        if (conf.mail_cmd == NULL)
+                conf.mail_cmd = xstrdup(MAILCMD);
+        if (conf.cache_file == NULL)
+                conf.cache_file = xstrdup(CACHEFILE);
+        if (conf.pid_file == NULL)
+                conf.pid_file = xstrdup(PIDFILE);
 
-        if(cache_file == NULL)
-                cache_file = xstrdup(CACHEFILE);
+        if (TAILQ_EMPTY(&conf.files)) {
+                log_warnx("no files specified");
+		exit(1);
+	}
 
-        if(pid_file == NULL)
-                pid_file = xstrdup(PIDFILE);
+	log_init(conf.debug);
 
-        if(files.head == NULL)
-                die("no files specified");
-
-        /*if(rules == NULL)
-          die("no rules found");*/
-
-        setpriority(PRIO_PROCESS, getpid(), 1);
-
-        if(!debug)
-        {
-                if(daemon(0, 0) != 0)
-                        die("daemon: %s", strerror(errno));
+        if (!conf.debug) {
+                if (daemon(0, 0) != 0)
+                        fatal("daemon");
         }
+        if (setpriority(PRIO_PROCESS, getpid(), 1) != 0)
+		fatal("setpriority");
 
-        if(gid != 0)
-        {
-                if(geteuid() != 0)
-                        error("need root privileges to set group");
-                else
-                {
-                        if(setgroups(1, &gid) != 0 ||
-                            setegid(gid) != 0 || setgid(gid) != 0)
-                                die("failed to drop group privileges");
+        if (conf.gid != 0) {
+                if (geteuid() != 0)
+                        fatalx("need root privileges to set group");
+                else {
+                        if (setgroups(1, &conf.gid) != 0 ||
+                            setegid(conf.gid) != 0 || setgid(conf.gid) != 0)
+                                fatalx("failed to drop group privileges");
+                }
+        }
+        if (conf.uid != 0) {
+                if (geteuid() != 0)
+                        fatalx("need root privileges to set user");
+                else {
+                        if (setuid(conf.uid) != 0 || seteuid(conf.uid) != 0)
+                                fatalx("failed to drop user privileges");
                 }
         }
 
-        if(uid != 0)
-        {
-                if(geteuid() != 0)
-                        error("need root privileges to set user");
-                else
-                {
-                        if(setuid(uid) != 0 || seteuid(uid) != 0)
-                                die("failed to drop user privileges");
+        log_info("started");
+
+        load_cache();
+
+        reload = 0;
+        quit = 0;
+
+        if (pthread_create(&thread, NULL, save_thread, NULL) != 0)
+                fatalx("pthread_create failed");
+
+        if (!conf.debug) {
+                if (signal(SIGINT, SIG_IGN) == SIG_ERR)
+                        fatalx("signal");
+                if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
+                        fatalx("signal");
+        }
+        if (signal(SIGHUP, sighandler) == SIG_ERR)
+                fatalx("signal");
+        if (signal(SIGTERM, sighandler) == SIG_ERR)
+                fatalx("signal");
+
+        if (conf.pid_file != NULL && *conf.pid_file != '\0') {
+                fd = fopen(conf.pid_file, "w");
+                if (fd == NULL)
+                        log_warn("%s", conf.pid_file);
+                else {
+                        if (fprintf(fd, "%ld\n", (long) getpid()) == -1)
+                                log_warnx("error writing pid");
+                        fclose(fd);
                 }
         }
 
-        now_daemon = 1;
-        info("started");
-
-        (void) load_cache();
-
-        reload_conf = 0;
-        exit_now = 0;
-
-        if(pthread_mutex_init(&save_mutex, NULL) != 0)
-                die("pthread_mutex_init failed");
-
-        if(pthread_create(&thread, NULL, save_thread, NULL) != 0)
-                die("pthread_create failed");
-
-        if(!debug)
-        {
-                if(signal(SIGINT, SIG_IGN) == SIG_ERR)
-                        die("signal: %s", strerror(errno));
-                if(signal(SIGQUIT, SIG_IGN) == SIG_ERR)
-                        die("signal: %s", strerror(errno));
-        }
-
-        if(signal(SIGHUP, sighandler) == SIG_ERR)
-                die("signal: %s", strerror(errno));
-        if(signal(SIGTERM, sighandler) == SIG_ERR)
-                die("signal: %s", strerror(errno));
-
-        /*signal(SIGCHLD, SIG_IGN);*/
-
-        if(pid_file != NULL && *pid_file != '\0')
-        {
-                fd = fopen(pid_file, "w");
-                if(fd == NULL)
-                        error("%s: %s", pid_file, strerror(errno));
-                else
-                {
-                        if(fprintf(fd, "%ld\n", (long) getpid()) == -1)
-                                error("error writing pid");
-
-                        (void) fclose(fd);
-                }
-        }
-
-        prev = time(NULL) + CHECKTIMEOUT;
 
         open_files();
         init_events();
 
         dirty = 0;
         failed = 0;
-        len = 0;
+        expiretime = time(NULL);
+	cachetime = time(NULL);
 
-        while(!exit_now)
-        {
-                if(reload_conf)
-                {
-                        info("reloading configuration");
-
-                        (void) save_cache();
-
-                        if(pthread_mutex_lock(&save_mutex) != 0)
-                                die("pthread_mutex_lock failed");
-
-                        clear_rules();
-                        clear_files(); /* closes too */
-
-                        if(load_conf() != 0)
-                                die("%s: %s", conf_file, strerror(errno));
-
-                        if(pthread_mutex_unlock(&save_mutex) != 0)
-                                die("pthread_mutex_unlock failed");
-
-                        (void) load_cache();
-                        open_files();
-                        init_events();
-
-                        reload_conf = 0;
-
+	while (!quit) {
+		/* reload config after signal */
+                if (reload) {
+			reload_conf();
+			reload = 0;
                         dirty = 0;
-                }
+		}
 
-                if(reopen_files(&failed) > 0)
+		/* if the check timeout has run out, check for closed files
+		   and save the cache if required */
+                if ((time(NULL) - expiretime) > EXPIRETIMEOUT) {
+			TAILQ_FOREACH(file, &conf.files, entry)
+				expire_contexts(file);
+			expiretime = time(NULL);
+		}
+		if (dirty && (time(NULL) - cachetime) > CACHETIMEOUT) {
+			save_cache();
+			dirty = 0;
+			cachetime = time(NULL);
+		}
+
+		/* attempt to reopen closed files */
+                if (reopen_files(&failed) > 0) {
+			/* if any files successfully reopened, reset the
+			   event array */
                         init_events();
-
-                if(failed > 0)
+		}
+		timeout = DEFAULTTIMEOUT;
+		/* if any reopens failed, use alternative timeout */
+                if (failed > 0)
                         timeout = REOPENTIMEOUT;
-                else
-                        timeout = DEFAULTTIMEOUT;
 
+		/* get an event */
                 file = get_event(&event, timeout);
-
-                now = time(NULL);
-                if(now >= prev)
-                {
-                        check_files();
-                        if(dirty)
-                        {
-                                (void) save_cache();
-                                dirty = 0;
-                        }
-                        prev = now + CHECKTIMEOUT;
-                }
-
-                if(file == NULL)
+                if (file == NULL)
                         continue;
+		log_debug("event: tag=%s, code=%d", file->tag.name, event);
 
-                switch(event)
-                {
+                switch (event) {
                 case EVENT_NONE:
                 case EVENT_TIMEOUT:
                         break;
                 case EVENT_REOPEN:
-                        (void) fclose(file->fd);
-                        file->fd = NULL;
-                        file->timer = time(NULL) + REOPENTIMEOUT;
-
-                        dirty = 1;
+                        fclose(file->fd);
+                        file->fd = fopen(file->path, "r");
+			if (file->fd == NULL) {
+				log_warn(file->path);
+				file->timer = time(NULL) + REOPENTIMEOUT;
+				dirty = 1;
+			}
                         break;
                 case EVENT_READ:
-                        for(;;)
-                        {
-                                file->buffer = xrealloc(file->buffer,
-                                    file->length + 256);
-
-                                len = read(fileno(file->fd), file->buffer +
-                                    file->length, 255);
-                                if(len == 0 || len == -1)
-                                        break;
-                                file->length += len;
-                                if(len < 255)
-                                        break;
-
-                                if(file->length > 256*1024)
-                                        break;
+			lbuf = NULL;
+			while ((buf = fgetln(file->fd, &len)) != NULL) {
+				if (buf[len - 1] == '\n')
+					buf[len - 1] = '\0';
+				else {
+					lbuf = xmalloc(len + 1);
+					memcpy(lbuf, buf, len);
+					lbuf[len] = '\0';
+					buf = lbuf;
+				}
+				parse_line(buf, file);
+				file->offset = ftello(file->fd);
                         }
-
-                        if(len == -1)
-                        {
-                                (void) fclose(file->fd);
+			free(lbuf);
+                        if (ferror(file->fd) != 0) {
+                                fclose(file->fd);
                                 file->fd = NULL;
                         }
-
-                        last = 0;
-                        for(pos = 0; pos < file->length; pos++)
-                        {
-                                if(*(file->buffer + pos) == '\0')
-                                        *(file->buffer + pos) = '_';
-
-                                if(*(file->buffer + pos) == '\n')
-                                {
-                                        *(file->buffer + pos) = '\0';
-                                        parse_line(file->buffer + last, file);
-                                        last = pos + 1;
-                                }
-                        }
-
-                        (void) memmove(file->buffer, file->buffer + last,
-                            file->length - last);
-                        file->length -= last;
-
-                        file->offset += last;
-
                         dirty = 1;
                         break;
                 }
         }
 
         close_files();
-        if(pid_file != NULL && *pid_file != '\0')
-                unlink(pid_file);
-
-        clear_rules();
-        clear_files();
-
-        free(conf_file);
-        free(cache_file);
-        free(pid_file);
-        free(mail_cmd);
+        if (conf.pid_file != NULL && *conf.pid_file != '\0')
+                unlink(conf.pid_file);
 
         pthread_mutex_destroy(&save_mutex);
 
-        info("terminated");
+        log_info("terminated");
 
-        return 0;
+        return (0);
 }

@@ -1,7 +1,8 @@
 /* $Id$ */
+/*      $OpenBSD: log.c,v 1.6 2004/07/12 09:22:38 dtucker Exp $ */
 
 /*
- * Copyright (c) 2004 Nicholas Marriott <nicm__@ntlworld.com>
+ * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,53 +17,141 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <err.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "log.h"
 #include "logfmon.h"
 
-void vlog(int, char *, va_list);
+int	debug;
 
-void die(char *fmt, ...)
+void	logit(int, const char *, ...);
+
+void
+log_init(int n_debug)
 {
-        va_list ap;
+	debug = n_debug;
 
-        va_start(ap, fmt);
-        vlog(LOG_ERR, fmt, ap);
-        va_end(ap);
+	if (!debug)
+		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
-        if(now_daemon)
-                error("exited");
-
-        exit(1);
+	tzset();
 }
 
-void error(char *fmt, ...)
+void
+logit(int pri, const char *fmt, ...)
 {
-        va_list ap;
+	va_list	ap;
 
-        va_start(ap, fmt);
-        vlog(LOG_ERR, fmt, ap);
-        va_end(ap);
+	va_start(ap, fmt);
+	vlog(pri, fmt, ap);
+	va_end(ap);
 }
 
-void info(char *fmt, ...)
+void
+vlog(int pri, const char *fmt, va_list ap)
 {
-        va_list ap;
+	char	*nfmt;
 
-        va_start(ap, fmt);
-        vlog(LOG_INFO, fmt, ap);
-        va_end(ap);
+	if (debug) {
+		/* best effort in out of mem situations */
+		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
+			vfprintf(stderr, fmt, ap);
+			fprintf(stderr, "\n");
+		} else {
+			vfprintf(stderr, nfmt, ap);
+			free(nfmt);
+		}
+		fflush(stderr);
+	} else
+		vsyslog(pri, fmt, ap);
 }
 
-void vlog(int pri, char *fmt, va_list ap)
+
+void
+log_warn(const char *emsg, ...)
 {
-        if(debug || !now_daemon)
-                vwarnx(fmt, ap);
-        else
-                vsyslog(LOG_DAEMON | pri, fmt, ap);
+	char	*nfmt;
+	va_list	 ap;
+
+	/* best effort to even work in out of memory situations */
+	if (emsg == NULL)
+		logit(LOG_CRIT, "%s", strerror(errno));
+	else {
+		va_start(ap, emsg);
+
+		if (asprintf(&nfmt, "%s: %s", emsg, strerror(errno)) == -1) {
+			/* we tried it... */
+			vlog(LOG_CRIT, emsg, ap);
+			logit(LOG_CRIT, "%s", strerror(errno));
+		} else {
+			vlog(LOG_CRIT, nfmt, ap);
+			free(nfmt);
+		}
+		va_end(ap);
+	}
+}
+
+void
+log_warnx(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vlog(LOG_CRIT, emsg, ap);
+	va_end(ap);
+}
+
+void
+log_info(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vlog(LOG_INFO, emsg, ap);
+	va_end(ap);
+}
+
+void
+log_debug(const char *emsg, ...)
+{
+	va_list	ap;
+
+	if (conf.debug) { /* don't log debug messages unless real debug set */
+		va_start(ap, emsg);
+		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
+}
+
+__dead void
+fatal(const char *emsg)
+{
+	if (emsg == NULL)
+		logit(LOG_CRIT, "fatal: %s", strerror(errno));
+	else
+		if (errno)
+			logit(LOG_CRIT, "fatal: %s: %s",
+			    emsg, strerror(errno));
+		else
+			logit(LOG_CRIT, "fatal: %s", emsg);
+
+	exit(1);
+}
+
+__dead void
+fatalx(const char *emsg)
+{
+	errno = 0;
+	fatal(emsg);
 }

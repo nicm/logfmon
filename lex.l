@@ -25,9 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "file.h"
-#include "tags.h"
-#include "xmalloc.h"
+#include "logfmon.h"
 #include "y.tab.h"
 
 extern int yylex(void);
@@ -36,81 +34,73 @@ extern int yylex(void);
 %%
 
 \{ {
-        int ch, done, len, pos;
-        char *tag;
+        int	 	 ch, done;
+	unsigned int	 pos;
+        char	 	 name[MAXTAGLEN];
+	struct tag	*tag;
 
         done = 0;
-
-        len = 24;
         pos = 0;
-        tag = xmalloc(len);
 
-        yylval.tags = xmalloc(sizeof(struct tags));
-        init_tags(yylval.tags);
+        yylval.tags = xmalloc(sizeof (struct tags));
+        TAILQ_INIT(&yylval.tags->tags);
 
-        while(!done && (ch = input()))
-        {
-                switch(ch)
-                {
+        while (!done && (ch = input())) {
+                switch (ch) {
                 case ' ':
-                        if(pos != 0)
-                        {
-                                *(tag + pos) = '\0';
-                                add_tag(yylval.tags, tag);
-                                len = 24;
+                        if (pos > 0) {
+                                *(name + pos) = '\0';
+				tag = xmalloc(sizeof (struct tag));
+				strncpy(tag->name, name, sizeof tag->name);
+				TAILQ_INSERT_HEAD(&yylval.tags->tags,
+				    tag, entry);
                                 pos = 0;
-                                tag = xrealloc(tag, len);
                         }
                         break;
                 case '}':
                         done = 1;
                         break;
                 default:
-                        if(ch == '-' || ch == '_' || isalpha(ch))
-                        {
-                                *(tag + pos) = ch;
+                        if (ch == '-' || ch == '_' || isalpha(ch)) {
+                                *(name + pos) = ch;
                                 pos++;
-                                while(pos >= len)
-                                {
-                                        len *= 2;
-                                        tag = xrealloc(tag, len);
-                                }
-                        }
-                        else
-                        {
-                                clear_tags(yylval.tags);
-                                free(yylval.tags);
-                                yylval.tags = NULL;
-                                free(tag);
-                                return TAGS;
-                        }
+                                if (pos >= sizeof name)
+					goto error;
+                        } else
+				goto error;
                         break;
                 }
         }
 
-        if(pos > 0)
-        {
-                *(tag + pos) = '\0';
-                add_tag(yylval.tags, tag);
+        if (pos > 0) {
+		*(name + pos) = '\0';
+		tag = xmalloc(sizeof (struct tag));
+		strncpy(tag->name, name, sizeof tag->name);
+		TAILQ_INSERT_HEAD(&yylval.tags->tags, tag, entry);
         }
 
-        if(yylval.tags->head == NULL)
-        {
-                free(yylval.tags);
-                yylval.tags = NULL;
-        }
+        if (TAILQ_EMPTY(&yylval.tags->tags))
+		goto error;
 
-        free(tag);
-        return TAGS;
+        return (TAGS);
+error:
+	while (!TAILQ_EMPTY(&yylval.tags->tags)) {
+		tag = TAILQ_FIRST(&yylval.tags->tags);
+		TAILQ_REMOVE(&yylval.tags->tags, tag, entry);
+		free(tag);
+	}
+	free(yylval.tags);
+	yylval.tags = NULL;
+	return (TAGS);
 }
 [0-9]+[hms] {
-        char ch;
+        char	ch;
 
         ch = *(yytext + strlen(yytext) - 1);
         *(yytext + strlen(yytext) - 1) = '\0';
 
         yylval.number=atoi(yytext);
-        switch(ch)
+        switch (ch)
         {
         case 'h':
                 yylval.number *= 3600;
@@ -120,11 +110,11 @@ extern int yylex(void);
                 break;
         }
 
-        return TIME;
+        return (TIME);
 }
-[0-9]+                  {
-        yylval.number=atoi(yytext);
-        return NUMBER;
+[0-9]+ {
+        yylval.number = atoi(yytext);
+        return (NUMBER);
 }
 \" {
         int ch, pos, len, done;
@@ -135,13 +125,10 @@ extern int yylex(void);
 
         yylval.string = xmalloc(len + 1);
 
-        while(!done && (ch = input()))
-        {
-                switch(ch)
-                {
+        while (!done && (ch = input())) {
+                switch (ch) {
                 case '\\':
-                        switch(ch = input())
-                        {
+                        switch (ch = input()) {
                         case 'r':
                                 ch = '\r';
                                 break;
@@ -160,8 +147,7 @@ extern int yylex(void);
 
                 *(yylval.string + pos) = ch;
                 pos++;
-                if(pos == len)
-                {
+                if (pos == len) {
                         len *= 2;
                         yylval.string = (char *)
                             xrealloc(yylval.string, len + 1);
@@ -170,41 +156,45 @@ extern int yylex(void);
 
         *(yylval.string + pos) = '\0';
 
-        return STRING;
+        return (STRING);
 }
-mailcmd return OPTMAILCMD;
-mailtime return OPTMAILTIME;
-cachefile return OPTCACHEFILE;
-pidfile return OPTPIDFILE;
-user return OPTUSER;
-group return OPTGROUP;
-not return TOKNOT;
-in return TOKIN;
-file return TOKFILE;
-tag return TOKTAG;
-set return TOKSET;
-match return TOKMATCH;
-ignore return TOKIGNORE;
-exec return TOKEXEC;
-open return TOKOPEN;
-expire return TOKEXPIRE;
-append return TOKAPPEND;
-close return TOKCLOSE;
-pipe return TOKPIPE;
-when return TOKWHEN;
+mailcmd return (OPTMAILCMD);
+mailtime return (OPTMAILTIME);
+cachefile return (OPTCACHEFILE);
+pidfile return (OPTPIDFILE);
+user return (OPTUSER);
+group return (OPTGROUP);
+not return (TOKNOT);
+in return (TOKIN);
+file return (TOKFILE);
+tag return (TOKTAG);
+set return (TOKSET);
+match return (TOKMATCH);
+ignore return (TOKIGNORE);
+exec return (TOKEXEC);
+open return (TOKOPEN);
+expire return (TOKEXPIRE);
+append return (TOKAPPEND);
+close return (TOKCLOSE);
+pipe return (TOKPIPE);
+when return (TOKWHEN);
 \* {
-        yylval.tags = xmalloc(sizeof(struct tags));
-        init_tags(yylval.tags);
+        yylval.tags = xmalloc(sizeof (struct tags));
+	TAILQ_INIT(&yylval.tags->tags);
 
-        return TAGS;
+        return (TAGS);
 }
 [A-Za-z0-9_-]+ {
-        yylval.tags = xmalloc(sizeof(struct tags));
-        init_tags(yylval.tags);
+	struct tag	*tag;
 
-        add_tag(yylval.tags, yytext);
+        yylval.tags = xmalloc(sizeof (struct tags));
+	TAILQ_INIT(&yylval.tags->tags);
 
-        return TAGS;
+	tag = xmalloc(sizeof (struct tag));
+	strncpy(tag->name, yytext, sizeof tag->name);
+	TAILQ_INSERT_HEAD(&yylval.tags->tags, tag, entry);
+
+        return (TAGS);
 }
 \#.*\n /* ignore comments */;
 \n /* ignore end of line */;

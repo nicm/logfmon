@@ -23,94 +23,90 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "file.h"
-#include "log.h"
 #include "logfmon.h"
-#include "save.h"
-#include "xmalloc.h"
 
-pthread_mutex_t save_mutex;
+pthread_mutex_t	save_mutex;
 
-/* ARGSUSED */
-void *save_thread(void *arg)
+void *
+save_thread(void *arg)
 {
-        struct message *save;
-        struct file *file;
-        FILE *fd;
-        int msgs;
+        struct msg	*save;
+        struct file	*file;
+        FILE		*fd;
+        int		 flag;
+	unsigned int	 n, t;
 
-        arg = NULL;
+	arg = NULL; /* stop gcc complaining */
 
-        for(;;)
-        {
-                if(debug)
-                        info("sleeping for %d seconds", mail_time);
+        for (;;) {
+		log_debug("sleeping for %d seconds", conf.mail_time);
 
-                sleep(mail_time);
-
-                if(exit_now)
+		t = conf.mail_time;
+		while (t > 0)
+			t = sleep(t);
+                if (quit)
                         break;
-
-                if(mail_cmd == NULL || *mail_cmd == '\0')
+                if (conf.mail_cmd == NULL || *conf.mail_cmd == '\0')
                         continue;
 
-                for(file = files.head; file != NULL; file = file->next)
-                {
-                        if(file->saves.head != NULL)
-                                break;
+                if (pthread_mutex_lock(&save_mutex) != 0)
+                        fatalx("pthread_mutex_lock failed");
+
+		flag = 0;
+		TAILQ_FOREACH(file, &conf.files, entry) {
+			if (!TAILQ_EMPTY(&file->saves)) {
+				flag = 1;
+				break;
+			}
+                }
+		if (!flag)
+			goto done;
+
+		log_debug("processing saved messages. executing: %s",
+		    conf.mail_cmd);
+
+                fd = popen(conf.mail_cmd, "w");
+                if (fd == NULL) {
+                        log_warn(conf.mail_cmd);
+			goto done;
                 }
 
-                if(file == NULL)
-                        continue;
-
-                if(debug)
-                        info("processing saved messages. executing: %s",
-                            mail_cmd);
-
-                fd = popen(mail_cmd, "w");
-                if(fd == NULL)
-                {
-                        error("%s: %s", mail_cmd, strerror(errno));
-                        continue;
-                }
-
-                msgs = 0;
-
-                if(pthread_mutex_lock(&save_mutex) != 0)
-                        die("pthread_mutex_lock failed");
-
-                for(file = files.tail; file != NULL; file = file->last)
-                {
-                        if(file->saves.head == NULL)
+                n = 0;
+		TAILQ_FOREACH(file, &conf.files, entry) {
+                        if (TAILQ_EMPTY(&file->saves))
                                 continue;
 
-                        if(fprintf(fd, "Unmatched messages for file %s, "
-                               "tag %s:\n\n", file->path, file->tag) == -1)
+                        if (fprintf(fd, "Unmatched messages for file %s, "
+			    "tag %s:\n\n", file->path, file->tag.name) == -1)
                                 break;
 
-                        for(save = file->saves.tail; save != NULL;
-                            save = save->last)
-                        {
-                                if(fwrite(save->msg,
-                                       strlen(save->msg), 1, fd) != 1)
+			TAILQ_FOREACH(save, &file->saves, entry) {
+				if (fwrite(save->str, strlen(save->str), 1,
+				    fd) != 1) {
+					log_warn("fwrite");
+					break;
+				}
+				if (fputc('\n', fd) == EOF) {
+					log_warn("fputc");
                                         break;
-                                if(fputc('\n', fd) == EOF)
-                                        break;
-                                msgs++;
+				}
+
+                                n++;
                         }
+                        if (fputc('\n', fd) == EOF)
+				log_warn("fputc");
 
-                        (void) fputc('\n', fd);
-
-                        clear_messages(&file->saves);
+                        reset_file(file);
                 }
+
                 pclose(fd);
 
-                if(pthread_mutex_unlock(&save_mutex) != 0)
-                        die("pthread_mutex_unlock failed");
+                log_debug("processed %d unmatched messages", n);
 
-                if(debug)
-                        info("processed %d unmatched messages", msgs);
+done:
+                if (pthread_mutex_unlock(&save_mutex) != 0)
+                        fatalx("pthread_mutex_lock failed");
         }
 
-        return NULL;
+        return (NULL);
 }

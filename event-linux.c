@@ -28,12 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "event.h"
-#include "file.h"
-#include "log.h"
 #include "logfmon.h"
-#include "save.h"
-#include "xmalloc.h"
 
 /*
  * Okay, this is a bit of a hack since, as far as I can tell:
@@ -59,66 +54,54 @@
  *
  */
 
-struct file *evfile = NULL;
+struct file	*evfile = NULL;
 
-void init_events(void)
+void
+init_events(void)
 {
-        evfile = files.head;
 }
 
-struct file *get_event(enum event *event, int timeout)
+struct file *
+get_event(enum event *event, int timeout)
 {
-        struct stat sb;
-        int num;
+        struct stat	sb;
+        int		n;
 
-        num = 0;
-
-        for(;;)
-        {
+        n = 0;
+        for(;;) {
                 *event = EVENT_NONE;
 
-                if(usleep(100000L) == -1)
-                {
-                        if(errno == EINTR)
-                                return NULL;
-
-                        die("usleep: %s", strerror(errno));
+                if (usleep(100000L) == -1) {
+                        if (errno == EINTR)
+                                return (NULL);
+                        fatal("usleep");
                 }
 
-                num++;
-                if(num > timeout * 10)
-                {
+                n++;
+                if (n > timeout * 10) {
                         *event = EVENT_TIMEOUT;
-                        return NULL;
+                        return (NULL);
                 }
 
-                if(evfile == NULL)
-                        evfile = files.head;
-
-                for(; evfile != NULL; evfile = evfile->next)
-                {
-                        if(evfile->fd != NULL)
-                        {
-                                if(stat(evfile->path, &sb) == -1)
-                                {
+                if (evfile == NULL)
+                        evfile = TAILQ_FIRST(&conf.files);
+		while (evfile != NULL) {
+                        if (evfile->fd != NULL) {
+                                if (stat(evfile->path, &sb) == -1) {
                                         *event = EVENT_REOPEN;
-                                        return evfile;
+                                        return (evfile);
                                 }
-
-                                if(sb.st_size < evfile->size)
-                                {
+                                if (sb.st_size < evfile->size) {
                                         *event = EVENT_REOPEN;
-                                        return evfile;
+                                        return (evfile);
                                 }
-
-                                if(sb.st_size > evfile->size)
-                                {
+                                if (sb.st_size > evfile->size) {
                                         evfile->size = sb.st_size;
-
                                         *event = EVENT_READ;
-                                        return evfile;
+                                        return (evfile);
                                 }
                         }
+			evfile = TAILQ_NEXT(evfile, entry);
                 }
         }
 }

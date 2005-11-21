@@ -2,13 +2,13 @@
 
 .SUFFIXES: .c .o .y .l .h .8 .8.gz .5 .5.gz
 
-VERSION= 0.7
+VERSION= 0.8
 
 OS!= uname
 
 PROG= logfmon
 SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c context.c \
-      messages.c tags.c cache.c threads.c parse.y lex.l
+      cache.c threads.c parse.y lex.l action.c
 
 .if ${OS} == "Linux"
 SRCS+= event-linux.c
@@ -18,9 +18,6 @@ SRCS+= event.c
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 
-LINT = lint
-LINTFLAGS = -aabcehprsu /usr/libdata/lint/llib-lstdc.ln
-
 LEX= lex
 LEXFLAGS=
 
@@ -28,6 +25,7 @@ YACC= yacc
 YACCFLAGS= -d
 
 CC= cc
+CFLAGS+= -g -DDEBUG
 CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W -Wnested-externs
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
@@ -119,7 +117,4 @@ uninstall:
 		${RM} ${RMFLAGS} ${DESTDIR}/man/man5/${PROG}.conf.5.gz
 
 clean:
-		${RM} ${RMFLAGS} ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz *~ *.ln
-
-lint:
-		-${LINT} ${LINTFLAGS} ${SRCS}
+		${RM} ${RMFLAGS} ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz *.[1-9].gz *~ *.ln ${PROG}.core

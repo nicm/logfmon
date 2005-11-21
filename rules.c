@@ -16,127 +16,105 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <sys/queue.h>
+
+#include <regex.h>
 #include <string.h>
+#include <stdlib.h>
 
-#include "file.h"
-#include "log.h"
 #include "logfmon.h"
-#include "rules.h"
-#include "tags.h"
-#include "xmalloc.h"
 
-struct rules rules = { NULL, NULL };
+void	free_rule(struct rule *);
 
-struct rule *add_rule(enum action action, struct tags *tags, char *re,
-    char *not_re)
+struct rule *
+add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 {
-        struct rule *rule;
+        struct rule	*rule;
+	struct tag	*tag;
 
-        rule = xmalloc(sizeof(struct rule));
+        rule = xmalloc(sizeof (struct rule));
+	bzero(rule, sizeof (struct rule));
+
+	TAILQ_INIT(&rule->tags);
+	TAILQ_FOREACH(tag, &tags->tags, entry) {
+		TAILQ_INSERT_HEAD(&rule->tags, tag, entry);
+	}
+	free(tags);
 
         rule->action = action;
 
-        rule->params.cmd = NULL;
-        rule->params.key = NULL;
-        rule->params.expiry = 0;
-
-        rule->params.ent_max = 0;
-        rule->params.ent_cmd = NULL;
-
-        if(tags == NULL)
-        {
-                rule->tags = xmalloc(sizeof(struct tags));
-                init_tags(rule->tags);
-        }
-        else
-                rule->tags = tags;
-
-        if(check_tags(rule->tags))
-        {
-                free(rule);
-                return NULL;
-        }
-
-        rule->re = xmalloc(sizeof(regex_t));
-
-        if(regcomp(rule->re, re, 0) != 0)
-        {
-                free(rule->re);
-                free(rule);
-
-                error("%s: bad regexp", re);
-
-                return NULL;
-        }
-
-        if(not_re != NULL)
-        {
-                rule->not_re = xmalloc(sizeof(regex_t));
-
-                if(regcomp(rule->not_re, not_re, 0) != 0)
-                {
-                        free(rule->not_re);
-                        free(rule->re);
-                        free(rule);
-
-                        error("%s: bad regexp", not_re);
-
-                        return NULL;
+	if (re != NULL) {
+		rule->re = xmalloc(sizeof (regex_t));
+		if (regcomp(rule->re, re, 0) != 0) {
+			free_rule(rule);
+			log_warnx("%s: bad regexp", re);
+			return (NULL);
+		}
+	}
+	if (not_re != NULL) {
+                rule->not_re = xmalloc(sizeof (regex_t));
+                if (regcomp(rule->not_re, not_re, 0) != 0) {
+			free_rule(rule);
+                        log_warnx("%s: bad regexp", not_re);
+                        return (NULL);
                 }
         }
-        else
-                rule->not_re = NULL;
 
-        if(debug)
-                info("match=%s, action=%d", re, rule->action);
-
-        if(rules.head == NULL)
-        {
-                rule->next = rule->last = NULL;
-                rules.head = rules.tail = rule;
-        }
-        else
-        {
-                rules.head->last = rule;
-                rule->next = rules.head;
-                rule->last = NULL;
-                rules.head = rule;
-        }
-
-        return rule;
+	log_debug("added rule: re=%s, not_re=%s, action=%d",
+	    re, not_re, action);
+	TAILQ_INSERT_HEAD(&conf.rules, rule, entry);
+        return (rule);
 }
 
-void clear_rules(void)
+void
+free_rule(struct rule *rule)
 {
-        struct rule *rule, *last;
+	struct tag	*tag;
 
-        if(rules.head == NULL)
-                return;
+	while (!TAILQ_EMPTY(&rule->tags)) {
+		tag = TAILQ_FIRST(&rule->tags);
+		TAILQ_REMOVE(&rule->tags, tag, entry);
+		free(tag);
+	}
 
-        rule = rules.head;
-        while(rule != NULL)
-        {
-                last = rule;
-                rule = rule->next;
+	if (rule->re != NULL) {
+		regfree(rule->re);
+		free(rule->re);
+	}
+	if (rule->not_re != NULL) {
+		regfree(rule->not_re);
+		free(rule->not_re);
+	}
 
-                clear_tags(last->tags);
-                free(last->tags);
+	if (rule->params.cmd != NULL)
+		free(rule->params.cmd);
+	if (rule->params.key != NULL)
+		free(rule->params.key);
 
-                regfree(last->re);
-                free(last->re);
+	free(rule);
+}
 
-                if(last->not_re != NULL)
-                {
-                        regfree(last->not_re);
-                        free(last->not_re);
-                }
+void
+free_rules(void)
+{
+        struct rule	*rule;
 
-                free(last->params.cmd);
-                free(last->params.key);
-                free(last);
-        }
+	while (!TAILQ_EMPTY(&conf.rules)) {
+		rule = TAILQ_FIRST(&conf.rules);
+		TAILQ_REMOVE(&conf.rules, rule, entry);
+		free_rule(rule);
+	}
+}
 
-        rules.head = rules.tail = NULL;
+int
+has_tag(struct rule *rule, char *name)
+{
+	struct tag	*tag;
+
+	TAILQ_FOREACH(tag, &rule->tags, entry) {
+		if (strcmp(name, tag->name) == 0)
+			return (1);
+	}
+
+	return (0);
 }

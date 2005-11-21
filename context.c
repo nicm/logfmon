@@ -25,178 +25,162 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "context.h"
-#include "log.h"
 #include "logfmon.h"
-#include "rules.h"
-#include "threads.h"
-#include "xmalloc.h"
 
-void init_contexts(struct contexts *contexts)
+void	free_context(struct context *);
+
+struct context *
+add_context(struct file *file, char *key, struct rule *rule)
 {
-        contexts->head = contexts->tail = NULL;
-}
+        struct context	*context;
 
-int add_context(struct contexts *contexts, char *key, struct rule *rule)
-{
-        struct context *context;
+        context = xmalloc(sizeof (struct context));
 
-        context = xmalloc(sizeof(struct context));
-
-        init_messages(&context->messages);
+	TAILQ_INIT(&context->msgs);
 
         context->rule = rule;
         context->expiry = time(NULL) + rule->params.expiry;
-
         context->key = xstrdup(key);
 
-        if(contexts->head == NULL)
-        {
-                context->next = context->last = NULL;
-                contexts->head = contexts->tail = context;
-        }
-        else
-        {
-                contexts->head->last = context;
-                context->next = contexts->head;
-                context->last = NULL;
-                contexts->head = context;
-        }
-
-        return 0;
+	log_debug("added context: key=%s", key);
+	TAILQ_INSERT_HEAD(&file->contexts, context, entry);
+        return (context);
 }
 
-void delete_context(struct contexts *contexts, struct context *context)
+void
+free_context(struct context *context)
 {
-        if(contexts->head == NULL)
-                return;
+	reset_context(context);
 
-        if(context == contexts->head)
-        {
-                contexts->head = context->next;
-                if(contexts->head != NULL)
-                        contexts->head->last = NULL;
-        }
-        if(context == contexts->tail)
-        {
-                contexts->tail = context->last;
-                if(contexts->tail != NULL)
-                        contexts->tail->next = NULL;
-        }
-
-        if(context->next != NULL)
-                context->next->last = context->last;
-        if(context->last != NULL)
-                context->last->next = context->next;
-
-        clear_messages(&context->messages);
-
-        free(context->key);
-        free(context);
+	free(context->key);
+	free(context);
 }
 
-void clear_contexts(struct contexts *contexts)
+void
+free_contexts(struct file *file)
 {
-        struct context *context, *last;
+        struct context	*context;
 
-        if(contexts->head == NULL)
-                return;
-
-        context = contexts->head;
-        while(context != NULL)
-        {
-                last = context;
-                context = context->next;
-
-                clear_messages(&last->messages);
-
-                free(last->key);
-                free(last);
-        }
-
-        contexts->head = contexts->tail = NULL;
+	while (!TAILQ_EMPTY(&file->contexts)) {
+		context = TAILQ_FIRST(&file->contexts);
+		TAILQ_REMOVE(&file->contexts, context, entry);
+		free_context(context);
+	}
 }
 
-struct context *find_context_by_key(struct contexts *contexts, char *key)
+void
+reset_context(struct context *context)
 {
-        struct context *context;
+	struct msg	*msg;
 
-        if(contexts->head == NULL)
-                return NULL;
-
-        for(context = contexts->head; context != NULL; context = context->next)
-        {
-                if(strcmp(context->key, key) == 0)
-                        return context;
-        }
-
-        return NULL;
+	while (!TAILQ_EMPTY(&context->msgs)) {
+		msg = TAILQ_FIRST(&context->msgs);
+		TAILQ_REMOVE(&context->msgs, msg, entry);
+		free(msg->str);
+		free(msg);
+	}
 }
 
-void check_contexts(struct contexts *contexts)
+void
+delete_context(struct file *file, struct context *context)
 {
-        struct context *context, *last;
-        time_t now;
+	log_debug("removed context: key=%s", context->key);
+	TAILQ_REMOVE(&file->contexts, context, entry);
+	free_context(context);
 
-        if(contexts->head == NULL)
-                return;
+}
+
+struct context *
+find_context_by_key(struct file *file, char *key)
+{
+        struct context	*context;
+
+	TAILQ_FOREACH(context, &file->contexts, entry) {
+                if (strcmp(context->key, key) == 0)
+                        return (context);
+        }
+
+        return (NULL);
+}
+
+unsigned int
+count_msgs(struct context *context)
+{
+        struct msg 	*msg;
+        unsigned int	 n;
+
+        n = 0;
+	TAILQ_FOREACH(msg, &context->msgs, entry)
+		n++;
+
+	return (n);
+}
+
+void
+expire_contexts(struct file *file)
+{
+        struct context		*context;
+	TAILQ_HEAD(, context)	 exp_contexts;
+        time_t		 	 now;
 
         now = time(NULL);
+	TAILQ_INIT(&exp_contexts);
 
-        context = contexts->head;
-        while(context != NULL)
-        {
-                last = context;
-                context = context->next;
-
-                if(now >= last->expiry)
-                {
-                        if(debug)
-                                info("context %s expired", last->key);
-                        if(last->rule != NULL && last->rule->params.cmd != NULL)
-                                (void) pipe_context(last,
-                                    last->rule->params.cmd);
-                        delete_context(contexts, last);
+	TAILQ_FOREACH(context, &file->contexts, entry) {
+                if(now >= context->expiry) {
+			log_debug("expired context: key=%s", context->key);
+                        if(context->rule != NULL &&
+			    context->rule->params.cmd != NULL)
+                                pipe_context(context,
+				    context->rule->params.cmd);
+			TAILQ_INSERT_HEAD(&exp_contexts, context,
+			    exp_entry);
                 }
         }
 
-        return;
+	while (!TAILQ_EMPTY(&exp_contexts)) {
+		context = TAILQ_FIRST(&exp_contexts);
+		TAILQ_REMOVE(&exp_contexts, context, exp_entry);
+		delete_context(file, context);
+	}
 }
 
-int pipe_context(struct context *context, char *cmd)
+int
+pipe_context(struct context *context, char *cmd)
 {
-        FILE *fd;
-        struct message *message;
-        pthread_t thread;
+        FILE		*fd;
+        struct msg	*msg;
+        pthread_t	 thread;
+	char		*s;
 
-        if(cmd == NULL || *cmd == '\0')
-        {
-                error("empty pipe command");
-                return 1;
+        if (cmd == NULL || *cmd == '\0') {
+                log_warnx("empty pipe command");
+                return (1);
         }
 
-        cmd = repl_one(cmd, context->key);
+        s = repl_one(cmd, context->key);
 
-        fd = popen(cmd, "w");
-        if(fd == NULL)
-        {
-                error("%s: %s", cmd, strerror(errno));
-                free(cmd);
-                return 1;
+        fd = popen(s, "w");
+        if (fd == NULL) {
+                log_warn(s);
+                free(s);
+                return (1);
         }
-        for(message = context->messages.tail; message != NULL;
-            message = message->last)
-        {
-                if(fwrite(message->msg, strlen(message->msg), 1, fd) != 1)
+	TAILQ_FOREACH(msg, &context->msgs, entry) {
+                if (fwrite(msg->str, strlen(msg->str), 1, fd) != 1) {
+			log_warn("fwrite");
                         break;
-                if(fputc('\n', fd) == EOF)
+		}
+                if (fputc('\n', fd) == EOF) {
+			log_warn("fputc");
                         break;
+		}
         }
 
-        if(pthread_create(&thread, NULL, pclose_thread, fd) != 0)
-                die("pthread_create failed");
+        if (pthread_create(&thread, NULL, pclose_thread, fd) != 0)
+                fatalx("pthread_create failed");
 
-        free(cmd);
+        free(s);
 
         return 0;
 }

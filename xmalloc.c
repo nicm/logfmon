@@ -16,42 +16,34 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "log.h"
 #include "logfmon.h"
-#include "xmalloc.h"
 
-char *xstrdup(char *str)
+char *
+xstrdup(char *s)
 {
-        return strcpy(xmalloc(strlen(str) + 1), str);
+	int 	len;
+
+	len = strlen(s) + 1;
+        return (strncpy(xmalloc(len), s, len));
 }
 
-void *xmalloc(size_t size)
+void *
+xmalloc(size_t size)
 {
-        void *block;
+        void	*ptr;
 
-        block = malloc(size);
-
-        if(block != NULL)
-                return block;
-
-        die("malloc: %s", strerror(errno));
-
-        return NULL;
+        if ((ptr = malloc(size)) == NULL)
+		fatal("malloc");
+        return (ptr);
 }
 
-void *xrealloc(void *block, size_t size)
+void *
+xrealloc(void *ptr, size_t size)
 {
-        block = realloc(block, size);
-
-        if(block != NULL)
-                return block;
-
-        die("realloc: %s", strerror(errno));
-
-        return NULL;
+        if ((ptr = realloc(ptr, size)) == NULL)
+		fatal("realloc");
+        return (ptr);
 }

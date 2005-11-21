@@ -25,39 +25,32 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "event.h"
-#include "file.h"
-#include "log.h"
 #include "logfmon.h"
-#include "save.h"
-#include "xmalloc.h"
 
 int kq = -1;
 
-void init_events(void)
+void
+init_events(void)
 {
-        struct file *file;
-        struct kevent *kevlist, *kevptr;
-        int kevlen;
+        struct file	*file;
+        struct kevent	*kevlist, *kevptr;
+        int		 kevlen;
 
-        if(kq == -1)
-        {
+        if (kq == -1) {
                 kq = kqueue();
-                if(kq == -1)
-                        die("kqueue: %s", strerror(errno));
+                if (kq == -1)
+                        fatal("kqueue");
         }
 
         kevlen = count_open_files() * 2;
-        if(kevlen == 0)
+        if (kevlen == 0)
                 return;
 
-        kevlist = xmalloc(sizeof(struct kevent) * kevlen);
+        kevlist = xmalloc((sizeof (struct kevent)) * kevlen);
 
         kevptr = kevlist;
-        for(file = files.head; file != NULL; file = file->next)
-        {
-                if(file->fd != NULL)
-                {
+        TAILQ_FOREACH(file, &conf.files, entry) {
+                if (file->fd != NULL) {
                         EV_SET(kevptr, fileno(file->fd), EVFILT_VNODE, EV_ADD |
                             EV_CLEAR, NOTE_RENAME | NOTE_DELETE, 0, NULL);
                         kevptr++;
@@ -67,62 +60,57 @@ void init_events(void)
                 }
         }
 
-        if(kevent(kq, kevlist, kevlen, NULL, 0, NULL))
-                die("kevent: %s", strerror(errno));
+        if (kevent(kq, kevlist, kevlen, NULL, 0, NULL))
+                fatal("kevent");
 
-        free(kevlist);
+	free(kevlist);
 }
 
-struct file *get_event(enum event *event, int timeout)
+struct file *
+get_event(enum event *event, int timeout)
 {
-        struct file *file;
-        struct kevent kev;
-        struct timespec ts;
-        int rc;
+        struct file	*file;
+        struct kevent	 kev;
+        struct timespec	 ts;
+        int		 res;
 
         *event = EVENT_NONE;
 
-        if(kq == -1)
-                return NULL;
+        if (kq == -1)
+                return (NULL);
 
         ts.tv_nsec = 0;
         ts.tv_sec = timeout;
 
-        rc = kevent(kq, NULL, 0, &kev, 1, &ts);
+        res = kevent(kq, NULL, 0, &kev, 1, &ts);
 
-        if(rc == -1)
-        {
-                if(errno == EINTR) /* && !debug) */
-                        return NULL;
-
-                die("kevent: %s", strerror(errno));
+        if (res == -1) {
+                if (errno == EINTR)
+                        return (NULL);
+                fatal("kevent");
         }
-
-        if(rc == 0)
-        {
+        if (res == 0) {
                 *event = EVENT_TIMEOUT;
-                return NULL;
+                return (NULL);
         }
 
         file = find_file_by_fd(kev.ident);
-        if(file == NULL)
-                return NULL;
+        if (file == NULL)
+                return (NULL);
 
-        switch(kev.filter)
-        {
+        switch(kev.filter) {
         case EVFILT_VNODE:
                 *event = EVENT_REOPEN;
-                return file;
+                return (file);
         case EVFILT_READ:
-                if(kev.data < 0)
+                if (kev.data < 0)
                         *event = EVENT_REOPEN;
-                else
-                {
+                else {
                         file->size += kev.data;
                         *event = EVENT_READ;
                 }
-                return file;
+                return (file);
         }
 
-        return NULL;
+        return (NULL);
 }

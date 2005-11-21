@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -25,161 +26,116 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "cache.h"
-#include "file.h"
-#include "log.h"
 #include "logfmon.h"
-#include "xmalloc.h"
 
-int save_cache(void)
+int
+save_cache(void)
 {
-        struct file *file;
-        size_t len;
-        FILE *fd;
-        char *name;
+        struct file	*file;
+        FILE		*fd;
+        char		 path[MAXPATHLEN];
+        int		 res;
 
-        if(cache_file == NULL || *cache_file == '\0')
-                return 0;
+        if (conf.cache_file == NULL || *conf.cache_file == '\0')
+                return (0);
 
-        if(debug)
-                info("saving cache");
+	log_debug("saving cache");
 
-        len = strlen(cache_file) + 5;
-        name = xmalloc(len);
-        if(snprintf(name, len, "%s.new", cache_file) < 0)
-        {
-                error("snprintf: %s", strerror(errno));
-                free(name);
-                return 1;
+        res = snprintf(path, sizeof path, "%s.new", conf.cache_file);
+	if (res < 0 || (unsigned) res > sizeof path) {
+                log_warnx("bad cache file");
+		return (1);
         }
 
-        fd = fopen(name, "w+");
-        if(fd == NULL)
-        {
-                error("%s: %s", name, strerror(errno));
-                free(name);
-                return 1;
+        fd = fopen(path, "w+");
+        if (fd == NULL) {
+                log_warn(path);
+                return (1);
         }
 
-        for(file = files.head; file != NULL; file = file->next)
-        {
-                if(fprintf(fd, "%d %s %lld %lld\n", strlen(file->path),
-                       file->path, (long long) file->size,
-                       (long long) file->offset) == -1)
-                {
-                        (void) fclose(fd);
-                        error("error writing cache");
-                        unlink(name);
-                        free(name);
-                        return 1;
+        TAILQ_FOREACH(file, &conf.files, entry) {
+                if (fprintf(fd,
+		    "%d %s %lld %lld\n", strlen(file->path), file->path,
+		    (long long) file->size,
+		    (long long) file->offset) == -1) {
+                        fclose(fd);
+                        log_warnx("error writing cache");
+                        unlink(path);
+                        return (1);
                 }
         }
 
-        (void) fclose(fd);
+        fclose(fd);
 
-        if(rename(name, cache_file) == -1)
-        {
-                error("rename: %s", strerror(errno));
-                unlink(name);
-                free(name);
-                return 1;
+        if (rename(path, conf.cache_file) == -1) {
+                log_warn("rename");
+                unlink(path);
+                return (1);
         }
 
-        free(name);
-
-        return 0;
+        return (0);
 }
 
 int load_cache(void)
 {
-        struct file *file;
-        struct stat sb;
-        FILE *fd;
-        char *path, format[24];
-        int length;
-        off_t size;
-        off_t offset;
-        int result;
+        struct file	*file;
+        struct stat	 sb;
+        FILE		*fd;
+        char		 path[MAXPATHLEN], fmt[32];
+        off_t	         size, off;
+	int		 res;
+        unsigned int	 len;
 
-        if(cache_file == NULL || *cache_file == '\0')
-                return 0;
+        if (conf.cache_file == NULL || *conf.cache_file == '\0')
+                return (0);
 
-        if(debug)
-                info("loading cache");
+	log_debug("loading cache");
 
-        fd = fopen(cache_file, "r");
-        if(fd == NULL)
-        {
-                /* info is probably correct */
-                info("%s: %s", cache_file, strerror(errno));
-                return 1;
+        fd = fopen(conf.cache_file, "r");
+        if (fd == NULL) {
+                log_warn("cache not loaded. %s", conf.cache_file);
+                return (1);
         }
 
-        path = NULL;
-        size = 0;
-        offset = 0;
+        while (!feof(fd)) {
+		if (fscanf(fd, "%u ", &len) != 1)
+			break;
+		if (len >= sizeof path)
+			goto error;
 
-        while(!feof(fd))
-        {
-                if(fscanf(fd, "%d ", &length) < 1)
-                        break;
+		res = snprintf(fmt, sizeof fmt, "%%%uc %%lld %%lld", len);
+		if (res < 0 || (unsigned) res > sizeof fmt)
+			goto error;
 
-                free(path);
-                path = malloc(length + 1); /* not xmalloc */
-                if(path == NULL)
-                {
-                        error("malloc: %s (cache: length = %d)",
-                            strerror(errno), length);
-                        goto error;
-                }
-
-                result = snprintf(format, sizeof(format), "%%%dc %%lld %%lld",
-                    length);
-                if(result < 0 || result > (int) sizeof(format))
-                {
-                        error("cannot load entire cache file; "
-                            "possibly corrupted");
-                        goto error;
-                }
-                if(fscanf(fd, format, path, &size, &offset) < 3)
-                {
-                        error("cannot load entire cache file; "
-                            "possibly corrupted");
-                        goto error;
-                }
-                path[length] = '\0';
+		bzero(path, sizeof path);
+                if (fscanf(fd, fmt, path, &size, &off) != 3)
+			goto error;
+                path[len] = '\0';
 
                 file = find_file_by_path(path);
-                if(file != NULL)
-                {
+                if (file != NULL) {
                         file->offset = 0;
-                        if(stat(path, &sb) == -1)
-                                error("%s: %s", path, strerror(errno));
-                        else
-                        {
-                                if(sb.st_size >= size)
-                                {
-                                        file->offset = offset;
-                                        /* this is correct: size is updated
-                                           incrementally */
-                                        file->size = offset;
+                        if (stat(path, &sb) == -1)
+                                log_warn(path);
+                        else {
+                                if (sb.st_size >= size) {
+                                        file->offset = off;
+                                        /* using off here is correct,
+					   size is updated incrementally */
+                                        file->size = off;
                                 }
                         }
-                        if(debug)
-                                info("file %s, was %lld/%lld now %lld/%lld",
-                                    path, offset, size,
-                                    file->offset, file->size);
+			log_debug("file %s, was %lld/%lld now %lld/%lld",
+			    path, off, size, file->offset, file->size);
                 }
         }
 
-        free(path);
-        (void) fclose(fd);
+	fclose(fd);
+        return (0);
 
-        return 0;
+error:
+	log_warnx("cannot load cache; possibly corrupted");
 
- error:
-        free(path);
-        (void) fclose(fd);
-
-        return 1;
+	fclose(fd);
+        return (1);
 }

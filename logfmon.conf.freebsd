@@ -1,9 +1,6 @@
 set mailtime 1m
 set mailcmd "/usr/bin/mail -s \"`hostname` `date` log report\" root"
 
-set cachefile "/usr/local/etc/logfmon.cache"
-set pidfile "/var/run/logfmon.pid"
-
 file "/var/log/messages" tag messages
 file "/var/log/maillog" tag mail
 

@@ -21,23 +21,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "log.h"
 #include "logfmon.h"
-#include "threads.h"
 
-void *pclose_thread(void *arg)
+void *
+pclose_thread(void *arg)
 {
         pclose((FILE *) arg);
-
-        return NULL;
+        return (NULL);
 }
 
-void *exec_thread(void *arg)
+void *
+exec_thread(void *arg)
 {
-        if(system((char *) arg) == -1)
-                error("%s: %s", (char *) arg, strerror(errno));
-
+        if (system((char *) arg) == -1)
+                log_warn((char *) arg, strerror(errno));
         free(arg);
-
-        return NULL;
+        return (NULL);
 }
