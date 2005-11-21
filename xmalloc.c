@@ -24,7 +24,7 @@
 char *
 xstrdup(char *s)
 {
-	int 	len;
+	size_t	len;
 
 	len = strlen(s) + 1;
         return (strncpy(xmalloc(len), s, len));
