@@ -17,6 +17,7 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -143,24 +144,24 @@ void
 act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
     char *line)
 {
-        char		*s;
+        char		*cmd;
         pthread_t	 thread;
         FILE		*fd;
 
         if (rule->params.cmd == NULL || *(rule->params.cmd) == '\0')
                 return;
 
-        s = repl_matches(t, rule->params.cmd, match);
+        cmd = repl_matches(t, rule->params.cmd, match);
 
-	log_debug("matched: (%s) %s -- piping: %s", file->tag.name, t, s);
+	log_debug("matched: (%s) %s -- piping: %s", file->tag.name, t, cmd);
 
-        if (s == NULL || *s == '\0') {
+        if (cmd == NULL || *cmd == '\0') {
                 log_warnx("empty command for pipe");
-                free(s);
+                free(cmd);
         } else {
-                fd = popen(s, "w");
+                fd = popen(cmd, "w");
                 if (fd == NULL)
-                        log_warn(s);
+                        log_warn(cmd);
                 else {
                         if (fwrite(line, strlen(line), 1, fd) == 1)
                                 fputc('\n', fd);
@@ -169,7 +170,7 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 			    fd) != 0)
                                 fatalx("pthread_create failed");
 
-                        free(s);
+                        free(cmd);
                 }
         }
 }
@@ -177,25 +178,25 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 void
 act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
-        char	*s;
+        char	*key;
 
         if (rule->params.key == NULL || *(rule->params.key) == '\0')
                 return;
 
-        s = repl_matches(t, rule->params.key, match);
+        key = repl_matches(t, rule->params.key, match);
 
-	log_debug("matched: (%s) %s -- opening: '%s'", file->tag.name, t, s);
+	log_debug("matched: (%s) %s -- opening: '%s'", file->tag.name, t, key);
 
-        if (find_context_by_key(file, s) != NULL) {
-		log_debug("ignoring open; found existing context %s", s);
-                free(s);
+        if (find_context_by_key(file, key) != NULL) {
+		log_debug("ignoring open; found existing context %s", key);
+                free(key);
                 return;
         }
 
-	if (add_context(file, s, rule) == NULL)
+	if (add_context(file, key, rule) == NULL)
 		log_warnx("error adding context");
 
-        free(s);
+        free(key);
 }
 
 void
@@ -204,22 +205,23 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 {
         struct context	*context;
 	struct msg	*msg;
-        char		*s;
+        char		*key;
 
         if (rule->params.key == NULL || *(rule->params.key) == '\0')
                 return;
 
-        s = repl_matches(t, rule->params.key, match);
+        key = repl_matches(t, rule->params.key, match);
 
-	log_debug("matched: (%s) %s -- appending: '%s'", file->tag.name, t, s);
+	log_debug("matched: (%s) %s -- appending: '%s'",
+	    file->tag.name, t, key);
 
-        context = find_context_by_key(file, s);
+        context = find_context_by_key(file, key);
         if (context == NULL) {
-		log_debug("missing context %s for append", s);
-                free(s);
+		log_debug("missing context %s for append", key);
+                free(key);
                 return;
         }
-        free(s);
+        free(key);
 
 	msg = xmalloc(sizeof (struct msg));
 	msg->str = xstrdup(line);
@@ -243,28 +245,28 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 void
 act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
-        char		*s;
+        char		*cmd;
         struct context	*context;
 
         if (rule->params.key == NULL || *(rule->params.key) == '\0')
                 return;
 
-        s = repl_matches(t, rule->params.key, match);
+        cmd = repl_matches(t, rule->params.key, match);
 
-	log_debug("matched: (%s) %s -- closing: '%s'", file->tag.name, t, s);
+	log_debug("matched: (%s) %s -- closing: '%s'", file->tag.name, t, cmd);
 
-        context = find_context_by_key(file, s);
+        context = find_context_by_key(file, cmd);
         if (context == NULL) {
-		log_debug("missing context %s for close", s);
-                free(s);
+		log_debug("missing context %s for close", cmd);
+                free(cmd);
                 return;
         }
-        free(s);
+        free(cmd);
 
         if (rule->params.cmd != NULL && *(rule->params.cmd) != '\0') {
-                s = repl_matches(t, rule->params.cmd, match);
-                pipe_context(context, s);
-                free(s);
+                cmd = repl_matches(t, rule->params.cmd, match);
+                pipe_context(context, cmd);
+                free(cmd);
         }
 
         delete_context(file, context);

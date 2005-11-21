@@ -37,6 +37,8 @@ add_file(char *path, char *tag)
 	bzero(file, sizeof (struct file));
 
         TAILQ_INIT(&file->saves);
+	INIT_MUTEX(file->saves_mutex);
+
         TAILQ_INIT(&file->contexts);
 
         if (find_file_by_path(path) != NULL) {
@@ -67,7 +69,9 @@ add_file(char *path, char *tag)
 	file->path = xstrdup(path);
 
 	log_debug("added file: path=%s, tag=%s", path, tag);
+	LOCK_MUTEX(conf.files_mutex);
 	TAILQ_INSERT_TAIL(&conf.files, file, entry);
+	UNLOCK_MUTEX(conf.files_mutex);
         return (file);
 }
 
@@ -76,7 +80,7 @@ free_file(struct file *file)
 {
 	reset_file(file);
 	free_contexts(file);
-
+	DESTROY_MUTEX(file->saves_mutex);
 	free(file->path);
 	free(file);
 }
@@ -88,11 +92,13 @@ free_files(void)
 
         close_files();
 
+	LOCK_MUTEX(conf.files_mutex);
 	while (!TAILQ_EMPTY(&conf.files)) {
 		file = TAILQ_FIRST(&conf.files);
 		TAILQ_REMOVE(&conf.files, file, entry);
 		free_file(file);
 	}
+	UNLOCK_MUTEX(conf.files_mutex);
 }
 
 void
@@ -100,12 +106,14 @@ reset_file(struct file *file)
 {
 	struct msg	*save;
 
+	LOCK_MUTEX(file->saves_mutex);
 	while (!TAILQ_EMPTY(&file->saves)) {
 		save = TAILQ_FIRST(&file->saves);
 		TAILQ_REMOVE(&file->saves, save, entry);
 		free(save->str);
 		free(save);
 	}
+	UNLOCK_MUTEX(file->saves_mutex);
 }
 
 unsigned int
@@ -212,8 +220,9 @@ find_file_by_path(char *path)
         struct file	*file;
 
         TAILQ_FOREACH(file, &conf.files, entry) {
-                if (strcmp(file->path, path) == 0)
+		if (strcmp(file->path, path) == 0) {
                         return (file);
+		}
         }
 
         return (NULL);

@@ -7,8 +7,8 @@ VERSION= 0.8
 
 OS!= uname
 
-SRCS= logfmon.c log.c rules.c xmalloc.c save.c file.c context.c \
-      cache.c threads.c parse.y lex.l action.c
+SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
+	parse.y lex.l action.c
 .if ${OS} == "Linux"
 SRCS+= event-linux.c
 .else
@@ -21,7 +21,8 @@ LEX= lex
 YACC= yacc -d
 
 CC= cc
-#CFLAGS+= -g -DDEBUG
+CFLAGS+= -g
+#CFLAGS+= -DDEBUG
 CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W -Wnested-externs
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes

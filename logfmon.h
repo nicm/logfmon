@@ -44,9 +44,32 @@
 #define DEFAULTTIMEOUT	5	/* default event timeout */
 #define REOPENTIMEOUT	2	/* event timeout if waiting to reopen files */
 
+#define INIT_MUTEX(mutex) do {						 \
+		if (pthread_mutex_init(&(mutex), NULL) != 0)		 \
+			fatalx("pthread_mutex_init failed");		 \
+	} while (0);
+
+#define DESTROY_MUTEX(mutex) do {					 \
+		int	error;						 \
+		while ((error = pthread_mutex_destroy(&(mutex))) != 0) { \
+			if (error == EBUSY)				 \
+				continue;				 \
+			fatalx("pthread_mutex_destroy failed");		 \
+		} 							 \
+	} while (0);
+
+#define LOCK_MUTEX(mutex) do {						 \
+		if (pthread_mutex_lock(&(mutex)) != 0)			 \
+			fatalx("pthread_mutex_lock failed");		 \
+	} while (0);
+
+#define UNLOCK_MUTEX(mutex) do {                        		 \
+		if (pthread_mutex_unlock(&(mutex)) != 0)		 \
+			fatalx("pthread_mutex_unlock failed");		 \
+	} while (0);
+
 extern char			*__progname;
 
-extern pthread_mutex_t		 save_mutex;
 extern volatile sig_atomic_t	 reload;
 extern volatile sig_atomic_t	 quit;
 
@@ -135,11 +158,12 @@ struct file {
 
         TAILQ_HEAD(, context)	 contexts;
 	TAILQ_HEAD(, msg)	 saves;
+	pthread_mutex_t		 saves_mutex;
 
 	TAILQ_ENTRY(file)	 entry;
 };
 
-/* Configuration type */
+/* Configuration settings */
 struct conf {
 	int 			 debug;
 
@@ -153,10 +177,23 @@ struct conf {
 	char			*cache_file;
 	char			*pid_file;
 
-	TAILQ_HEAD(rules, rule)	 rules;
+	TAILQ_HEAD(, rule)	 rules;
 	TAILQ_HEAD(, file)	 files;
+
+	/* Files list mutex. Since entries only can be added and deleted in the
+	   main thread, this mutex only needs to be held for iterating in the
+	   save thread. */
+	pthread_mutex_t		 files_mutex;
 };
 extern struct conf		 conf;
+
+/* Args for pipe thread. */
+struct pipe_args {
+	pthread_cond_t		 cond;
+	pthread_mutex_t		 mutex;
+	struct msgs		*msgs;
+	char			*cmd;
+};
 
 /* action.c */
 char	*repl_one(char *, char *);
@@ -179,7 +216,7 @@ void		 reset_context(struct context *);
 void		 delete_context(struct file *, struct context *);
 struct context	*find_context_by_key(struct file *, char *);
 void		 expire_contexts(struct file *);
-int		 pipe_context(struct context *, char *);
+void		 pipe_context(struct context *, char *);
 unsigned int	 count_msgs(struct context *);
 
 /* event.c */
@@ -198,7 +235,6 @@ struct file 	*find_file_by_tag(char *);
 struct file 	*find_file_by_path(char *);
 struct file 	*find_file_by_fd(int);
 
-/* logfmon.c */
 /* log.c */
 void		 log_init(int);
 void    	 vlog(int, const char *, va_list);
@@ -214,12 +250,10 @@ struct rule	*add_rule(enum action, struct tags *, char *, char *);
 void		 free_rules(void);
 int		 has_tag(struct rule *, char *);
 
-/* save.c */
-void		*save_thread(void *);
-
 /* threads.c */
 void		*pclose_thread(void *);
 void		*exec_thread(void *);
+void		*save_thread(void *);
 
 /* xmalloc.c */
 char		*xstrdup(char *);

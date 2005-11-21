@@ -87,7 +87,6 @@ delete_context(struct file *file, struct context *context)
 	log_debug("removed context: key=%s", context->key);
 	TAILQ_REMOVE(&file->contexts, context, entry);
 	free_context(context);
-
 }
 
 struct context *
@@ -144,27 +143,27 @@ expire_contexts(struct file *file)
 	}
 }
 
-int
+void
 pipe_context(struct context *context, char *cmd)
 {
         FILE		*fd;
         struct msg	*msg;
         pthread_t	 thread;
-	char		*s;
 
         if (cmd == NULL || *cmd == '\0') {
                 log_warnx("empty pipe command");
-                return (1);
+                return;
         }
 
-        s = repl_one(cmd, context->key);
+        cmd = repl_one(cmd, context->key);
 
-        fd = popen(s, "w");
+        fd = popen(cmd, "w");
         if (fd == NULL) {
-                log_warn(s);
-                free(s);
-                return (1);
+                log_warn(cmd);
+                free(cmd);
+                return;
         }
+
 	TAILQ_FOREACH(msg, &context->msgs, entry) {
                 if (fwrite(msg->str, strlen(msg->str), 1, fd) != 1) {
 			log_warn("fwrite");
@@ -179,7 +178,5 @@ pipe_context(struct context *context, char *cmd)
         if (pthread_create(&thread, NULL, pclose_thread, fd) != 0)
                 fatalx("pthread_create failed");
 
-        free(s);
-
-        return 0;
+        free(cmd);
 }

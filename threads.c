@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "logfmon.h"
 
@@ -68,5 +69,95 @@ exec_thread(void *arg)
 	free(cmd);
 
         free(arg);
+        return (NULL);
+}
+
+void *
+save_thread(void *arg)
+{
+        struct msg	*save;
+        struct file	*file;
+        FILE		*fd;
+        int		 flag;
+	unsigned int	 n, t;
+
+	arg = NULL; /* stop gcc complaining */
+
+        for (;;) {
+		log_debug("sleeping for %d seconds", conf.mail_time);
+
+		t = conf.mail_time;
+		while (t > 0)
+			t = sleep(t);
+                if (quit)
+                        break;
+                if (conf.mail_cmd == NULL || *conf.mail_cmd == '\0')
+                        continue;
+
+                LOCK_MUTEX(conf.files_mutex);
+		flag = 0;
+		TAILQ_FOREACH(file, &conf.files, entry) {
+			LOCK_MUTEX(file->saves_mutex);
+			if (!TAILQ_EMPTY(&file->saves)) {
+				UNLOCK_MUTEX(file->saves_mutex);
+				flag = 1;
+				break;
+			}
+			UNLOCK_MUTEX(file->saves_mutex);
+                }
+                UNLOCK_MUTEX(conf.files_mutex);
+		if (!flag)
+			continue;
+
+		log_debug("processing saved messages. executing: %s",
+		    conf.mail_cmd);
+
+                fd = popen(conf.mail_cmd, "w");
+                if (fd == NULL) {
+                        log_warn(conf.mail_cmd);
+			continue;
+                }
+
+                LOCK_MUTEX(conf.files_mutex);
+                n = 0;
+		TAILQ_FOREACH(file, &conf.files, entry) {
+			LOCK_MUTEX(file->saves_mutex);
+                        if (TAILQ_EMPTY(&file->saves)) {
+				UNLOCK_MUTEX(file->saves_mutex);
+				continue;
+			}
+
+                        if (fprintf(fd, "Unmatched messages for file %s, "
+			    "tag %s:\n\n", file->path, file->tag.name) == -1) {
+				UNLOCK_MUTEX(file->saves_mutex);
+				break;
+			}
+
+			TAILQ_FOREACH(save, &file->saves, entry) {
+				if (fwrite(save->str, strlen(save->str), 1,
+				    fd) != 1) {
+					log_warn("fwrite");
+					break;
+				}
+				if (fputc('\n', fd) == EOF) {
+					log_warn("fputc");
+                                        break;
+				}
+                                n++;
+                        }
+			if (fputc('\n', fd) == EOF)
+				log_warn("fputc");
+
+                        reset_file(file);
+
+			UNLOCK_MUTEX(file->saves_mutex);
+                }
+                UNLOCK_MUTEX(conf.files_mutex);
+
+                pclose(fd);
+
+                log_debug("processed %d unmatched messages", n);
+        }
+
         return (NULL);
 }

@@ -83,17 +83,11 @@ reload_conf(void)
 
 	save_cache();
 
-	if (pthread_mutex_lock(&save_mutex) != 0)
-		fatalx("pthread_mutex_lock failed");
-
 	free_rules();
 	free_files(); /* closes too */
 
 	if (load_conf() != 0)
 		fatal(conf.conf_file);
-
-	if (pthread_mutex_unlock(&save_mutex) != 0)
-		fatalx("pthread_mutex_unlock failed");
 
 	load_cache();
 
@@ -154,13 +148,13 @@ parse_line(char *line, struct file *file)
 			return (0);
                 case ACT_OPEN:
                         act_open(file, t, rule, match);
-			return (0);
+			continue; /* falls-through to following rules */
                 case ACT_APPEND:
                         act_appd(file, t, rule, match, line);
-			return (0);
+			continue; /* falls-through to following rules */
                 case ACT_CLOSE:
                         act_close(file, t, rule, match);
-			return (0);
+			continue; /* falls-through to following rules */
                 }
 
 		log_warnx("unknown action: %d", rule->action);
@@ -171,16 +165,12 @@ parse_line(char *line, struct file *file)
 	log_debug("unmatched: (%s) %s", file->tag.name, t);
 
         if (conf.mail_cmd != NULL && *conf.mail_cmd != '\0') {
-                if (pthread_mutex_lock(&save_mutex) != 0)
-                        fatalx("pthread_mutex_lock failed");
-
 		/* append the line to the saves list */
+		LOCK_MUTEX(file->saves_mutex);
 		save = xmalloc(sizeof (struct msg));
 		save->str = xstrdup(line);
 		TAILQ_INSERT_TAIL(&file->saves, save, entry);
-
-                if (pthread_mutex_unlock(&save_mutex) != 0)
-                        fatalx("pthread_mutex_unlock failed");
+		UNLOCK_MUTEX(file->saves_mutex);
         }
 
 	return (0);
@@ -291,6 +281,7 @@ main(int argc, char **argv)
         reload = 0;
         quit = 0;
 
+	INIT_MUTEX(conf.files_mutex);
         if (pthread_create(&thread, NULL, save_thread, NULL) != 0)
                 fatalx("pthread_create failed");
 
@@ -316,7 +307,6 @@ main(int argc, char **argv)
                 }
         }
 
-
         open_files();
         init_events();
 
@@ -336,8 +326,10 @@ main(int argc, char **argv)
 		/* if the check timeout has run out, check for closed files
 		   and save the cache if required */
                 if ((time(NULL) - expiretime) > EXPIRETIMEOUT) {
+			LOCK_MUTEX(conf.files_mutex);
 			TAILQ_FOREACH(file, &conf.files, entry)
 				expire_contexts(file);
+			UNLOCK_MUTEX(conf.files_mutex);
 			expiretime = time(NULL);
 		}
 		if (dirty && (time(NULL) - cachetime) > CACHETIMEOUT) {
@@ -406,7 +398,7 @@ main(int argc, char **argv)
         if (conf.pid_file != NULL && *conf.pid_file != '\0')
                 unlink(conf.pid_file);
 
-        pthread_mutex_destroy(&save_mutex);
+	DESTROY_MUTEX(conf.files_mutex);
 
         log_info("terminated");
 
