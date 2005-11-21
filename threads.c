@@ -33,8 +33,40 @@ pclose_thread(void *arg)
 void *
 exec_thread(void *arg)
 {
-        if (system((char *) arg) == -1)
-                log_warn((char *) arg, strerror(errno));
+	FILE	*fd;
+	char	*cmd, *buf, *lbuf;
+	size_t	len;
+
+	if (conf.debug) {
+		if (asprintf(&cmd, "%s 2>&1", (char *) arg) == -1)
+			fatal("asprintf");
+	} else {
+		if (asprintf(&cmd, "%s 2>&1 1>/dev/null", (char *) arg) == -1)
+			fatal("asprintf");
+	}
+
+	fd = popen(cmd, "r");
+	if (fd == NULL)
+		log_warn((char *) arg);
+
+	lbuf = NULL;
+	while ((buf = fgetln(fd, &len)) != NULL) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			lbuf = xmalloc(len + 1);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+		log_warnx("%s: %s", (char *) arg, buf);
+	}
+	free(lbuf);
+
+	pclose(fd);
+
+	free(cmd);
+
         free(arg);
         return (NULL);
 }
