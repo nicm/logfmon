@@ -212,7 +212,6 @@ parse_line(char *line, struct file *file)
 		if (*t < 32)
 			*t = '_';
 	}
-
         t = strchr(line + 16, ' ');
         if (t == NULL)
                 return;
@@ -239,27 +238,27 @@ parse_line(char *line, struct file *file)
                 case ACT_IGNORE:
                         if (act_ignore(file, t) != 0)
                                 return;
-                        continue;
+                        break;
                 case ACT_EXEC:
                         if (act_exec(file, t, rule, match) != 0)
                                 return;
-                        continue;
+                        break;
                 case ACT_PIPE:
                         if (act_pipe(file, t, rule, match, line) != 0)
                                 return;
-                        continue;
+                        break;
                 case ACT_OPEN:
                         if (act_open(file, t, rule, match) != 0)
                                 return;
-                        continue;
+                        break;
                 case ACT_APPEND:
                         if (act_appnd(file, t, rule, match, line) != 0)
                                 return;
-                        continue;
+                        break;
                 case ACT_CLOSE:
                         if (act_close(file, t, rule, match) != 0)
                                 return;
-                        continue;
+                        break;
                 }
         }
 

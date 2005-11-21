@@ -46,6 +46,7 @@ act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
                 if (pthread_create(&thread, NULL, exec_thread, s) != 0)
                         fatalx("pthread_create failed");
         }
+
         return (1);
 }
 
@@ -82,6 +83,7 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
                         free(s);
                 }
         }
+
         return (1);
 }
 
