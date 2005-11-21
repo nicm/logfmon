@@ -44,40 +44,63 @@
 #define DEFAULTTIMEOUT	5	/* default event timeout */
 #define REOPENTIMEOUT	2	/* event timeout if waiting to reopen files */
 
-#define INIT_MUTEX(mutex) do {						 \
-		if (pthread_mutex_init(&(mutex), NULL) != 0) {		 \
-			log_warnx("pthread_mutex_init failed: %s:%d",	 \
-			__FILE__, __LINE__);		 		 \
-			exit(1);					 \
-		}							 \
-	} while (0)
+#ifndef __dead
+#define __dead
+#endif
 
-#define DESTROY_MUTEX(mutex) do {					 \
-		int	error;						 \
-		while ((error = pthread_mutex_destroy(&(mutex))) != 0) { \
-			if (error == EBUSY)				 \
-				continue;				 \
-			log_warnx("pthread_mutex_destroy failed: %s:%d", \
-			__FILE__, __LINE__);		 		 \
-			exit(1);					 \
-		}							 \
-	} while (0)
+#ifndef TAILQ_FIRST
+#define TAILQ_FIRST(head) (head)->tqh_first
+#endif
+#ifndef TAILQ_END
+#define TAILQ_END(head) NULL
+#endif
+#ifndef TAILQ_NEXT
+#define TAILQ_NEXT(elm, field) ((elm)->field.tqe_next)
+#endif
+#ifndef TAILQ_FOREACH
+#define TAILQ_FOREACH(var, head, field)					\
+	for ((var) = TAILQ_FIRST(head);					\
+	     (var) != TAILQ_END(head);				 	\
+	     (var) = TAILQ_NEXT(var, field))
+#endif
+#ifndef TAILQ_EMPTY
+#define TAILQ_EMPTY(head) (TAILQ_FIRST(head) == TAILQ_END(head))
+#endif
 
-#define LOCK_MUTEX(mutex) do {						 \
-		if (pthread_mutex_lock(&(mutex)) != 0) {		 \
-			log_warnx("pthread_mutex_lock failed: %s:%d",	 \
-			__FILE__, __LINE__);		 		 \
-			exit(1);					 \
-		}							 \
-	} while (0)
+#define INIT_MUTEX(mutex) do {						\
+	if (pthread_mutex_init(&(mutex), NULL) != 0) {		 	\
+		log_warnx("pthread_mutex_init failed: %s:%d",		\
+		__FILE__, __LINE__);		 			\
+		exit(1);						\
+	}							 	\
+} while (0)
 
-#define UNLOCK_MUTEX(mutex) do {                        		 \
-		if (pthread_mutex_unlock(&(mutex)) != 0) {		 \
-			log_warnx("pthread_mutex_unlock failed: %s:%d",	 \
-			__FILE__, __LINE__);		 		 \
-			exit(1);					 \
-		}							 \
-	} while (0)
+#define DESTROY_MUTEX(mutex) do {					\
+	int	error;						 	\
+	while ((error = pthread_mutex_destroy(&(mutex))) != 0) { 	\
+		if (error == EBUSY)				 	\
+			continue;				 	\
+		log_warnx("pthread_mutex_destroy failed: %s:%d", 	\
+		__FILE__, __LINE__);		 		 	\
+		exit(1);					 	\
+	}							 	\
+} while (0)
+
+#define LOCK_MUTEX(mutex) do {						\
+	if (pthread_mutex_lock(&(mutex)) != 0) {			\
+		log_warnx("pthread_mutex_lock failed: %s:%d",		\
+		__FILE__, __LINE__);		 			\
+		exit(1);						\
+	}								\
+} while (0)
+
+#define UNLOCK_MUTEX(mutex) do {                        		\
+	if (pthread_mutex_unlock(&(mutex)) != 0) {			\
+		log_warnx("pthread_mutex_unlock failed: %s:%d",		\
+		__FILE__, __LINE__);		 			\
+		exit(1);					 	\
+	}							 	\
+} while (0)
 
 extern char			*__progname;
 

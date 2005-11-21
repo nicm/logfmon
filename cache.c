@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/queue.h>
 
 #include <errno.h>
 #include <stdio.h>

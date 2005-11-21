@@ -8,7 +8,16 @@ if [ "$1" == "clean" ]; then
 fi
 
 CC="gcc"
-CFLAGS="-I- -I. -I/usr/local/include $CFLAGS -D_LARGEFILE_SOURCE \
+# GCC 4 sucks, use GCC 3.x if possible.
+if which gcc-3.3 1>/dev/null 2>&1; then
+    CC="gcc-3.3"
+fi
+if which gcc-3.4 1>/dev/null 2>&1; then
+    CC="gcc-3.4"
+fi
+
+CFLAGS="-I- -I. -I/usr/local/include $CFLAGS \
+	-D_GNU_SOURCE -D_LARGEFILE_SOURCE \
         -Wall -W -Wmissing-prototypes -Wmissing-declarations \
         -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare"
 LDFLAGS="-L/usr/local/lib"
