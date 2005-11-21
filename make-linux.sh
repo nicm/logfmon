@@ -20,8 +20,8 @@ LEX="lex"
 [ ! -f y.tab.c ] && $YACC parse.y
 [ ! -f lex.yy.c ] && $LEX lex.l
 
-SRCS=`echo *.c`
-for i in ${SRCS/event.c/}; do
+SRCS=`echo *.c| sed -e s'/event.c//'`
+for i in $SRCS; do
     [ ! -f ${i%.c}.o ] && $CC $CFLAGS -c $i -o ${i%.c}.o
 done
 
