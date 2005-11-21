@@ -14,14 +14,11 @@ CFLAGS="-I- -I. -I/usr/local/include $CFLAGS -D_LARGEFILE_SOURCE \
 LDFLAGS="-L/usr/local/lib"
 LIBS="-lm -lpthread"
 
-YACC="bison"
-YACCFLAGS="-d -y"
-
+YACC="bison -d -y"
 LEX="lex"
-LEXFLAGS=
 
-[ ! -f y.tab.c ] && $YACC $YACCFLAGS parse.y
-[ ! -f lex.yy.c ] && $LEX $LEXFLAGS lex.l
+[ ! -f y.tab.c ] && $YACC parse.y
+[ ! -f lex.yy.c ] && $LEX lex.l
 
 SRCS=`echo *.c`
 for i in ${SRCS/event.c/}; do
