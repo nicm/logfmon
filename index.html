@@ -1,0 +1,270 @@
+<!-- $Id -->
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Logfmon</title>
+</head>
+<body>
+<p>The project page is <a href="http://sf.net/projects/logfmon">here.</a></p>
+<pre>
+LOGFMON(8)                                                          LOGFMON(8)
+
+<B>NAME</B>
+     <B>logfmon </B>- log file monitoring daemon
+
+<B>SYNOPSIS</B>
+     <B>logfmon </B>[<B>-d</B>] [<B>-f </B><I>conffile</I>] [<B>-c </B><I>cachefile</I>] [<B>-p </B><I>pidfile</I>]
+
+<B>DESCRIPTION</B>
+     The <B>logfmon </B>daemon monitors a set of syslog log files and matches each
+     new entry against the rules defined in it's configuration file. Each rule
+     may be tested against entries from a single file, a set of files or from
+     all files. Depending on the rule, a command may be executed or the entry
+     may be ignored. All unmatched messages are batched together and mailed
+     every 15 minutes, or whatever alternative time is specified in the con-
+     figuration file.
+
+     Messages may also be collected into contexts and piped to a command after
+     a final message is found or a number of messages is reached. See
+     logfmon.conf(5) for more details of this.
+
+     The options are as follows:
+
+     <B>-c </B><I>cachefile</I>
+                 Specify the cache file location. Default is
+                 <I>/etc/logfmon.cache</I>.
+
+                 This overrides any location specified in the configuration
+                 file.
+
+     <B>-d          </B>Run in the foreground and log to <I>stderr</I>.
+
+                 This option also causes additional debugging messages to be
+                 generated.
+
+     <B>-f </B><I>conffile</I>
+                 Specify the configuration file location. Default is
+                 <I>/etc/logfmon.conf</I>.
+
+     <B>-p </B><I>pidfile  </I>Specify the pid file location. Default is
+                 <I>/var/run/logfmon.pid</I>.
+
+                 This overrides any location specified in the configuration
+                 file.
+
+<B>FILES</B>
+     /etc/logfmon.conf     default <B>logfmon </B>configuration file
+
+<B>AUTHORS</B>
+     Nicholas Marriott
+
+<B>SEE ALSO</B>
+     logfmon.conf(5) syslog(3)
+
+                               November 8, 2004                              1
+
+
+LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
+
+<B>NAME</B>
+     <B>logfmon.conf </B>- log file monitoring daemon configuration file
+
+<B>DESCRIPTION</B>
+     This manual page describes the logfmon(8) configuration file. It has the
+     following format:
+
+     Empty lines and lines beginning with the `#' character are ignored.
+
+     Regexps and strings must be enclosed in double quotes. Special characters
+     in regexps and strings must be escaped. Note that this may mean double-
+     escaping in regexps.
+
+     Possible commands are covered in the following sections.
+
+<B>OPTIONS</B>
+     Options are configured using the <B>set </B>command.  It may be followed by the
+     following options, one per command:
+
+     <B>mailtime </B><I>time</I>
+             This is used to set the time between mails of unmatched messages.
+
+             The time may be specified as a plain number in seconds or with a
+             suffix of `h' for hours, `m' for minutes or `s' for seconds. The
+             default is 15 minutes and the minimum is 10 seconds.
+
+     <B>mailcmd </B><I>command</I>
+             This sets the command to which the mail is piped. For example:
+
+                   set mailcmd "/usr/bin/mail -s \"`date` log report\" root"
+
+             No mail will be sent if the command is an empty string ("").
+
+     <B>user </B><I>user </I>| <I>uid</I>
+             This instructs logfmon(8) to run as a different user or uid. In
+             common with other strings, a user name must be in double quotes.
+             An alternative user will only be used if logfmon(8) is run as
+             root.
+
+             It is important to note that when logfmon(8) runs as a different
+             user or group, it will still need read access to any log files
+             specified with a <B>file </B>command and the ability to execute any ex-
+             ternal commands (including the <B>mailcmd </B>setting) specified in the
+             configuration file.
+
+     <B>group </B><I>group </I>| <I>gid</I>
+             This instructs logfmon(8) to run as a different group or gid. An
+             alternative group will only be used if logfmon(8) is run as root.
+
+     <B>cachefile </B><I>file</I>
+             This informs logfmon(8) of the path of the file used to retain a
+             cache of the offsets and sizes of the log files to prevent dupli-
+             cate processing of entries when it is restarted.  An empty string
+             disables caching. Note that this option may be overridden on the
+             command line. The default setting is /etc/logfmon.cache.
+
+     <B>pidfile </B><I>file</I>
+             This instructs logfmon(8) to write its pid into the file speci-
+             fied. If an empty string is used, the pid is not written. If this
+             entry does not appear in the configuration file, the default of
+             /var/run/logfmon.pid is used. Note that this option may be over-
+             ridden on the command line.
+
+<B>FILES</B>
+     The <B>file </B>command is used to instruct logfmon(8) to monitor a file. The
+     filename must be given as a parameter.
+
+     Optionally, the file may be given a tag by specifying <B>tag </B><I>tag </I>following
+     the filename. This tag is used in <B>match </B>rules, described below, to re-
+     strict matches to a particular file. The tag is restricted to alphanumer-
+     ic characters, hyphens and underscores. If no tag is given for a file,
+     logfmon(8) assigns it a tag.
+
+     An example of a <B>file </B>command is:
+
+           file "/var/log/daemon" tag daemon
+
+<B>RULES</B>
+     Rules are described using the <B>match </B>command. This section describes sim-
+     ple rules, contexts are covered in a seperate section below.
+
+     Each <B>match </B>command gives logfmon(8) a regexp to test each new log entry
+     against, an action to perform and optionally a tag or set of tags to re-
+     strict matches to a single file.
+
+     The format of a match command is:
+
+     <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <I>action</I>
+
+     If the <B>in </B><I>tags </I>part is not supplied, or is a single asterisk, the rule is
+     applied in all files. A rule may be applied to multiple tags by enclosing
+     them in braces, for example { tag1 tag2 tag3 }. Braces are not necessary
+     for a single tag.
+
+     If a <B>not </B><I>regexp </I>part is supplied, the rule only applies if the log entry
+     both matches the first regexp and <I>doesn't </I>match the second, not, regexp.
+
+     For this form of <B>match </B>command, testing of a log entry is stopped as soon
+     as a matching rule is found.
+
+     The possible actions are:
+
+     <B>ignore  </B>Any matched log entries in the specified files are ignored. They
+             are not batched into the unmatched email and are tested against
+             no further rules.
+
+             An example <B>ignore </B>rule is:
+
+                   match in daemon "ntpd\\[[0-9]*\\]: adjusting local clock by
+                   [0-9.-]*s" ignore
+
+     <B>exec </B><I>command</I>
+             This executes <I>command </I>when a matching entry is seen. $0 is re-
+             placed in the command with the entire log entry and $1 to $9 are
+             replaced with any bracketted expressions in the regexp.
+
+             An example <B>exec </B>rule is:
+
+                   match "sshd\\[[0-9]*\\]: Invalid user .* from
+                   \\([0-9\.]*\\)" exec "grep $1 /etc/pf.ignore || (echo $1 &gt&gt
+                   /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1;
+                   echo $0 | mail -s 'ssh attempt' root)"
+
+     <B>pipe </B><I>command</I>
+             With this action, the entire log entry is piped to the supplied
+             command.
+
+<B>CONTEXTS</B>
+     A context is a set of log entries that has been collected together. A
+     context is opened by an <B>open </B>action on a <B>match </B>rule, messages may be ap-
+     pended to it with an <B>append </B>action and it may be closed and an action
+     taken with a <B>close </B>rule.
+
+     A context expires and is removed after a time supplied to the <B>open </B>rule.
+     An action may be taken when a context expires, or, with a <B>when </B>command,
+     optionally when it reaches a certain number of entries.  If a <B>pipe </B>action
+     is used, then $1 is replaced by the name of the context in the command
+     before the context is piped to it.
+
+     Note that unlike the other rules, logfmon(8) does <I>not </I>stop parsing rules
+     when a message matches a context rule. This means that without a matching
+     <B>ignore </B>rule, messages that match any of the context rules described below
+     will be included in the email of unmatched rules. This also means, howev-
+     er, that messages matching an <B>open </B>can be included in the context with an
+     <B>append </B>command, or indeed used to <B>exec </B>or <B>pipe </B>in later rules.
+
+     The forms of <B>match </B>command relating to contexts are described below.
+     <B>pipe </B>or <B>ignore </B>are the only actions permitted where <I>action </I>appears. When
+     <B>pipe </B>is used, the entire context is piped to the supplied command.
+
+     <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>open </B><I>name <B></I>expire </B><I>time action </I>[
+             <B>when </B><I>num action </I>]
+             This opens a context with name <I>name </I>and sets it to expire after
+             the time specified.  <I>time </I>is in the same format as for the <B>set</B>
+             <B>mailtime </B>command. $0 to $9 are replaced as normal in the context
+             name.
+
+             The expiry time is counted from the point at which the context is
+             created, so a context with a time of two minutes will be expired
+             after two minutes regardless of when the last message was append-
+             ed to it.
+
+             If the optional <B>when </B>part of the rule is supplied, the specified
+             <I>action </I>is taken and the context is removed when the context holds
+             <I>num </I>entries.
+
+     <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>append </B><I>name</I>
+             This appends a matching log entry to a context. If the context
+             does not exist, this rule is silently ignored.
+
+     <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>close </B><I>name action</I>
+             This applies the specified action and removes the context.
+
+     An example set of context rules is:
+
+           match in auth "sshd\\[\\([0-9]*\\)\\]: input_userauth_request: in-
+           valid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s
+           \"`date` ssh attempt (expired)\" root"
+
+           match in auth "sshd\\[\\([0-9]*\\)\\]: .*" append "sshd-$1"
+
+           match in auth "sshd\\[\\([0-9]*\\)\\]: Received disconnect from .*"
+           close "sshd-$1" pipe "/usr/bin/mail -s \"`date` ssh attempt\" root"
+
+     The first rule opens the context named with the sshd pid, the second ap-
+     pends all messages from the same sshd pid (including the messages match-
+     ing the open and close rules) to the context and the third rule closes
+     and mails the context when the remote client disconnects.
+
+<B>FILES</B>
+     /etc/logfmon.conf     default logfmon(8) configuration file
+
+<B>AUTHORS</B>
+     Nicholas Marriott
+
+<B>SEE ALSO</B>
+     logfmon(8) re_format(7)
+
+                               November 8, 2004                              4
+</pre>
+</body>
+</html>
