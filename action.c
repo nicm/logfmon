@@ -21,15 +21,13 @@
 
 #include "logfmon.h"
 
-int
+void
 act_ignore(struct file *file, char *t)
 {
 	log_debug("matched: (%s) %s -- ignoring", file->tag.name, t);
-
-	return (1);
 }
 
-int
+void
 act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
         char		*s;
@@ -46,11 +44,9 @@ act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
                 if (pthread_create(&thread, NULL, exec_thread, s) != 0)
                         fatalx("pthread_create failed");
         }
-
-        return (1);
 }
 
-int
+void
 act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
     char *line)
 {
@@ -59,7 +55,7 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         FILE		*fd;
 
         if (rule->params.cmd == NULL || *(rule->params.cmd) == '\0')
-                return (1);
+                return;
 
         s = repl_matches(t, rule->params.cmd, match);
 
@@ -83,17 +79,15 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
                         free(s);
                 }
         }
-
-        return (1);
 }
 
-int
+void
 act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
         char	*s;
 
         if (rule->params.key == NULL || *(rule->params.key) == '\0')
-                return (1);
+                return;
 
         s = repl_matches(t, rule->params.key, match);
 
@@ -102,18 +96,16 @@ act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
         if (find_context_by_key(file, s) != NULL) {
 		log_debug("ignoring open; found existing context %s", s);
                 free(s);
-                return (0);
+                return;
         }
 
 	if (add_context(file, s, rule) == NULL)
 		log_warnx("error adding context");
 
         free(s);
-
-        return (0);
 }
 
-int
+void
 act_appnd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
     char *line)
 {
@@ -122,7 +114,7 @@ act_appnd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         char		*s;
 
         if (rule->params.key == NULL || *(rule->params.key) == '\0')
-                return (1);
+                return;
 
         s = repl_matches(t, rule->params.key, match);
 
@@ -132,7 +124,7 @@ act_appnd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         if (context == NULL) {
 		log_debug("missing context %s for append", s);
                 free(s);
-                return (0);
+                return;
         }
         free(s);
 
@@ -141,7 +133,7 @@ act_appnd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 	TAILQ_INSERT_TAIL(&context->msgs, msg, entry);
 
         if (context->rule->params.ent_max == 0)
-                return (0);
+                return;
 
         if (count_msgs(context) >= context->rule->params.ent_max) {
 		log_debug("context %s reached limit of %d entries",
@@ -153,18 +145,16 @@ act_appnd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 
                 delete_context(file, context);
         }
-
-        return (0);
 }
 
-int
+void
 act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
         char		*s;
         struct context	*context;
 
         if (rule->params.key == NULL || *(rule->params.key) == '\0')
-                return (1);
+                return;
 
         s = repl_matches(t, rule->params.key, match);
 
@@ -174,7 +164,7 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
         if (context == NULL) {
 		log_debug("missing context %s for close", s);
                 free(s);
-                return (0);
+                return;
         }
         free(s);
 
@@ -185,6 +175,4 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
         }
 
         delete_context(file, context);
-
-        return (0);
 }

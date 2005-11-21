@@ -208,10 +208,13 @@ parse_line(char *line, struct file *file)
 	if (strlen(line) < 17)
 		return;
 
+	/* replace ctrl chars with _ */
 	for (t = line; *t != '\0'; t++) {
 		if (*t < 32)
 			*t = '_';
 	}
+
+	/* skip the hostname and any subsequent spaces */
         t = strchr(line + 16, ' ');
         if (t == NULL)
                 return;
@@ -225,46 +228,43 @@ parse_line(char *line, struct file *file)
 
                 if (regexec(rule->re, t, 10, match, 0) != 0)
                         continue;
+                if (rule->not_re != NULL &&
+		    regexec(rule->not_re, t, 0, NULL, 0) == 0)
+			continue;
 
-                if (rule->not_re != NULL) {
-                        if (regexec(rule->not_re, t, 0, NULL, 0) == 0)
-                                continue;
-                }
-
+		/* perform action and return */
                 switch (rule->action) {
                 case ACT_IGNORE:
-                        if (act_ignore(file, t) != 0)
-                                return;
-                        break;
+                        act_ignore(file, t);
+			return;
                 case ACT_EXEC:
-                        if (act_exec(file, t, rule, match) != 0)
-                                return;
-                        break;
+                        act_exec(file, t, rule, match);
+			return;
                 case ACT_PIPE:
-                        if (act_pipe(file, t, rule, match, line) != 0)
-                                return;
-                        break;
+                        act_pipe(file, t, rule, match, line);
+			return;
                 case ACT_OPEN:
-                        if (act_open(file, t, rule, match) != 0)
-                                return;
-                        break;
+                        act_open(file, t, rule, match);
+			return;
                 case ACT_APPEND:
-                        if (act_appnd(file, t, rule, match, line) != 0)
-                                return;
-                        break;
+                        act_appnd(file, t, rule, match, line);
+			return;
                 case ACT_CLOSE:
-                        if (act_close(file, t, rule, match) != 0)
-                                return;
-                        break;
+                        act_close(file, t, rule, match);
+			return;
                 }
+
+		fatal("unknown action: %d", rule->action);
         }
 
+	/* no matching rule found */
 	log_debug("unmatched: (%s) %s", file->tag.name, t);
 
         if (conf.mail_cmd != NULL && *conf.mail_cmd != '\0') {
                 if (pthread_mutex_lock(&save_mutex) != 0)
                         fatalx("pthread_mutex_lock failed");
 
+		/* append the line to the saves list */
 		save = xmalloc(sizeof (struct msg));
 		save->str = xstrdup(line);
 		TAILQ_INSERT_TAIL(&file->saves, save, entry);

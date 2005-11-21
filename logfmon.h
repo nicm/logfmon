@@ -159,12 +159,12 @@ struct conf {
 extern struct conf		 conf;
 
 /* action.c */
-int	act_ignore(struct file *, char *);
-int	act_exec(struct file *, char *, struct rule *, regmatch_t []);
-int	act_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
-int	act_open(struct file *, char *, struct rule *, regmatch_t []);
-int	act_appnd(struct file *, char *, struct rule *, regmatch_t [], char *);
-int	act_close(struct file *, char *, struct rule *, regmatch_t []);
+void	act_ignore(struct file *, char *);
+void	act_exec(struct file *, char *, struct rule *, regmatch_t []);
+void	act_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
+void	act_open(struct file *, char *, struct rule *, regmatch_t []);
+void	act_appnd(struct file *, char *, struct rule *, regmatch_t [], char *);
+void	act_close(struct file *, char *, struct rule *, regmatch_t []);
 
 /* cache.c */
 int		 save_cache(void);
