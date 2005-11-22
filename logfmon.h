@@ -269,7 +269,7 @@ struct file 	*find_file_by_tag(char *);
 struct file 	*find_file_by_path(char *);
 struct file 	*find_file_by_fd(int);
 
-/* getln.h */
+/* getln.c */
 char		*getln(FILE *, int *);
 
 /* log.c */
