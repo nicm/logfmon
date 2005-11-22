@@ -56,7 +56,7 @@ save_cache(void)
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (fprintf(fd,
-		    "%d %s %lld %lld\n", strlen(file->path), file->path,
+		    "%d %s %llu %llu\n", strlen(file->path), file->path,
 		    (long long) file->size,
 		    (long long) file->offset) == -1) {
                         fclose(fd);
@@ -104,7 +104,7 @@ int load_cache(void)
 		if (len >= sizeof path)
 			goto error;
 
-		res = snprintf(fmt, sizeof fmt, "%%%uc %%lld %%lld", len);
+		res = snprintf(fmt, sizeof fmt, "%%%dc %%llu %%llu", len);
 		if (res < 0 || (unsigned) res > sizeof fmt)
 			goto error;
 
@@ -126,7 +126,7 @@ int load_cache(void)
                                         file->size = off;
                                 }
                         }
-			log_debug("file %s, was %lld/%lld now %lld/%lld",
+			log_debug("file %s, was %llu/%llu now %llu/%llu",
 			    path, off, size, file->offset, file->size);
                 }
         }

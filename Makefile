@@ -22,7 +22,7 @@ YACC= yacc -d
 
 CC= cc
 CFLAGS+= -g
-#CFLAGS+= -DDEBUG
+CFLAGS+= -DDEBUG
 CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W -Wnested-externs
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
