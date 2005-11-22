@@ -58,11 +58,11 @@ getln(FILE *fd, int *error)
 	buf = fgetln(fd, &len);
 	if (buf == NULL) {
 		if (feof(fd)) {
-			clearerr();
+			clearerr(fd);
 			*error = 0;
 			return (NULL);
 		}
-		clearerr();
+		clearerr(fd);
 		*error = 1;
 		return (NULL);
 	}
