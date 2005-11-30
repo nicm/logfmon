@@ -382,7 +382,7 @@ main(int argc, char **argv)
 				if (file->size < file->offset)
 					file->size = file->offset;
 				log_debug("new size=%lld, new offset=%lld",
-				    file->offset);
+				    file->size, file->offset);
                         }
                         if (error == 1) {
                                 fclose(file->fd);
