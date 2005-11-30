@@ -235,7 +235,20 @@ find_file_by_fd(int fd)
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (file->fd != NULL && fileno(file->fd) == fd)
-                        return file;
+                        return (file);
+        }
+
+        return (NULL);
+}
+
+struct file *
+find_file_mismatch(void)
+{
+        struct file	*file;
+
+        TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->size != file->offset)
+			return (file);
         }
 
         return (NULL);

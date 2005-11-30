@@ -268,6 +268,7 @@ void		 close_files(void);
 struct file 	*find_file_by_tag(char *);
 struct file 	*find_file_by_path(char *);
 struct file 	*find_file_by_fd(int);
+struct file	*find_file_mismatch(void);
 
 /* getln.c */
 char		*getln(FILE *, int *);

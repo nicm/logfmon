@@ -348,11 +348,17 @@ main(int argc, char **argv)
                 if (failed > 0)
                         timeout = REOPENTIMEOUT;
 
-		/* get an event */
-                file = get_event(&event, timeout);
-                if (file == NULL)
-                        continue;
-		log_debug("event: tag=%s, code=%d", file->tag.name, event);
+		file = find_file_mismatch();
+		if (file == NULL) {
+			/* get an event */
+			file = get_event(&event, timeout);
+			if (file == NULL)
+				continue;
+			log_debug("event: tag=%s, code=%d", file->tag.name,
+			    event);
+		} else
+			log_debug("file mismatch: size=%lld offset=%lld",
+			    file->size, file->offset);
 
                 switch (event) {
                 case EVENT_NONE:
@@ -373,6 +379,10 @@ main(int argc, char **argv)
 					exit(1);
 				free(line);
 				file->offset = ftello(file->fd);
+				if (file->size < file->offset)
+					file->size = file->offset;
+				log_debug("new size=%lld, new offset=%lld",
+				    file->offset);
                         }
                         if (error == 1) {
                                 fclose(file->fd);
