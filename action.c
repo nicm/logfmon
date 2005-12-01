@@ -212,7 +212,7 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
                 return;
 
         if (count_msgs(context) >= context->rule->params.ent_max) {
-		log_debug("context %s reached limit of %d entries",
+		log_debug("context %s reached limit of %u entries",
 		    context->key, context->rule->params.ent_max);
 
                 if (context->rule->params.ent_cmd != NULL)
