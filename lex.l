@@ -63,9 +63,10 @@ extern int yylex(void);
                         break;
                 default:
                         if (ch == '-' || ch == '_' ||
-			    isalpha(ch) || isdigit(ch)) {
+			    isalpha((unsigned char) ch) ||
+			    isdigit((unsigned char) ch)) {
 				/* Tag must begin with a letter */
-				if (pos == 0 && !isalpha(ch))
+				if (pos == 0 && !isalpha((unsigned char) ch))
 					goto badtags;
                                 *(name + pos) = ch;
                                 pos++;

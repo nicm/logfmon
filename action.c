@@ -68,8 +68,8 @@ repl_matches(char *line, char *src, regmatch_t *match)
         buf = xmalloc(len);
 
         while (*src != '\0') {
-                if (src[0] == '$' &&
-		    isdigit((int) src[1]) && !isdigit((int) src[2])) {
+                if (src[0] == '$' && isdigit((unsigned char) src[1]) &&
+		    !isdigit((unsigned char) src[2])) {
 			src++; /* skip $ */
 			num = atoi(src);
 			mlen = match[num].rm_eo - match[num].rm_so;
