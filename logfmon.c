@@ -181,7 +181,6 @@ usage(void)
 {
 	printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n",
 	    __progname);
-
         exit(1);
 }
 

@@ -34,16 +34,15 @@ extern int yylex(void);
 %%
 
 \{ {
-        int	 	 done, ch;
-	unsigned int	 pos;
+        int	 	 done = 0, ch;
+	unsigned int	 pos = 0;
         char	 	 name[MAXTAGLEN];
 	struct tag	*tag;
-
-        done = 0;
-        pos = 0;
+	struct tags	*tags;
 
         yylval.tags = xmalloc(sizeof (struct tags));
-        TAILQ_INIT(&yylval.tags->tags);
+	tags = yylval.tags;
+        TAILQ_INIT(&tags->tags);
 
         while (!done) {
                 switch (ch = input()) {
@@ -57,16 +56,20 @@ extern int yylex(void);
                         if (pos > 0) {
                                 *(name + pos) = '\0';
 				tag = xmalloc(sizeof (struct tag));
-				strncpy(tag->name, name, sizeof tag->name);
-				TAILQ_INSERT_TAIL(&yylval.tags->tags,
-				    tag, entry);
+				strlcpy(tag->name, name, sizeof tag->name);
+				TAILQ_INSERT_TAIL(&tags->tags, tag, entry);
                                 pos = 0;
                         }
                         break;
                 default:
-                        if (ch == '-' || ch == '_' || isalpha(ch)) {
+                        if (ch == '-' || ch == '_' ||
+			    isalpha(ch) || isdigit(ch)) {
+				/* Tag must begin with a letter */
+				if (pos == 0 && !isalpha(ch))
+					goto badtags;
                                 *(name + pos) = ch;
                                 pos++;
+				/* Bail if the size has become too long */
                                 if (pos >= sizeof name)
 					goto badtags;
                         } else
@@ -78,7 +81,7 @@ extern int yylex(void);
         if (pos > 0) {
 		*(name + pos) = '\0';
 		tag = xmalloc(sizeof (struct tag));
-		strncpy(tag->name, name, sizeof tag->name);
+		strlcpy(tag->name, name, sizeof tag->name);
 		TAILQ_INSERT_TAIL(&yylval.tags->tags, tag, entry);
         }
 
@@ -121,12 +124,8 @@ badtags:
         return (NUMBER);
 }
 \" {
-	int		done, ch;
-	size_t		pos, len;
-
-        done = 0;
-        len  = 24;
-        pos  = 0;
+	int		done = 0, ch;
+	size_t		pos = 0, len = 24;
 
         yylval.string = xmalloc(len + 1);
 
@@ -158,7 +157,7 @@ badtags:
 
                 *(yylval.string + pos) = ch;
                 pos++;
-                if (pos == len) {
+                if (pos >= len) {
                         len *= 2;
                         yylval.string = xrealloc(yylval.string, len + 1);
                 }
@@ -200,14 +199,19 @@ when return (TOKWHEN);
 
         return (TAGS);
 }
-[A-Za-z0-9_-]+ {
+[A-Za-z][A-Za-z0-9_-]* {
 	struct tag	*tag;
+
+	if (strlen(yytext) > MAXTAGLEN - 1) {
+		yylval.tags = NULL;
+		return (TAGS);
+	}
 
         yylval.tags = xmalloc(sizeof (struct tags));
 	TAILQ_INIT(&yylval.tags->tags);
 
 	tag = xmalloc(sizeof (struct tag));
-	strncpy(tag->name, yytext, sizeof tag->name);
+	strlcpy(tag->name, yytext, sizeof tag->name);
 	TAILQ_INSERT_HEAD(&yylval.tags->tags, tag, entry);
 
         return (TAGS);
