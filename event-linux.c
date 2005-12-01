@@ -87,7 +87,7 @@ get_event(enum event *event, int timeout)
                         evfile = TAILQ_FIRST(&conf.files);
 		while (evfile != NULL) {
                         if (evfile->fd != NULL) {
-                                if (stat(evfile->path, &sb) == -1) {
+                                if (stat(evfile->path, &sb) != 0) {
                                         *event = EVENT_REOPEN;
                                         return (evfile);
                                 }

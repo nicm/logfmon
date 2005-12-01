@@ -68,7 +68,7 @@ save_cache(void)
 
         fclose(fd);
 
-        if (rename(path, conf.cache_file) == -1) {
+        if (rename(path, conf.cache_file) != 0) {
                 log_warn("rename");
                 unlink(path);
                 return (1);
@@ -116,7 +116,7 @@ int load_cache(void)
                 file = find_file_by_path(path);
                 if (file != NULL) {
                         file->offset = 0;
-                        if (stat(path, &sb) == -1)
+                        if (stat(path, &sb) != 0)
                                 log_warn(path);
                         else {
                                 if (sb.st_size >= size) {
