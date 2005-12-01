@@ -51,11 +51,14 @@ init_events(void)
         kevptr = kevlist;
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (file->fd != NULL) {
-                        EV_SET(kevptr, fileno(file->fd), EVFILT_VNODE, EV_ADD |
-                            EV_CLEAR, NOTE_RENAME | NOTE_DELETE, 0, NULL);
+			log_debug("init file: tag=%s", file->tag.name);
+                        EV_SET(kevptr, fileno(file->fd), EVFILT_VNODE,
+			    EV_ADD | EV_CLEAR,
+			    NOTE_RENAME | NOTE_DELETE, 0, NULL);
                         kevptr++;
-                        EV_SET(kevptr, fileno(file->fd), EVFILT_READ, EV_ADD |
-                            EV_CLEAR, 0, 0, NULL);
+                        EV_SET(kevptr, fileno(file->fd), EVFILT_READ,
+			    EV_ADD | EV_CLEAR,
+			    0, 0, NULL);
                         kevptr++;
                 }
         }

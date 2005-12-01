@@ -221,14 +221,6 @@ struct conf {
 };
 extern struct conf		 conf;
 
-/* Args for pipe thread. */
-struct pipe_args {
-	pthread_cond_t		 cond;
-	pthread_mutex_t		 mutex;
-	struct msgs		*msgs;
-	char			*cmd;
-};
-
 /* action.c */
 char	*repl_one(char *, char *);
 char	*repl_matches(char *, char *, regmatch_t *);
