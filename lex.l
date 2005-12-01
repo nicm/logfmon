@@ -94,7 +94,7 @@ extern __dead void yyerror(const char *);
 
         return (TAGS);
 }
-[0-9]+[hms] {
+[0-9]+[HhMmSs] {
         char		ch;
 	long long	num;
 
@@ -111,11 +111,13 @@ extern __dead void yyerror(const char *);
 
         switch (ch) {
         case 'h':
+	case 'H':
 		if (yylval.number > INT_MAX / 3600)
 			yyerror("time too large");
                 yylval.number *= 3600;
                 break;
         case 'm':
+	case 'M':
 		if (yylval.number > INT_MAX / 60)
 			yyerror("time too large");
                 yylval.number *= 60;
