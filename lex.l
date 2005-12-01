@@ -22,6 +22,8 @@
 
 %{
 #include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -29,6 +31,7 @@
 #include "y.tab.h"
 
 extern int yylex(void);
+extern __dead void yyerror(const char *);
 %}
 
 %%
@@ -48,7 +51,7 @@ extern int yylex(void);
                 switch (ch = input()) {
 		case 0:
 		case EOF:
-			goto badtags;
+			yyerror("unterminated tag list");
                 case '}':
 			done = 1;
 			break;
@@ -67,14 +70,14 @@ extern int yylex(void);
 			    isdigit((unsigned char) ch)) {
 				/* Tag must begin with a letter */
 				if (pos == 0 && !isalpha((unsigned char) ch))
-					goto badtags;
+					yyerror("illegal tag first character");
                                 *(name + pos) = ch;
                                 pos++;
 				/* Bail if the size has become too long */
                                 if (pos >= sizeof name)
-					goto badtags;
-                        } else
-				goto badtags;
+					yyerror("tag too long");
+			} else
+				yyerror("illegal character in tag");
                         break;
                 }
         }
@@ -87,33 +90,34 @@ extern int yylex(void);
         }
 
         if (TAILQ_EMPTY(&yylval.tags->tags))
-		goto badtags;
+		yyerror("empty tag list");
 
         return (TAGS);
-
-badtags:
-	while (!TAILQ_EMPTY(&yylval.tags->tags)) {
-		tag = TAILQ_FIRST(&yylval.tags->tags);
-		TAILQ_REMOVE(&yylval.tags->tags, tag, entry);
-		free(tag);
-	}
-	free(yylval.tags);
-	yylval.tags = NULL;
-
-	return (TAGS);
 }
 [0-9]+[hms] {
-        char	ch;
+        char		ch;
+	long long	num;
 
         ch = *(yytext + strlen(yytext) - 1);
         *(yytext + strlen(yytext) - 1) = '\0';
 
-        yylval.number = atoi(yytext);
+	errno = 0;
+	num = strtoll(yytext, NULL, 10);
+	if (num == 0 && (errno == EINVAL || errno == ERANGE))
+		yyerror("illegal time");
+	if (num > INT_MAX)
+		yyerror("time too large");
+	yylval.number = num;
+
         switch (ch) {
         case 'h':
+		if (yylval.number > INT_MAX / 3600)
+			yyerror("time too large");
                 yylval.number *= 3600;
                 break;
         case 'm':
+		if (yylval.number > INT_MAX / 60)
+			yyerror("time too large");
                 yylval.number *= 60;
                 break;
         }
@@ -121,7 +125,14 @@ badtags:
         return (TIME);
 }
 [0-9]+ {
-        yylval.number = atoi(yytext);
+	long long	num;
+        num = strtol(yytext, NULL, 10);
+	if (num == 0 && (errno == EINVAL || errno == ERANGE))
+		yyerror("illegal number");
+	if (num > INT_MAX)
+		yyerror("number too large");
+	yylval.number = num;
+
         return (NUMBER);
 }
 \" {
@@ -134,12 +145,12 @@ badtags:
                 switch (ch = input()) {
 		case 0:
 		case EOF:
-			goto badstring;
+			yyerror("unterminated string");
                 case '\\':
                         switch (ch = input()) {
 			case 0:
 			case EOF:
-				goto badstring;
+				yyerror("unterminated string");
                         case 'r':
                                 ch = '\r';
                                 break;
@@ -167,12 +178,6 @@ badtags:
         *(yylval.string + pos) = '\0';
 
         return (STRING);
-
-badstring:
-	free(yylval.string);
-	yylval.string = NULL;
-
-	return (STRING);
 }
 mailcmd return (OPTMAILCMD);
 mailtime return (OPTMAILTIME);
@@ -203,10 +208,8 @@ when return (TOKWHEN);
 [A-Za-z][A-Za-z0-9_-]* {
 	struct tag	*tag;
 
-	if (strlen(yytext) > MAXTAGLEN - 1) {
-		yylval.tags = NULL;
-		return (TAGS);
-	}
+	if (strlen(yytext) > MAXTAGLEN - 1)
+		yyerror("tag too long");
 
         yylval.tags = xmalloc(sizeof (struct tags));
 	TAILQ_INIT(&yylval.tags->tags);

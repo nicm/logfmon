@@ -71,7 +71,7 @@ repl_matches(char *line, char *src, regmatch_t *match)
                 if (src[0] == '$' && isdigit((unsigned char) src[1]) &&
 		    !isdigit((unsigned char) src[2])) {
 			src++; /* skip $ */
-			num = atoi(src);
+			num = *src - '0';
 			mlen = match[num].rm_eo - match[num].rm_so;
 			if (mlen > 0) {
 				ENSURE_SIZE(buf, len, pos + mlen);

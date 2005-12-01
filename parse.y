@@ -38,13 +38,15 @@ int yywrap(void);
 
 extern int yylex(void);
 
-void yyerror(const char *s)
+__dead void
+yyerror(const char *s)
 {
-        log_warnx("%s at line %d", s, yylineno);
+        log_warnx("%s: %s at line %d", conf.conf_file, s, yylineno);
 	exit(1);
 }
 
-int yywrap(void)
+int
+yywrap(void)
 {
         return (1);
 }
