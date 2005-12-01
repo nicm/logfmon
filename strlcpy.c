@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <string.h>
 
+#include "logfmon.h"
+
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz == 0).
