@@ -10,7 +10,7 @@ OS!= uname
 SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
 	getln.c parse.y lex.l action.c
 .if ${OS} == "Linux"
-SRCS+= event-linux.c
+SRCS+= event-linux.c strlcpy.c
 .else
 SRCS+= event.c
 .endif

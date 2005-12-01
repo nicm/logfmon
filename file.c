@@ -46,18 +46,13 @@ add_file(char *path, char *tag)
                 log_warnx("%s: duplicate file", path);
                 return (NULL);
         }
+
         if (find_file_by_tag(tag) != NULL) {
                 free(file);
                 log_warnx("%s: duplicate tag", tag);
                 return (NULL);
         }
-
-	if (strlen(tag) > sizeof file->tag.name) {
-		free(file);
-		log_warnx("%s: tag too long", tag);
-		return (NULL);
-	}
-	strncpy(file->tag.name, tag, sizeof file->tag.name);
+	strlcpy(file->tag.name, tag, sizeof file->tag.name);
 
         fd = fopen(path, "r");
         if (fd == NULL) {

@@ -23,40 +23,35 @@
 
 #include "logfmon.h"
 
+#define ENSURE_SIZE(buf, len, req) do {					\
+	while (len <= (req)) {						\
+		len *= 2;						\
+		buf = xrealloc(buf, len);				\
+	}								\
+} while(0)
+
 char *
-repl_one(char *src, char *repl)
+repl_one(char *src, char *rpl)
 {
         char	*buf;
-        size_t	 len, pos;
+        size_t	 len, pos = 0;
 
         len = strlen(src) + 512;
         buf = xmalloc(len);
-        pos = 0;
 
         while (*src != '\0') {
-                if (*src != '$' || *(src + 1) != '1') {
-                        *(buf + pos) = *src++;
-
-                        pos++;
-                        while (len <= pos) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-
-                        continue;
+                if (src[0] == '$' && src[1] == '1') {
+			ENSURE_SIZE(buf, len, pos + strlen(rpl));
+			strlcpy(buf + pos, rpl, len - pos);
+			pos += strlen(rpl);
+			continue;
                 }
 
-                src += 2;
-
-                while (len <= pos + strlen(repl)) {
-                        len *= 2;
-                        buf = xrealloc(buf, len);
-                }
-
-                strncpy(buf + pos, repl, len - pos - 1);
-                pos += strlen(repl);
+		ENSURE_SIZE(buf, len, pos + 1);
+		*(buf + pos++) = *src++;
         }
 
+	ENSURE_SIZE(buf, len, pos + 1);
         *(buf + pos) = '\0';
 
         return (buf);
@@ -65,52 +60,38 @@ repl_one(char *src, char *repl)
 char *
 repl_matches(char *line, char *src, regmatch_t *match)
 {
-        char	*buf;
-        size_t	 len, mlen, pos;
+        char	*buf, *mptr;
+        size_t	 len, mlen, pos = 0;
         int	 num;
 
         len = strlen(src) + 512;
         buf = xmalloc(len);
-        pos = 0;
 
         while (*src != '\0') {
-                if (*src != '$' ||
-		    !isdigit(*(src + 1)) || isdigit(*(src + 2))) {
-                        *(buf + pos) = *src++;
-
-                        pos++;
-                        while (len <= pos) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-
-                        continue;
+                if (src[0] == '$' &&
+		    isdigit((int) src[1]) && !isdigit((int) src[2])) {
+			src++; /* skip $ */
+			num = atoi(src);
+			mlen = match[num].rm_eo - match[num].rm_so;
+			if (mlen > 0) {
+				ENSURE_SIZE(buf, len, pos + mlen);
+				mptr = line + match[num].rm_so;
+				strncpy(buf + pos, mptr, mlen);
+				pos += mlen;
+				src++; /* skip num */
+			} else { /* bad match, copy $ */
+				ENSURE_SIZE(buf, len, pos + 1);
+				*(buf + pos++) = '$';
+			}
+			continue;
                 }
 
-                num = atoi(++src);
-                mlen = match[num].rm_eo - match[num].rm_so;
-
-                if (mlen > 0) {
-                        while (len <= pos + mlen) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-
-                        strncpy(buf + pos, line + match[num].rm_so, mlen);
-                        pos += mlen;
-
-                        src++;
-                } else {
-                        *(buf + pos) = '$';
-
-                        pos++;
-                        while (len <= pos) {
-                                len *= 2;
-                                buf = xrealloc(buf, len);
-                        }
-                }
+		ENSURE_SIZE(buf, len, pos + 1);
+		*(buf + pos++) = *src++;
         }
-        *(buf + pos) = '\0';
+
+	ENSURE_SIZE(buf, len, pos + 1);
+	*(buf + pos) = '\0';
 
         return (buf);
 }

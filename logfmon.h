@@ -221,6 +221,11 @@ struct conf {
 };
 extern struct conf		 conf;
 
+#ifdef __GLIBC__
+/* strlcpy.c */
+size_t	 strlcpy(char *, const char *, size_t);
+#endif
+
 /* action.c */
 char	*repl_one(char *, char *);
 char	*repl_matches(char *, char *, regmatch_t *);
