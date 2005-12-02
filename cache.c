@@ -121,9 +121,7 @@ int load_cache(void)
                         else {
                                 if (sb.st_size >= size) {
                                         file->offset = off;
-                                        /* using off here is correct,
-					   size is updated incrementally */
-                                        file->size = off;
+                                        file->size = sb.st_size;
                                 }
                         }
 			log_debug("file %s, was %lld/%lld now %lld/%lld",

@@ -355,9 +355,12 @@ main(int argc, char **argv)
 				continue;
 			log_debug("event: tag=%s, code=%d", file->tag.name,
 			    event);
-		} else
+		} else {
+			/* force read event */
+			event = EVENT_READ;
 			log_debug("file mismatch: size=%lld offset=%lld",
 			    file->size, file->offset);
+		}
 
                 switch (event) {
                 case EVENT_NONE:

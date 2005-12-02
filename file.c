@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -130,6 +131,7 @@ void
 open_files(void)
 {
         struct file	*file;
+	int		 res;
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (file->fd == NULL) {
@@ -140,8 +142,8 @@ open_files(void)
                                 file->timer = 0;
                                 if (file->offset == 0)
                                         continue;
-				if (fseeko(file->fd, file->offset,
-				    SEEK_SET) != 0)
+				res = fseeko(file->fd, file->offset, SEEK_SET);
+				if (res != 0)
                                         log_warn("fseeko");
                         }
                 }
@@ -242,7 +244,7 @@ find_file_mismatch(void)
         struct file	*file;
 
         TAILQ_FOREACH(file, &conf.files, entry) {
-		if (file->size != file->offset)
+		if (file->fd != NULL && file->size != file->offset)
 			return (file);
         }
 
