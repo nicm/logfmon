@@ -351,7 +351,6 @@ main(int argc, char **argv)
 		if (file == NULL) {
 			/* get an event */
 			file = get_event(&event, timeout);
-			log_debug("event: code=%d", event);
 		} else {
 			/* force read event */
 			event = EVENT_READ;
