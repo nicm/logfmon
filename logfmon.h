@@ -29,7 +29,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#define MAXREADSIZE	(256 * 1024)
 #define MAXTAGLEN	32
 
 #define MAILTIME	900

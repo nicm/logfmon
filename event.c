@@ -86,7 +86,6 @@ get_event(enum event *event, int timeout)
         ts.tv_sec = timeout;
 
         res = kevent(kq, NULL, 0, &kev, 1, &ts);
-
         if (res == -1) {
                 if (errno == EINTR)
                         return (NULL);

@@ -351,10 +351,7 @@ main(int argc, char **argv)
 		if (file == NULL) {
 			/* get an event */
 			file = get_event(&event, timeout);
-			if (file == NULL)
-				continue;
-			log_debug("event: tag=%s, code=%d", file->tag.name,
-			    event);
+			log_debug("event: code=%d", event);
 		} else {
 			/* force read event */
 			event = EVENT_READ;
@@ -367,6 +364,7 @@ main(int argc, char **argv)
                 case EVENT_TIMEOUT:
                         break;
                 case EVENT_REOPEN:
+			log_debug("reopen: tag=%s", file->tag.name);
                         fclose(file->fd);
                         file->fd = fopen(file->path, "r");
 			if (file->fd == NULL) {
@@ -376,6 +374,7 @@ main(int argc, char **argv)
 			}
                         break;
                 case EVENT_READ:
+			log_debug("read: tag=%s", file->tag.name);
 			while ((line = getln(file->fd, &error)) != NULL) {
 				if (parse_line(line, file) != 0)
 					exit(1);
