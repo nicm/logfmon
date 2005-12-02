@@ -161,24 +161,23 @@ reopen_files(unsigned int *failed)
         opened = 0;
 
         TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd == NULL)
-                {
+                if (file->fd == NULL) {
                         if (file->timer != 0 && file->timer > time(NULL)) {
                                 if (failed != NULL)
                                         (*failed)++;
                                 continue;
                         }
 
-                        file->fd = fopen(file->path, "r");
-                        if (file->fd == NULL) {
-                                if (failed != NULL)
-                                        (*failed)++;
-                        } else {
-                                file->timer = 0;
-                                file->size = 0;
-                                file->offset = 0;
-                                opened++;
-                        }
+			file->fd = fopen(file->path, "r");
+			if (file->fd == NULL) {
+				if (failed != NULL)
+					(*failed)++;
+			} else {
+				file->timer = 0;
+				file->size = 0;
+				file->offset = 0;
+				opened++;
+			}
                 }
         }
 

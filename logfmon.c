@@ -365,12 +365,7 @@ main(int argc, char **argv)
                 case EVENT_REOPEN:
 			log_debug("reopen: tag=%s", file->tag.name);
                         fclose(file->fd);
-                        file->fd = fopen(file->path, "r");
-			if (file->fd == NULL) {
-				log_warn(file->path);
-				file->timer = time(NULL) + REOPENTIMEOUT;
-				dirty = 1;
-			}
+			file->fd = NULL;
                         break;
                 case EVENT_READ:
 			log_debug("read: tag=%s", file->tag.name);
