@@ -3,7 +3,7 @@
 .SUFFIXES: .c .o .y .l .h .8 .8.gz .5 .5.gz
 
 PROG= logfmon
-VERSION= 0.8
+VERSION= 0.8a
 
 OS!= uname
 
@@ -21,8 +21,8 @@ LEX= lex
 YACC= yacc -d
 
 CC= cc
-CFLAGS+= -g
-CFLAGS+= -DDEBUG
+#CFLAGS+= -g
+#CFLAGS+= -DDEBUG
 CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W -Wnested-externs
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes

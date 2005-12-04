@@ -54,7 +54,7 @@ init_events(void)
 			log_debug("init file: tag=%s", file->tag.name);
                         EV_SET(kevptr, fileno(file->fd), EVFILT_VNODE,
 			    EV_ADD | EV_CLEAR, NOTE_DELETE | NOTE_RENAME |
-			    NOTE_TRUNCATE | NOTE_REVOKE, 0, NULL);
+			    NOTE_REVOKE, 0, NULL);
                         kevptr++;
                         EV_SET(kevptr, fileno(file->fd), EVFILT_READ,
 			    EV_ADD | EV_CLEAR, 0, 0, NULL);
