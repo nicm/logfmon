@@ -6,6 +6,7 @@ PROG= logfmon
 VERSION= 0.8a
 
 OS!= uname
+REL!= uname -r
 
 SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
 	getln.c parse.y lex.l action.c
@@ -43,7 +44,7 @@ LDFLAGS+= -pthread
 LIBS+= -lpthread
 .endif
 
-TARFLAGS= -zxc -s '/.*/${PROG}-${VERSION}\/\0/'
+TARFLAGS= 
 DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] \
 	README make-linux.sh \
 	rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
@@ -68,7 +69,15 @@ ${PROG}:	${OBJS}
 		${CC} ${LDFLAGS} -o ${PROG} ${LIBS} ${OBJS}
 
 dist:		clean
-		tar ${TARFLAGS} -f ${PROG}-${VERSION}.tar.gz ${DISTFILES}
+		tar -zxc \
+			-s '/.*/${PROG}-${VERSION}\/\0/' \
+			-f ${PROG}-${VERSION}.tar.gz ${DISTFILES}
+
+port:
+		find ports/OpenBSD/* -type f -and ! -path '*CVS*' | tar -zxc \
+			-s '/ports\/OpenBSD/${PROG}/' \
+			-I - \
+			-f ${PROG}-${VERSION}-openbsd${REL}-port.tar.gz
 
 depend:
 		mkdep ${CFLAGS} ${SRCS}
