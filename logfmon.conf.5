@@ -180,7 +180,7 @@ An example
 .Ic exec
 rule is:
 .Bd -ragged -offset indent
-match "sshd\\\\[[0-9]*\\\\]: Invalid user .* from \\\\([0-9\\.]*\\\\)" exec "grep $1 /etc/pf.ignore || (echo $1 >> /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1; echo $0 | mail -s 'ssh attempt' root)"
+match "sshd\\\\[[0-9]*\\\\]: Invalid user .* from ([0-9.]*)" exec "grep $1 /etc/pf.ignore || (echo $1 >> /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1; echo $0 | mail -s 'ssh attempt' root)"
 .Ed
 .It Ic pipe Ar command
 With this action, the entire log entry is piped to the supplied command.
@@ -286,13 +286,13 @@ This applies the specified action and removes the context.
 .Pp
 An example set of context rules is:
 .Bd -ragged -offset indent
-match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: input_userauth_request: invalid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s \\"`date` ssh attempt (expired)\\" root"
+match in auth "sshd\\\\[([0-9]*)\\\\]: input_userauth_request: invalid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s \\"`date` ssh attempt (expired)\\" root"
 .Ed
 .Bd -ragged -offset indent
-match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: .*" append "sshd-$1"
+match in auth "sshd\\\\[([0-9]*)\\\\]: .*" append "sshd-$1"
 .Ed
 .Bd -ragged -offset indent
-match in auth "sshd\\\\[\\\\([0-9]*\\\\)\\\\]: Received disconnect from .*" close "sshd-$1" pipe "/usr/bin/mail -s \\"`date` ssh attempt\\" root"
+match in auth "sshd\\\\[([0-9]*)\\\\]: Received disconnect from .*" close "sshd-$1" pipe "/usr/bin/mail -s \\"`date` ssh attempt\\" root"
 .Ed
 .Pp
 The first rule opens the context named with the sshd pid, the second appends all messages from the same sshd pid (including the messages matching the open and close rules) to the context and the third rule closes and mails the context when the remote client disconnects.

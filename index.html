@@ -185,7 +185,7 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
              An example <B>exec </B>rule is:
 
                    match "sshd\\[[0-9]*\\]: Invalid user .* from
-                   \\([0-9\.]*\\)" exec "grep $1 /etc/pf.ignore || (echo $1 &gt&gt
+                   ([0-9\.]*)" exec "grep $1 /etc/pf.ignore || (echo $1 &gt&gt
                    /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1;
                    echo $0 | mail -s 'ssh attempt' root)"
 
@@ -241,13 +241,13 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
 
      An example set of context rules is:
 
-           match in auth "sshd\\[\\([0-9]*\\)\\]: input_userauth_request: in-
+           match in auth "sshd\\[([0-9]*)\\]: input_userauth_request: in-
            valid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s
            \"`date` ssh attempt (expired)\" root"
 
-           match in auth "sshd\\[\\([0-9]*\\)\\]: .*" append "sshd-$1"
+           match in auth "sshd\\[([0-9]*)\\]: .*" append "sshd-$1"
 
-           match in auth "sshd\\[\\([0-9]*\\)\\]: Received disconnect from .*"
+           match in auth "sshd\\[([0-9]*)\\]: Received disconnect from .*"
            close "sshd-$1" pipe "/usr/bin/mail -s \"`date` ssh attempt\" root"
 
      The first rule opens the context named with the sshd pid, the second ap-
