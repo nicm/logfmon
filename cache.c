@@ -50,7 +50,7 @@ save_cache(void)
 
         fd = fopen(path, "w+");
         if (fd == NULL) {
-                log_warn(path);
+                log_warn("%s", path);
                 return (1);
         }
 
@@ -117,7 +117,7 @@ int load_cache(void)
                 if (file != NULL) {
                         file->offset = 0;
                         if (stat(path, &sb) != 0)
-                                log_warn(path);
+                                log_warn("%s", path);
                         else {
                                 if (sb.st_size >= size) {
                                         file->offset = off;

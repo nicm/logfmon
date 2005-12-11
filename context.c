@@ -159,7 +159,7 @@ pipe_context(struct context *context, char *cmd)
 
         fd = popen(cmd, "w");
         if (fd == NULL) {
-                log_warn(cmd);
+                log_warn("%s", cmd);
                 free(cmd);
                 return;
         }

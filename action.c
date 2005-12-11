@@ -142,7 +142,7 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         } else {
                 fd = popen(cmd, "w");
                 if (fd == NULL)
-                        log_warn(cmd);
+                        log_warn("%s", cmd);
                 else {
                         if (fwrite(line, strlen(line), 1, fd) == 1)
                                 fputc('\n', fd);

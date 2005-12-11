@@ -58,7 +58,7 @@ add_file(char *path, char *tag)
         fd = fopen(path, "r");
         if (fd == NULL) {
                 free(file);
-                log_warn(path);
+                log_warn("%s", path);
                 return (NULL);
         }
         fclose(fd);
@@ -137,7 +137,7 @@ open_files(void)
                 if (file->fd == NULL) {
                         file->fd = fopen(file->path, "r");
                         if (file->fd == NULL)
-                                log_warn(file->path);
+                                log_warn("%s", file->path);
                         else {
                                 file->timer = 0;
                                 if (file->offset == 0)

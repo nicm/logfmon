@@ -229,7 +229,7 @@ main(int argc, char **argv)
                 conf.conf_file = xstrdup(CONFFILE);
 
         if (load_conf() != 0) {
-                log_warn(conf.conf_file);
+                log_warn("%s", conf.conf_file);
 		exit(1);
         }
 

@@ -48,7 +48,7 @@ exec_thread(void *arg)
 
 	fd = popen(cmd, "r");
 	if (fd == NULL)
-		log_warn((char *) arg);
+		log_warn("%s", (char *) arg);
 
 	while ((line = getln(fd, &error)) != NULL) {
 		log_warnx("%s: %s", (char *) arg, line);
@@ -105,7 +105,7 @@ save_thread(void *arg)
 
                 fd = popen(conf.mail_cmd, "w");
                 if (fd == NULL) {
-                        log_warn(conf.mail_cmd);
+                        log_warn("%s", conf.mail_cmd);
 			continue;
                 }
 
