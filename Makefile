@@ -3,7 +3,7 @@
 .SUFFIXES: .c .o .y .l .h .8 .8.gz .5 .5.gz
 
 PROG= logfmon
-VERSION= 0.8a
+VERSION= 0.8b
 
 OS!= uname
 REL!= uname -r
