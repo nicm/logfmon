@@ -63,6 +63,7 @@ exec_thread(void *arg)
         return (NULL);
 }
 
+/* ARGSUSED */
 void *
 save_thread(void *arg)
 {

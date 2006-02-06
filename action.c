@@ -72,10 +72,10 @@ repl_matches(char *line, char *src, regmatch_t *match)
 		    !isdigit((unsigned char) src[2])) {
 			src++; /* skip $ */
 			num = *src - '0';
-			mlen = match[num].rm_eo - match[num].rm_so;
+			mlen = (size_t) (match[num].rm_eo - match[num].rm_so);
 			if (mlen > 0) {
 				ENSURE_SIZE(buf, len, pos + mlen);
-				mptr = line + match[num].rm_so;
+				mptr = line + (size_t) match[num].rm_so;
 				strncpy(buf + pos, mptr, mlen);
 				pos += mlen;
 				src++; /* skip num */

@@ -157,6 +157,7 @@ parse_line(char *line, struct file *file)
 			continue; /* falls-through to following rules */
                 }
 
+		/* NOTREACHED */ /* shut lint up */
 		log_warnx("unknown action: %d", rule->action);
 		return (1);
         }

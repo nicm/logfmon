@@ -56,7 +56,7 @@ save_cache(void)
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (fprintf(fd,
-		    "%u %s %lld %lld\n", strlen(file->path), file->path,
+		    "%lu %s %lld %lld\n", strlen(file->path), file->path,
 		    (long long) file->size,
 		    (long long) file->offset) == -1) {
                         fclose(fd);
