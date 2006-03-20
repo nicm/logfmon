@@ -33,6 +33,7 @@ getln(FILE *fd, int *error)
 	res = getline(&buf, &len, fd);
 	if (res == -1) {
 		if (feof(fd)) {
+			clearerr(fd);
 			*error = 0;
 			return (NULL);
 		}
