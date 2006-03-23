@@ -12,6 +12,7 @@ SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
 	getln.c parse.y lex.l action.c
 .if ${OS} == "Linux"
 SRCS+= event-linux.c strlcpy.c
+CFLAGS+= -D_GNU_SOURCE -D_LARGEFILE_SOURCE
 .else
 SRCS+= event.c
 .endif
