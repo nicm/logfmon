@@ -174,7 +174,7 @@ extern __dead void yyerror(const char *);
                 pos++;
                 if (pos >= len) {
                         len *= 2;
-                        yylval.string = xrealloc(yylval.string, len + 1);
+                        yylval.string = xrealloc(yylval.string, 1, len + 1);
                 }
         }
 

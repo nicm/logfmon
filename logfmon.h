@@ -291,7 +291,8 @@ void		*save_thread(void *);
 
 /* xmalloc.c */
 char		*xstrdup(char *);
+void		*xcalloc(size_t, size_t);
 void		*xmalloc(size_t);
-void		*xrealloc(void *, size_t);
+void		*xrealloc(void *, size_t, size_t);
 
 #endif

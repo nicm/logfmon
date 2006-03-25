@@ -46,7 +46,7 @@ init_events(void)
         if (kevlen == 0)
                 return;
 
-        kevlist = xmalloc((sizeof (struct kevent)) * kevlen);
+        kevlist = xcalloc(kevlen, sizeof (struct kevent));
 
         kevptr = kevlist;
         TAILQ_FOREACH(file, &conf.files, entry) {

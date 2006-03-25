@@ -26,7 +26,7 @@
 #define ENSURE_SIZE(buf, len, req) do {					\
 	while (len <= (req)) {						\
 		len *= 2;						\
-		buf = xrealloc(buf, len);				\
+		buf = xrealloc(buf, 1, len);				\
 	}								\
 } while(0)
 

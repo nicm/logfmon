@@ -31,6 +31,16 @@ xstrdup(char *s)
 }
 
 void *
+xcalloc(size_t nmemb, size_t size)
+{
+        void	*ptr;
+
+        if ((ptr = calloc(nmemb, size)) == NULL)
+		fatal("calloc");
+        return (ptr);
+}
+
+void *
 xmalloc(size_t size)
 {
         void	*ptr;
@@ -41,9 +51,13 @@ xmalloc(size_t size)
 }
 
 void *
-xrealloc(void *ptr, size_t size)
+xrealloc(void *ptr, size_t nmemb, size_t size)
 {
-        if ((ptr = realloc(ptr, size)) == NULL)
+	size_t new_size = nmemb * size;
+
+	if (nmemb != 0 && size != 0 && SIZE_T_MAX / nmemb < size)
+		fatal("xrealloc: nmemb * size > SIZE_T_MAX");
+        if ((ptr = realloc(ptr, new_size)) == NULL)
 		fatal("realloc");
         return (ptr);
 }
