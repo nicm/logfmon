@@ -39,12 +39,9 @@ exec_thread(void *arg)
 	int	 error;
 
 	if (conf.debug) {
-		if (asprintf(&cmd, "%s 2>&1", (char *) arg) == -1)
-			fatal("asprintf");
-	} else {
-		if (asprintf(&cmd, "%s 2>&1 1>/dev/null", (char *) arg) == -1)
-			fatal("asprintf");
-	}
+		xasprintf(&cmd, "%s 2>&1", (char *) arg);
+	} else
+		xasprintf(&cmd, "%s 2>&1 1>/dev/null", (char *) arg);
 
 	fd = popen(cmd, "r");
 	if (fd == NULL)
@@ -52,14 +49,14 @@ exec_thread(void *arg)
 
 	while ((line = getln(fd, &error)) != NULL) {
 		log_warnx("%s: %s", (char *) arg, line);
-		free(line);
+		xfree(line);
 	}
 
 	pclose(fd);
 
-	free(cmd);
+	xfree(cmd);
 
-        free(arg);
+        xfree(arg);
         return (NULL);
 }
 

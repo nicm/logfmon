@@ -39,7 +39,7 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 	TAILQ_FOREACH(tag, &tags->tags, entry) {
 		TAILQ_INSERT_TAIL(&rule->tags, tag, entry);
 	}
-	free(tags);
+	xfree(tags);
 
         rule->action = action;
 
@@ -74,24 +74,24 @@ free_rule(struct rule *rule)
 	while (!TAILQ_EMPTY(&rule->tags)) {
 		tag = TAILQ_FIRST(&rule->tags);
 		TAILQ_REMOVE(&rule->tags, tag, entry);
-		free(tag);
+		xfree(tag);
 	}
 
 	if (rule->re != NULL) {
 		regfree(rule->re);
-		free(rule->re);
+		xfree(rule->re);
 	}
 	if (rule->not_re != NULL) {
 		regfree(rule->not_re);
-		free(rule->not_re);
+		xfree(rule->not_re);
 	}
 
 	if (rule->params.cmd != NULL)
-		free(rule->params.cmd);
+		xfree(rule->params.cmd);
 	if (rule->params.key != NULL)
-		free(rule->params.key);
+		xfree(rule->params.key);
 
-	free(rule);
+	xfree(rule);
 }
 
 void

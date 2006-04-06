@@ -81,7 +81,7 @@ cmds:
 set: TOKSET OPTMAILCMD STRING
      {
              if (conf.mail_cmd != NULL)
-                     free(conf.mail_cmd);
+                     xfree(conf.mail_cmd);
              conf.mail_cmd = $3;
      }
    | TOKSET OPTCACHEFILE STRING
@@ -89,14 +89,14 @@ set: TOKSET OPTMAILCMD STRING
              if (conf.cache_file == NULL)
                      conf.cache_file = $3;
              else
-                     free($3);
+                     xfree($3);
      }
    | TOKSET OPTPIDFILE STRING
      {
              if (conf.pid_file == NULL)
                      conf.pid_file = $3;
              else
-                     free($3);
+                     xfree($3);
      }
    | TOKSET OPTMAILTIME TIME
      {
@@ -125,7 +125,7 @@ set: TOKSET OPTMAILCMD STRING
              conf.uid = pw->pw_uid;
 
              endpwent();
-             free($3);
+             xfree($3);
      }
    | TOKSET OPTUSER NUMBER
      {
@@ -154,7 +154,7 @@ set: TOKSET OPTMAILCMD STRING
              conf.gid = gr->gr_gid;
 
              endgrent();
-             free($3);
+             xfree($3);
      }
    | TOKSET OPTGROUP NUMBER
      {
@@ -184,7 +184,7 @@ rule: /* match, exec */
 
               rule->params.cmd = $4;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKEXEC STRING
       {
@@ -197,8 +197,8 @@ rule: /* match, exec */
 
               rule->params.cmd = $6;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKEXEC STRING
       {
@@ -214,7 +214,7 @@ rule: /* match, exec */
 
               rule->params.cmd = $6;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKEXEC STRING
       {
@@ -230,8 +230,8 @@ rule: /* match, exec */
 
               rule->params.cmd = $8;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, pipe */
@@ -246,7 +246,7 @@ rule: /* match, exec */
 
               rule->params.cmd = $4;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKPIPE STRING
       {
@@ -259,8 +259,8 @@ rule: /* match, exec */
 
               rule->params.cmd = $6;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKPIPE STRING
       {
@@ -276,7 +276,7 @@ rule: /* match, exec */
 
               rule->params.cmd = $6;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKPIPE STRING
       {
@@ -292,8 +292,8 @@ rule: /* match, exec */
 
               rule->params.cmd = $8;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, ignore */
@@ -306,7 +306,7 @@ rule: /* match, exec */
               if (rule == NULL)
                       exit(1);
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKIGNORE
       {
@@ -317,8 +317,8 @@ rule: /* match, exec */
               if (rule == NULL)
                       exit(1);
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKIGNORE
       {
@@ -332,7 +332,7 @@ rule: /* match, exec */
               if (rule == NULL)
                       exit(1);
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKIGNORE
       {
@@ -346,8 +346,8 @@ rule: /* match, exec */
               if (rule == NULL)
                       exit(1);
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, open, ignore, none */
@@ -369,7 +369,7 @@ rule: /* match, exec */
               rule->params.key = $4;
               rule->params.expiry = $6;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
       {
@@ -389,8 +389,8 @@ rule: /* match, exec */
               rule->params.key = $6;
               rule->params.expiry = $8;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
@@ -410,7 +410,7 @@ rule: /* match, exec */
               rule->params.key = $4;
               rule->params.expiry = $6;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
@@ -430,8 +430,8 @@ rule: /* match, exec */
               rule->params.key = $6;
               rule->params.expiry = $8;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
       {
@@ -454,7 +454,7 @@ rule: /* match, exec */
               rule->params.key = $6;
               rule->params.expiry = $8;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE
           TIME TOKIGNORE
@@ -478,8 +478,8 @@ rule: /* match, exec */
               rule->params.key = $8;
               rule->params.expiry = $10;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
       {
@@ -502,7 +502,7 @@ rule: /* match, exec */
               rule->params.key = $6;
               rule->params.expiry = $8;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE
           NUMBER TOKIGNORE
@@ -526,8 +526,8 @@ rule: /* match, exec */
               rule->params.key = $8;
               rule->params.expiry = $10;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, open, pipe, none */
@@ -550,7 +550,7 @@ rule: /* match, exec */
               rule->params.expiry = $6;
               rule->params.cmd = $8;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
       {
@@ -571,8 +571,8 @@ rule: /* match, exec */
               rule->params.expiry = $8;
               rule->params.cmd = $10;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
@@ -593,7 +593,7 @@ rule: /* match, exec */
               rule->params.expiry = $6;
               rule->params.cmd = $8;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
           TOKPIPE STRING
@@ -615,8 +615,8 @@ rule: /* match, exec */
               rule->params.expiry = $8;
               rule->params.cmd = $10;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
       {
@@ -640,7 +640,7 @@ rule: /* match, exec */
               rule->params.expiry = $8;
               rule->params.cmd = $10;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
           TOKPIPE STRING
@@ -665,8 +665,8 @@ rule: /* match, exec */
               rule->params.expiry = $10;
               rule->params.cmd = $12;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
       {
@@ -690,7 +690,7 @@ rule: /* match, exec */
               rule->params.expiry = $8;
               rule->params.cmd = $10;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
           TOKPIPE STRING
@@ -715,8 +715,8 @@ rule: /* match, exec */
               rule->params.expiry = $10;
               rule->params.cmd = $12;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, open, ignore, ignore */
@@ -744,7 +744,7 @@ rule: /* match, exec */
 
               rule->params.ent_max = $9;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
           TOKWHEN NUMBER TOKIGNORE
@@ -770,8 +770,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $11;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER
           TOKIGNORE
@@ -797,7 +797,7 @@ rule: /* match, exec */
 
               rule->params.ent_max = $9;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
           TOKWHEN NUMBER TOKIGNORE
@@ -823,8 +823,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $11;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
           TOKWHEN NUMBER TOKIGNORE
@@ -853,8 +853,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $11;
 
-              free($3);
-              free($4);
+              xfree($3);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
           TOKIGNORE TOKWHEN NUMBER TOKIGNORE
@@ -883,9 +883,9 @@ rule: /* match, exec */
 
               rule->params.ent_max = $13;
 
-              free($3);
-              free($4);
-              free($6);
+              xfree($3);
+              xfree($4);
+              xfree($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
           TOKWHEN NUMBER TOKIGNORE
@@ -914,7 +914,7 @@ rule: /* match, exec */
 
               rule->params.ent_max = $11;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
           TOKIGNORE TOKWHEN NUMBER TOKIGNORE
@@ -943,8 +943,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $13;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, open, ignore, pipe */
@@ -973,7 +973,7 @@ rule: /* match, exec */
               rule->params.ent_max = $9;
               rule->params.ent_cmd = $11;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
           TOKWHEN NUMBER TOKPIPE STRING
@@ -1000,8 +1000,8 @@ rule: /* match, exec */
               rule->params.ent_max = $11;
               rule->params.ent_cmd = $13;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE TOKWHEN NUMBER
           TOKPIPE STRING
@@ -1028,7 +1028,7 @@ rule: /* match, exec */
               rule->params.ent_max = $9;
               rule->params.ent_cmd = $11;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
           TOKWHEN NUMBER TOKPIPE STRING
@@ -1055,8 +1055,8 @@ rule: /* match, exec */
               rule->params.ent_max = $11;
               rule->params.ent_cmd = $13;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
      | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKIGNORE
            TOKWHEN NUMBER TOKPIPE STRING
@@ -1086,7 +1086,7 @@ rule: /* match, exec */
               rule->params.ent_max = $11;
               rule->params.ent_cmd = $13;
 
-              free($4);
+              xfree($4);
       }
      | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
            TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
@@ -1116,8 +1116,8 @@ rule: /* match, exec */
               rule->params.ent_max = $13;
               rule->params.ent_cmd = $15;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKIGNORE
           TOKWHEN NUMBER TOKPIPE STRING
@@ -1147,7 +1147,7 @@ rule: /* match, exec */
               rule->params.ent_max = $11;
               rule->params.ent_cmd = $13;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
           TOKIGNORE TOKWHEN NUMBER TOKPIPE STRING
@@ -1177,8 +1177,8 @@ rule: /* match, exec */
               rule->params.ent_max = $13;
               rule->params.ent_cmd = $15;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, open, pipe, pipe */
@@ -1208,7 +1208,7 @@ rule: /* match, exec */
               rule->params.ent_max = $10;
               rule->params.ent_cmd = $12;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
           TOKWHEN NUMBER TOKPIPE STRING
@@ -1236,8 +1236,8 @@ rule: /* match, exec */
               rule->params.ent_max = $12;
               rule->params.ent_cmd = $14;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN
           NUMBER TOKPIPE STRING
@@ -1265,7 +1265,7 @@ rule: /* match, exec */
               rule->params.ent_max = $10;
               rule->params.ent_cmd = $12;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE
           STRING TOKWHEN NUMBER TOKPIPE STRING
@@ -1293,8 +1293,8 @@ rule: /* match, exec */
               rule->params.ent_max = $12;
               rule->params.ent_cmd = $14;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
           TOKWHEN NUMBER TOKPIPE STRING
@@ -1325,7 +1325,7 @@ rule: /* match, exec */
               rule->params.ent_max = $12;
               rule->params.ent_cmd = $14;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
           TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
@@ -1356,8 +1356,8 @@ rule: /* match, exec */
               rule->params.ent_max = $14;
               rule->params.ent_cmd = $16;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
           TOKWHEN NUMBER TOKPIPE STRING
@@ -1388,7 +1388,7 @@ rule: /* match, exec */
               rule->params.ent_max = $12;
               rule->params.ent_cmd = $14;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
           TOKPIPE STRING TOKWHEN NUMBER TOKPIPE STRING
@@ -1419,8 +1419,8 @@ rule: /* match, exec */
               rule->params.ent_max = $14;
               rule->params.ent_cmd = $16;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, open, pipe, ignore */
@@ -1449,7 +1449,7 @@ rule: /* match, exec */
 
               rule->params.ent_max = $10;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
           TOKWHEN NUMBER TOKIGNORE
@@ -1476,8 +1476,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $12;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING TOKWHEN
           NUMBER TOKIGNORE
@@ -1504,7 +1504,7 @@ rule: /* match, exec */
 
               rule->params.ent_max = $10;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE
           STRING TOKWHEN NUMBER TOKIGNORE
@@ -1531,8 +1531,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $12;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE TIME TOKPIPE STRING
           TOKWHEN NUMBER TOKIGNORE
@@ -1562,7 +1562,7 @@ rule: /* match, exec */
 
               rule->params.ent_max = $12;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE TIME
           TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
@@ -1592,8 +1592,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $14;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
     | TOKMATCH TOKIN TAGS STRING TOKOPEN STRING TOKEXPIRE NUMBER TOKPIPE STRING
           TOKWHEN NUMBER TOKIGNORE
@@ -1623,7 +1623,7 @@ rule: /* match, exec */
 
               rule->params.ent_max = $12;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKOPEN STRING TOKEXPIRE NUMBER
           TOKPIPE STRING TOKWHEN NUMBER TOKIGNORE
@@ -1653,8 +1653,8 @@ rule: /* match, exec */
 
               rule->params.ent_max = $14;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, append */
@@ -1669,7 +1669,7 @@ rule: /* match, exec */
 
               rule->params.key = $4;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKAPPEND STRING
       {
@@ -1682,8 +1682,8 @@ rule: /* match, exec */
 
               rule->params.key = $6;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKAPPEND STRING
       {
@@ -1699,7 +1699,7 @@ rule: /* match, exec */
 
               rule->params.key = $6;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKAPPEND STRING
       {
@@ -1715,8 +1715,8 @@ rule: /* match, exec */
 
               rule->params.key = $8;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, close, ignore */
@@ -1731,7 +1731,7 @@ rule: /* match, exec */
 
               rule->params.key = $4;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKCLOSE STRING TOKIGNORE
       {
@@ -1744,8 +1744,8 @@ rule: /* match, exec */
 
               rule->params.key = $6;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKCLOSE STRING TOKIGNORE
       {
@@ -1761,7 +1761,7 @@ rule: /* match, exec */
 
               rule->params.key = $6;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKCLOSE STRING TOKIGNORE
       {
@@ -1777,8 +1777,8 @@ rule: /* match, exec */
 
               rule->params.key = $8;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
 
       /* match, close, pipe */
@@ -1794,7 +1794,7 @@ rule: /* match, exec */
               rule->params.key = $4;
               rule->params.cmd = $6;
 
-              free($2);
+              xfree($2);
       }
     | TOKMATCH STRING TOKNOT STRING TOKCLOSE STRING TOKPIPE STRING
       {
@@ -1808,8 +1808,8 @@ rule: /* match, exec */
               rule->params.key = $6;
               rule->params.cmd = $8;
 
-              free($2);
-              free($4);
+              xfree($2);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKCLOSE STRING TOKPIPE STRING
       {
@@ -1826,7 +1826,7 @@ rule: /* match, exec */
               rule->params.key = $6;
               rule->params.cmd = $8;
 
-              free($4);
+              xfree($4);
       }
     | TOKMATCH TOKIN TAGS STRING TOKNOT STRING TOKCLOSE STRING TOKPIPE STRING
       {
@@ -1843,8 +1843,8 @@ rule: /* match, exec */
               rule->params.key = $8;
               rule->params.cmd = $10;
 
-              free($4);
-              free($6);
+              xfree($4);
+              xfree($6);
       }
     ;
 
@@ -1867,10 +1867,10 @@ file: TOKFILE STRING TOKTAG TAGS
               if (add_file($2, tag->name) == NULL)
                       exit(1);
 
-              free($2);
+              xfree($2);
 
-              free(tag);
-              free($4);
+              xfree(tag);
+              xfree($4);
       }
     | TOKFILE STRING
       {
@@ -1892,7 +1892,7 @@ file: TOKFILE STRING TOKTAG TAGS
                       log_warnx("%s: unable to find unused tag", $2);
 		      exit(1);
 	      }
-              free($2);
+              xfree($2);
       }
     ;
 

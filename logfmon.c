@@ -373,7 +373,7 @@ main(int argc, char **argv)
 			while ((line = getln(file->fd, &error)) != NULL) {
 				if (parse_line(line, file) != 0)
 					exit(1);
-				free(line);
+				xfree(line);
 				file->offset = ftello(file->fd);
 				if (file->size < file->offset)
 					file->size = file->offset;

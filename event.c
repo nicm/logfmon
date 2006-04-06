@@ -65,7 +65,7 @@ init_events(void)
         if (kevent(kq, kevlist, kevlen, NULL, 0, NULL))
                 fatal("kevent");
 
-	free(kevlist);
+	xfree(kevlist);
 }
 
 struct file *

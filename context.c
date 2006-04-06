@@ -52,8 +52,8 @@ free_context(struct context *context)
 {
 	reset_context(context);
 
-	free(context->key);
-	free(context);
+	xfree(context->key);
+	xfree(context);
 }
 
 void
@@ -76,8 +76,8 @@ reset_context(struct context *context)
 	while (!TAILQ_EMPTY(&context->msgs)) {
 		msg = TAILQ_FIRST(&context->msgs);
 		TAILQ_REMOVE(&context->msgs, msg, entry);
-		free(msg->str);
-		free(msg);
+		xfree(msg->str);
+		xfree(msg);
 	}
 }
 
@@ -160,7 +160,7 @@ pipe_context(struct context *context, char *cmd)
         fd = popen(cmd, "w");
         if (fd == NULL) {
                 log_warn("%s", cmd);
-                free(cmd);
+                xfree(cmd);
                 return;
         }
 
@@ -178,5 +178,5 @@ pipe_context(struct context *context, char *cmd)
         if (pthread_create(&thread, NULL, pclose_thread, fd) != 0)
                 fatalx("pthread_create failed");
 
-        free(cmd);
+        xfree(cmd);
 }

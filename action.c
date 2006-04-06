@@ -25,6 +25,8 @@
 
 #define ENSURE_SIZE(buf, len, req) do {					\
 	while (len <= (req)) {						\
+		if (len > SIZE_T_MAX / 2)				\
+			fatal("size too large");			\
 		len *= 2;						\
 		buf = xrealloc(buf, 1, len);				\
 	}								\
@@ -44,6 +46,7 @@ repl_one(char *src, char *rpl)
 			ENSURE_SIZE(buf, len, pos + strlen(rpl));
 			strlcpy(buf + pos, rpl, len - pos);
 			pos += strlen(rpl);
+			src += 2;
 			continue;
                 }
 
@@ -114,7 +117,7 @@ act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 
         if (s == NULL || *s == '\0') {
                 log_warnx("empty command for exec");
-                free(s);
+                xfree(s);
         } else {
                 if (pthread_create(&thread, NULL, exec_thread, s) != 0)
                         fatalx("pthread_create failed");
@@ -138,7 +141,8 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 
         if (cmd == NULL || *cmd == '\0') {
                 log_warnx("empty command for pipe");
-                free(cmd);
+                if (cmd != NULL)
+			xfree(cmd);
         } else {
                 fd = popen(cmd, "w");
                 if (fd == NULL)
@@ -151,7 +155,7 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 			    fd) != 0)
                                 fatalx("pthread_create failed");
 
-                        free(cmd);
+                        xfree(cmd);
                 }
         }
 }
@@ -170,14 +174,14 @@ act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 
         if (find_context_by_key(file, key) != NULL) {
 		log_debug("ignoring open; found existing context %s", key);
-                free(key);
+                xfree(key);
                 return;
         }
 
 	if (add_context(file, key, rule) == NULL)
 		log_warnx("error adding context");
 
-        free(key);
+        xfree(key);
 }
 
 void
@@ -199,10 +203,10 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         context = find_context_by_key(file, key);
         if (context == NULL) {
 		log_debug("missing context %s for append", key);
-                free(key);
+                xfree(key);
                 return;
         }
-        free(key);
+        xfree(key);
 
 	msg = xmalloc(sizeof (struct msg));
 	msg->str = xstrdup(line);
@@ -239,15 +243,15 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
         context = find_context_by_key(file, cmd);
         if (context == NULL) {
 		log_debug("missing context %s for close", cmd);
-                free(cmd);
+                xfree(cmd);
                 return;
         }
-        free(cmd);
+	xfree(cmd);
 
         if (rule->params.cmd != NULL && *(rule->params.cmd) != '\0') {
                 cmd = repl_matches(t, rule->params.cmd, match);
                 pipe_context(context, cmd);
-                free(cmd);
+                xfree(cmd);
         }
 
         delete_context(file, context);

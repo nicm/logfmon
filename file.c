@@ -43,13 +43,13 @@ add_file(char *path, char *tag)
         TAILQ_INIT(&file->contexts);
 
         if (find_file_by_path(path) != NULL) {
-                free(file);
+                xfree(file);
                 log_warnx("%s: duplicate file", path);
                 return (NULL);
         }
 
         if (find_file_by_tag(tag) != NULL) {
-                free(file);
+                xfree(file);
                 log_warnx("%s: duplicate tag", tag);
                 return (NULL);
         }
@@ -57,7 +57,7 @@ add_file(char *path, char *tag)
 
         fd = fopen(path, "r");
         if (fd == NULL) {
-                free(file);
+                xfree(file);
                 log_warn("%s", path);
                 return (NULL);
         }
@@ -77,8 +77,8 @@ free_file(struct file *file)
 	reset_file(file);
 	free_contexts(file);
 	DESTROY_MUTEX(file->saves_mutex);
-	free(file->path);
-	free(file);
+	xfree(file->path);
+	xfree(file);
 }
 
 void
@@ -106,8 +106,8 @@ reset_file(struct file *file)
 	while (!TAILQ_EMPTY(&file->saves)) {
 		save = TAILQ_FIRST(&file->saves);
 		TAILQ_REMOVE(&file->saves, save, entry);
-		free(save->str);
-		free(save);
+		xfree(save->str);
+		xfree(save);
 	}
 	UNLOCK_MUTEX(file->saves_mutex);
 }

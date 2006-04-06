@@ -22,12 +22,11 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
-#include <pthread.h>
-#include <regex.h>
 #include <signal.h>
-#include <stdarg.h>
+#include <regex.h>
 #include <stdio.h>
-#include <time.h>
+#include <pthread.h>
+#include <stdarg.h>
 
 #define MAXTAGLEN	32
 
@@ -290,9 +289,11 @@ void		*exec_thread(void *);
 void		*save_thread(void *);
 
 /* xmalloc.c */
-char		*xstrdup(char *);
+char		*xstrdup(const char *);
 void		*xcalloc(size_t, size_t);
 void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t, size_t);
+void		 xfree(void *);
+int		 xasprintf(char **, const char *, ...);
 
 #endif

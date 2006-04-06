@@ -16,13 +16,18 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/limits.h>
+
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "logfmon.h"
 
 char *
-xstrdup(char *s)
+xstrdup(const char *s)
 {
 	size_t	len;
 
@@ -36,11 +41,11 @@ xcalloc(size_t nmemb, size_t size)
         void	*ptr;
 
         if (size == 0 || nmemb == 0)
-                fatal("xcalloc: zero size");
+                fatalx("xcalloc: zero size");
         if (SIZE_T_MAX / nmemb < size)
-                fatal("xcalloc: nmemb * size > SIZE_T_MAX");
+                fatalx("xcalloc: nmemb * size > SIZE_T_MAX");
         if ((ptr = calloc(nmemb, size)) == NULL)
-		fatal("calloc");
+		fatal("xcalloc");
         return (ptr);
 }
 
@@ -49,8 +54,10 @@ xmalloc(size_t size)
 {
         void	*ptr;
 
+        if (size == 0)
+                fatalx("xmalloc: zero size");
         if ((ptr = malloc(size)) == NULL)
-		fatal("malloc");
+		fatal("xmalloc");
         return (ptr);
 }
 
@@ -60,10 +67,34 @@ xrealloc(void *ptr, size_t nmemb, size_t size)
 	size_t new_size = nmemb * size;
 
 	if (new_size == 0)
-                fatal("xrealloc: zero size");
+                fatalx("xrealloc: zero size");
         if (SIZE_T_MAX / nmemb < size)
-                fatal("xrealloc: nmemb * size > SIZE_T_MAX");
+                fatalx("xrealloc: nmemb * size > SIZE_T_MAX");
         if ((ptr = realloc(ptr, new_size)) == NULL)
-		fatal("realloc");
+		fatal("xrealloc");
         return (ptr);
+}
+
+void
+xfree(void *ptr)
+{
+	if (ptr == NULL)
+		fatalx("xfree: null pointer");
+	free(ptr);
+}
+
+int
+xasprintf(char **ret, const char *fmt, ...)
+{
+        va_list ap;
+        int i;
+
+        va_start(ap, fmt);
+        i = vasprintf(ret, fmt, ap);
+        va_end(ap);
+
+        if (i < 0 || *ret == NULL)
+                fatal("xasprintf");
+
+        return (i);
 }
