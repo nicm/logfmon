@@ -213,7 +213,7 @@ struct conf {
 	TAILQ_HEAD(, file)	 files;
 
 	/* Files list mutex. Since entries only can be added and deleted in the
-	   main thread, this mutex only needs to be held for iterating in the
+	   main thread, for iterating this mutex only needs to be held in the
 	   save thread. */
 	pthread_mutex_t		 files_mutex;
 };
