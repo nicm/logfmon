@@ -180,7 +180,7 @@ parse_line(char *line, struct file *file)
 __dead void
 usage(void)
 {
-	printf("usage: %s [-d] [-f conffile] [-c cachefile] [-p pidfile]\n",
+	printf("usage: %s [-dv] [-f conffile] [-c cachefile] [-p pidfile]\n",
 	    __progname);
         exit(1);
 }
