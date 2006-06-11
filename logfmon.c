@@ -203,7 +203,7 @@ main(int argc, char **argv)
 
 	log_init(1);
 
-        while ((opt = getopt(argc, argv, "c:df:p:")) != EOF) {
+        while ((opt = getopt(argc, argv, "c:df:p:v")) != EOF) {
                 switch (opt) {
                 case 'c':
                         conf.cache_file = xstrdup(optarg);
@@ -217,6 +217,9 @@ main(int argc, char **argv)
                 case 'p':
                         conf.pid_file = xstrdup(optarg);
                         break;
+		case 'v':
+			printf("%s " BUILD "\n", __progname);
+			exit(1);
                 case '?':
                 default:
                         usage();

@@ -3,7 +3,7 @@
 .SUFFIXES: .c .o .y .l .h .8 .8.gz .5 .5.gz
 
 PROG= logfmon
-VERSION= 0.8b
+VERSION= 0.9
 
 OS!= uname
 REL!= uname -r
@@ -13,8 +13,10 @@ SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
 .if ${OS} == "Linux"
 SRCS+= event-linux.c strlcpy.c
 CFLAGS+= -D_GNU_SOURCE -D_LARGEFILE_SOURCE
+FILEMON= linux
 .else
-SRCS+= event.c
+SRCS+= event-kqueue.c
+FILEMON= kqueue
 .endif
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
@@ -31,6 +33,7 @@ CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
+CFLAGS+= -DBUILD="\"$(VERSION) ($(FILEMON))\""
 
 PREFIX?= /usr/local
 INSTALLBIN= install -g bin -o root -m 555

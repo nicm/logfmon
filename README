@@ -9,21 +9,21 @@ I haven't tested on NetBSD but on newer versions with kqueue it should work
 fine. For older NetBSDs you may have to edit the Makefile to use the Linux
 event code, see below for how to do this.
 
-The Makefile requires BSD make. In Debian, FreeBSD make is part of the
-freebsd-buildutils package - installed as /usr/bin/freebsd-make - and it
-works fine. A portable BSD make is also available from the TenDRA project
-http://www.ten15.org. Alternatively, the make-linux.sh script should work.
+Thanks to Laurent Pelecq there is now both a GNUmakefile for GNU make and
+support for the FAM file notification daemon on Linux. Once you have FAM 
+installed and the FAM headers (on Debian these are libfam-devel), you can 
+build the FAM version using:
 
-There is some weirdness with yacc on my Linux installation, in that it
-sometimes fails the first time you build with `unexpected end of file'. It
-seems to work fine if you just make again (sometimes you have to do it twice
-more).
+	make FILEMON=fam
 
-To install, do:
+GNU make should use the GNUmakefile by default. Note that FAM will not work
+with logs stored on NFS.
+
+To build the non-FAM Linux version or to build on any of the BSDs, just do:
 
 	make
 
-then, as root:
+then to install, as root:
 	
 	make install
 

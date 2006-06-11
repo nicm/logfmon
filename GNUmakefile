@@ -1,6 +1,7 @@
 # $Id$
 
 PROG = logfmon
+VERSION= 0.9
 
 ## Installation parameters
 
@@ -30,11 +31,12 @@ SRCS =	logfmon.c log.c rules.c xmalloc.c file.c	\
 	y.tab.c lex.yy.c
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
-DEFS = -D_GNU_SOURCE -D_LARGEFILE_SOURCE -DSIZE_MAX=ULONG_MAX
+DEFS = -D_GNU_SOURCE -D_LARGEFILE_SOURCE -DSIZE_MAX=ULONG_MAX \
+       -DBUILD="\"$(VERSION) ($(FILEMON))\""
 CPPFLAGS = $(DEFS) -I.
 CFLAGS = -pedantic -Wno-long-long -Wall -W -Wnested-externs		\
-	-Wformat-security -Wmissing-prototypes -Wstrict-prototypes	\
-	-Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual	\
+	 -Wformat-security -Wmissing-prototypes -Wstrict-prototypes	\
+	 -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual	\
 	-Wsign-compare 
 
 LIBS_fam = -lfam
