@@ -250,6 +250,7 @@ unsigned int	 count_msgs(struct context *);
 
 /* event.c */
 void		 init_events(void);
+void		 close_events(void);
 struct file 	*get_event(enum event *, int timeout);
 
 /* file.c */

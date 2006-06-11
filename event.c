@@ -115,3 +115,8 @@ get_event(enum event *event, int timeout)
 
         return (NULL);
 }
+
+void
+close_events(void)
+{
+}

@@ -61,6 +61,11 @@ init_events(void)
 {
 }
 
+void
+close_events(void)
+{
+}
+
 struct file *
 get_event(enum event *event, int timeout)
 {

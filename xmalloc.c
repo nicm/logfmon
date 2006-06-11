@@ -17,8 +17,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/limits.h>
 
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,8 +42,8 @@ xcalloc(size_t nmemb, size_t size)
 
         if (size == 0 || nmemb == 0)
                 fatalx("xcalloc: zero size");
-        if (SIZE_T_MAX / nmemb < size)
-                fatalx("xcalloc: nmemb * size > SIZE_T_MAX");
+        if (SIZE_MAX / nmemb < size)
+                fatalx("xcalloc: nmemb * size > SIZE_MAX");
         if ((ptr = calloc(nmemb, size)) == NULL)
 		fatal("xcalloc");
         return (ptr);
@@ -68,8 +68,8 @@ xrealloc(void *ptr, size_t nmemb, size_t size)
 
 	if (new_size == 0)
                 fatalx("xrealloc: zero size");
-        if (SIZE_T_MAX / nmemb < size)
-                fatalx("xrealloc: nmemb * size > SIZE_T_MAX");
+        if (SIZE_MAX / nmemb < size)
+                fatalx("xrealloc: nmemb * size > SIZE_MAX");
         if ((ptr = realloc(ptr, new_size)) == NULL)
 		fatal("xrealloc");
         return (ptr);

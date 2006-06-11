@@ -18,6 +18,7 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,7 +26,7 @@
 
 #define ENSURE_SIZE(buf, len, req) do {					\
 	while (len <= (req)) {						\
-		if (len > SIZE_T_MAX / 2)				\
+		if (len > SIZE_MAX / 2)				\
 			fatal("size too large");			\
 		len *= 2;						\
 		buf = xrealloc(buf, 1, len);				\

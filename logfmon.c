@@ -389,6 +389,7 @@ main(int argc, char **argv)
                 }
         }
 
+	close_events();
         close_files();
         if (conf.pid_file != NULL && *conf.pid_file != '\0')
                 unlink(conf.pid_file);
