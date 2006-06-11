@@ -24,6 +24,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __GLIBC__
+#include <stdint.h>
+#endif
+
 #include "logfmon.h"
 
 char *

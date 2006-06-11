@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __GLIBC__
+#include <stdint.h>
+#endif
+
 #include "logfmon.h"
 
 #define ENSURE_SIZE(buf, len, req) do {					\
