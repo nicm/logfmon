@@ -43,16 +43,13 @@ file_mon_t *
 new_file_monitor(struct file *file)
 {
   file_mon_t *fmon = (file_mon_t*)xcalloc(1, sizeof(file_mon_t));
-  if (fmon) {
-    fmon->file = file;
-    if (FAMMonitorFile(&fc, file->path, &(fmon->fr), fmon) < 0) {
-      log_warn("%s: FAMMonitorFile error", fmon->file->path);
-      xfree(fmon);
-      fmon = NULL;
-    } else
-      log_debug("Monitoring file %s", file->path);
+  fmon->file = file;
+  if (FAMMonitorFile(&fc, file->path, &(fmon->fr), fmon) < 0) {
+    log_warn("FAMMonitorFile(\"%s\")", fmon->file->path);
+    xfree(fmon);
+    fmon = NULL;
   } else
-    log_warn("%s: memory exhausted", file->path);
+    log_debug("%s: monitoring", file->path);
   return fmon;
 }
 
@@ -61,9 +58,9 @@ void
 delete_file_monitor(file_mon_t *fmon)
 {
   if (fmon) {
-    log_debug("Cancelling monitoring of file %s", fmon->file->path);
+    log_debug("%s: cancelling monitoring", fmon->file->path);
     if (FAMCancelMonitor(&fc, &(fmon->fr)) < 0)
-      log_warn("Cancelling monitoring of file %s failed.", fmon->file->path);
+      log_warnx("%s: failed to cancel monitoring", fmon->file->path);
     xfree(fmon);
   }
 }
@@ -110,7 +107,7 @@ log_event(FAMEvent *fe, void (*log_msg)(const char *, ...))
     log_msg("%s: moved", fe->filename);
     break;
   default:
-    log_warn("(unknown event %d on %s)", fe->code, fe->filename);
+    log_warnx("%s: unknown event %d", fe->filename, fe->code);
   }
 }
 
@@ -154,7 +151,7 @@ wait_for_event(int timeout)
   } while (n < 0 && errno == EINTR);
 
   if (n < 0)
-    log_warn("%s", strerror(errno));
+    log_warn("select");
 
   return n;
 }
@@ -179,7 +176,7 @@ init_events()
   close_events();
 
   if (FAMOpen(&fc) < 0)
-    fatal("FAMOpen failed!");
+    fatal("FAMOpen");
 
   TAILQ_FOREACH(file, &conf.files, entry) {
     if (file->fd != NULL) {
@@ -202,7 +199,7 @@ get_event(enum event *event, int timeout)
 	  if (FAMNextEvent(&fc, &fe) >= 0) {
 	    file = find_change(&fe, event);
 	  } else
-	    log_warn("FAMNextEvent failed");
+	    log_warnx("FAMNextEvent failed");
       } else {
 	int n = wait_for_event(timeout);
 	if (n == 0)
