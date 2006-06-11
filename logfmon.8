@@ -22,7 +22,7 @@
 .Nd "log file monitoring daemon"
 .Sh SYNOPSIS
 .Nm logfmon
-.Op Fl d
+.Op Fl dv
 .Bk -words
 .Op Fl f Ar conffile
 .Ek
@@ -68,6 +68,10 @@ Specify the pid file location. Default is
 .Pa /var/run/logfmon.pid .
 .Pp
 This overrides any location specified in the configuration file.
+.It Fl v
+Display the 
+.Nm
+version, and exit.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/logfmon.confXXX" -compact
