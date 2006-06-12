@@ -92,6 +92,7 @@ reload_conf(void)
 	load_cache();
 
 	open_files();
+	close_events();
 	init_events();
 
 	return (0);
@@ -344,6 +345,7 @@ main(int argc, char **argv)
                 if (reopen_files(&failed) > 0) {
 			/* if any files successfully reopened, reset the
 			   event array */
+			close_events();
                         init_events();
 		}
 		timeout = DEFAULTTIMEOUT;

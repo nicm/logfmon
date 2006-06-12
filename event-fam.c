@@ -173,8 +173,6 @@ init_events()
 {
   struct file *file = NULL;
 
-  close_events();
-
   if (FAMOpen(&fc) < 0)
     fatal("FAMOpen");
 
