@@ -49,8 +49,8 @@ LIBS+= -lpthread
 .endif
 
 TARFLAGS= 
-DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd Makefile *.[1-9] \
-	README make-linux.sh \
+DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd \
+	GNUmakefile Makefile *.[1-9] README \
 	rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
 
 CLEANFILES= ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz \
