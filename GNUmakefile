@@ -1,7 +1,7 @@
 # $Id$
 
 PROG = logfmon
-VERSION= 0.9
+VERSION = 0.9
 
 ## Installation parameters
 
@@ -14,8 +14,16 @@ BIN_GROUP = root
 
 CC = gcc
 
-LEX = flex
+ifeq ($(shell uname),SunOS)
+YACC = yacc
+YFLAGS = -d
+else
 YACC = bison
+YFLAGS = -d -y
+endif
+
+LEX = flex
+LFLAGS = -l
 
 INSTALLBIN = install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 555
 INSTALLMAN = install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 444
@@ -24,15 +32,18 @@ INSTALLMAN = install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 444
 
 FILEMON = linux
 
-SRCS =	logfmon.c log.c rules.c xmalloc.c file.c	\
-	context.c cache.c threads.c			\
-	getln.c action.c strlcpy.c			\
-	event-$(FILEMON).c				\
-	y.tab.c lex.yy.c
-OBJS = $(patsubst %.c,%.o,$(SRCS))
+SRCS =	logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
+	getln.c action.c strlcpy.c event-$(FILEMON).c y.tab.c lex.yy.c
 
 DEFS = -D_GNU_SOURCE $(shell getconf LFS_CFLAGS) \
        -DBUILD="\"$(VERSION) ($(FILEMON))\""
+
+ifeq ($(shell uname),SunOS)
+SRCS += daemon.c asprintf.c
+DEFS += -D__SunOS__
+endif
+
+OBJS = $(patsubst %.c,%.o,$(SRCS))
 CPPFLAGS = $(DEFS) -I.
 CFLAGS = -pedantic -Wno-long-long -Wall -W -Wnested-externs		\
 	 -Wformat-security -Wmissing-prototypes -Wstrict-prototypes	\
@@ -44,9 +55,6 @@ LIBS_linux =
 LIBS = -lm -lpthread $(LIBS_$(FILEMON))
 
 CLEANFILES = $(PROG) y.tab.c lex.yy.c y.tab.h $(OBJS) depends.mk
-
-YFLAGS = -d -y
-LFLAGS = -l
 
 all: logfmon
 

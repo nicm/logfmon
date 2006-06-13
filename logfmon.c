@@ -19,7 +19,12 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
+#ifdef __SunOS__
+#include "queue.h"
+#else
 #include <sys/queue.h>
+#endif
 
 #include <errno.h>
 #include <grp.h>
@@ -31,6 +36,10 @@
 #include <unistd.h>
 
 #include "logfmon.h"
+
+#ifdef __SunOS__
+char	*__progname = "logfmon";
+#endif
 
 #ifdef DEBUG
 char	*malloc_options = "AFGJX";
@@ -198,7 +207,7 @@ main(int argc, char **argv)
         FILE		*fd;
 	char		*line;
 
-	bzero(&conf, sizeof conf);
+	memset(&conf, 0, sizeof conf);
 	TAILQ_INIT(&conf.rules);
 	TAILQ_INIT(&conf.files);
 

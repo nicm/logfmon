@@ -20,7 +20,12 @@
 #define LOGFMON_H
 
 #include <sys/types.h>
+
+#ifdef __SunOS__
+#include "queue.h"
+#else
 #include <sys/queue.h>
+#endif
 
 #include <signal.h>
 #include <regex.h>
@@ -222,6 +227,15 @@ extern struct conf		 conf;
 #ifdef __GLIBC__
 /* strlcpy.c */
 size_t	 strlcpy(char *, const char *, size_t);
+#endif
+
+#ifdef __SunOS__
+/* daemon.c */
+int	 daemon(int, int);
+
+/* asprintf.c */
+int	asprintf(char **, const char *, ...);
+int	vasprintf(char **, const char *, va_list);
 #endif
 
 /* action.c */

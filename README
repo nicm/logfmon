@@ -19,13 +19,19 @@ build the FAM version using:
 GNU make should use the GNUmakefile by default. Note that FAM will not work
 with logs stored on NFS.
 
-To build the non-FAM Linux version or to build on any of the BSDs, just do:
+To build the non-FAM (sleeping/polling) Linux version or to build on any of
+the BSDs, just do:
 
 	make
 
 then to install, as root:
 	
 	make install
+
+To build on Solaris 10 you have to use gcc, GNU make, flex but Sun's yacc (I
+couldn't persuade bison to work in the short time I spent on it,  anyway). It
+uses the old Linux event handling. I've hardly tested it, so let me know of any
+problems.
 
 By default, the executable is put in /usr/local/sbin and the man pages in
 /usr/local/man.

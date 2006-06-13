@@ -21,8 +21,12 @@
 
 #include "logfmon.h"
 
+/* Three different versions of this is pretty excessive, considering the
+   Solaris version will work on anything. */
+
 #ifdef __GLIBC__
 
+/* Linux/glibc using getline() */
 char *
 getln(FILE *fd, int *error)
 {
@@ -50,6 +54,47 @@ getln(FILE *fd, int *error)
 
 #else /* __GLIBC__ */
 
+#ifdef __SunOS__
+
+/* Solaris */
+char *
+getln(FILE *fd, int *error)
+{
+	char	*buf;
+	int	 ch;
+	size_t	 len, used;
+
+	len = 256;
+	buf = xmalloc(len);
+
+	used = 0;
+	do {
+		ch = fgetc(fd);
+		if (ch == EOF) {
+			if (feof(fd)) {
+				clearerr(fd);
+				*error = 0;
+				return (NULL);
+			}
+			clearerr(fd);
+			*error = 1;
+			return (NULL);
+		}
+
+		while (used >= len) {
+			len *= 2;
+			buf = xrealloc(buf, 1, len);
+		}
+		buf[used++] = ch;
+	} while (ch != '\n');
+
+	buf[used - 1] = '\0';
+	return (buf);
+}
+
+#else /* __SunOS__ */
+
+/* BSD using fgetln() */
 char *
 getln(FILE *fd, int *error)
 {
@@ -78,5 +123,7 @@ getln(FILE *fd, int *error)
 	return (lbuf);
 
 }
+
+#endif /* __SunOS__ */
 
 #endif /* __GLIBC__ */

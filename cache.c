@@ -19,7 +19,12 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+
+#ifdef __SunOS__
+#include "queue.h"
+#else
 #include <sys/queue.h>
+#endif
 
 #include <errno.h>
 #include <stdio.h>
@@ -108,7 +113,7 @@ int load_cache(void)
 		if (res < 0 || (unsigned) res > sizeof fmt)
 			goto error;
 
-		bzero(path, sizeof path);
+		memset(path, 0, sizeof path);
                 if (fscanf(fd, fmt, path, &size, &off) != 3)
 			goto error;
                 path[len] = '\0';

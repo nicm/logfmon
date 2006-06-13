@@ -36,7 +36,7 @@ add_file(char *path, char *tag)
         FILE		*fd;
 
         file = xmalloc(sizeof (struct file));
-	bzero(file, sizeof (struct file));
+	memset(file, 0, sizeof (struct file));
 
         TAILQ_INIT(&file->saves);
 	INIT_MUTEX(file->saves_mutex);

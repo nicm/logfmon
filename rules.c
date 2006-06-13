@@ -16,7 +16,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __SunOS__
+#include "queue.h"
+#else
 #include <sys/queue.h>
+#endif
 
 #include <regex.h>
 #include <string.h>
@@ -33,7 +37,7 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 	struct tag	*tag;
 
         rule = xmalloc(sizeof (struct rule));
-	bzero(rule, sizeof (struct rule));
+	memset(rule, 0, sizeof (struct rule));
 
 	TAILQ_INIT(&rule->tags);
 	TAILQ_FOREACH(tag, &tags->tags, entry) {
@@ -61,7 +65,7 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
         }
 
 	log_debug("added rule: re=%s, not_re=%s, action=%d",
-	    re, not_re, action);
+	    re, not_re != NULL ? not_re : "<none>", action);
 	TAILQ_INSERT_TAIL(&conf.rules, rule, entry);
         return (rule);
 }
