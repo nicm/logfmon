@@ -16,7 +16,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __SunOS__
+#ifdef NO_QUEUE_H
 #include "queue.h"
 #else
 #include <sys/queue.h>

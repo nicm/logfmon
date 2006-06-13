@@ -20,7 +20,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#ifdef __SunOS__
+#ifdef NO_QUEUE_H
 #include "queue.h"
 #else
 #include <sys/queue.h>
@@ -37,7 +37,7 @@
 
 #include "logfmon.h"
 
-#ifdef __SunOS__
+#ifdef NO_PROGNAME
 char	*__progname = "logfmon";
 #endif
 

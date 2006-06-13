@@ -21,7 +21,7 @@
 
 #include <sys/types.h>
 
-#ifdef __SunOS__
+#ifdef NO_QUEUE_H
 #include "queue.h"
 #else
 #include <sys/queue.h>
@@ -224,15 +224,17 @@ struct conf {
 };
 extern struct conf		 conf;
 
-#ifdef __GLIBC__
+#ifdef NO_STRLCPY
 /* strlcpy.c */
 size_t	 strlcpy(char *, const char *, size_t);
 #endif
 
-#ifdef __SunOS__
+#ifdef NO_DAEMON
 /* daemon.c */
 int	 daemon(int, int);
+#endif
 
+#ifdef NO_ASPRINTF
 /* asprintf.c */
 int	asprintf(char **, const char *, ...);
 int	vasprintf(char **, const char *, va_list);

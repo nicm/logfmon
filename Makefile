@@ -9,16 +9,9 @@ VERSION= 0.9
 OS!= uname
 REL!= uname -r
 
-SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
-	getln.c parse.y lex.l action.c
-.if ${OS} == "Linux"
-SRCS+= event-linux.c strlcpy.c
-CFLAGS+= -D_GNU_SOURCE -D_LARGEFILE_SOURCE
-FILEMON= linux
-.else
-SRCS+= event-kqueue.c
 FILEMON= kqueue
-.endif
+SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
+	getln.c parse.y lex.l action.c event-${FILEMON}.c
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 
@@ -35,6 +28,7 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare
 CFLAGS+= -DBUILD="\"$(VERSION) ($(FILEMON))\""
+CFLAGS+= -DUSE_FGETLN
 
 PREFIX?= /usr/local
 INSTALLBIN= install -g bin -o root -m 555

@@ -24,9 +24,9 @@
 /* Three different versions of this is pretty excessive, considering the
    Solaris version will work on anything. */
 
-#ifdef __GLIBC__
+#ifdef USE_GETLINE
 
-/* Linux/glibc using getline() */
+/* getline() */
 char *
 getln(FILE *fd, int *error)
 {
@@ -52,11 +52,42 @@ getln(FILE *fd, int *error)
 	return (buf);
 }
 
-#else /* __GLIBC__ */
+#else /* USE_GETLINE */
 
-#ifdef __SunOS__
+#ifdef USE_FGETLN
 
-/* Solaris */
+/* fgetln() */
+char *
+getln(FILE *fd, int *error)
+{
+	char	*buf, *lbuf;
+	size_t	 len;
+
+	buf = fgetln(fd, &len);
+	if (buf == NULL) {
+		if (feof(fd)) {
+			clearerr(fd);
+			*error = 0;
+			return (NULL);
+		}
+		clearerr(fd);
+		*error = 1;
+		return (NULL);
+	}
+
+	if (buf[len - 1] == '\n')
+		len--;
+
+	lbuf = xmalloc(len + 1);
+	memcpy(lbuf, buf, len);
+	lbuf[len] = '\0';
+
+	return (lbuf);
+
+}
+
+#else /* USE_FGETLN */
+
 char *
 getln(FILE *fd, int *error)
 {
@@ -92,38 +123,6 @@ getln(FILE *fd, int *error)
 	return (buf);
 }
 
-#else /* __SunOS__ */
+#endif /* !USE_FGETLN */
 
-/* BSD using fgetln() */
-char *
-getln(FILE *fd, int *error)
-{
-	char	*buf, *lbuf;
-	size_t	 len;
-
-	buf = fgetln(fd, &len);
-	if (buf == NULL) {
-		if (feof(fd)) {
-			clearerr(fd);
-			*error = 0;
-			return (NULL);
-		}
-		clearerr(fd);
-		*error = 1;
-		return (NULL);
-	}
-
-	if (buf[len - 1] == '\n')
-		len--;
-
-	lbuf = xmalloc(len + 1);
-	memcpy(lbuf, buf, len);
-	lbuf[len] = '\0';
-
-	return (lbuf);
-
-}
-
-#endif /* __SunOS__ */
-
-#endif /* __GLIBC__ */
+#endif /* USE_GETLINE */

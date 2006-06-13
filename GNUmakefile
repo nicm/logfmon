@@ -34,15 +34,18 @@ INSTALLMAN = install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 444
 
 FILEMON = linux
 
-SRCS =	logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
-	getln.c action.c strlcpy.c event-$(FILEMON).c y.tab.c lex.yy.c
+SRCS = logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
+       getln.c action.c event-$(FILEMON).c y.tab.c lex.yy.c
 
-DEFS = -D_GNU_SOURCE $(shell getconf LFS_CFLAGS) \
-       -DBUILD="\"$(VERSION) ($(FILEMON))\""
+DEFS = $(shell getconf LFS_CFLAGS) -DBUILD="\"$(VERSION) ($(FILEMON))\""
 
 ifeq ($(shell uname),SunOS)
 SRCS += daemon.c asprintf.c
-DEFS += -D__SunOS__
+DEFS += -DNO_PROGNAME -DNO_ASPRINTF -DNO_STRLCPY -DNO_DAEMON -DNO_QUEUE_H
+endif
+ifeq ($(shell uname),Linux)
+SRCS += strlcpy.c
+DEFS += -D_GNU_SOURCE -DNO_STRLCPY -DUSE_GETLINE
 endif
 
 OBJS = $(patsubst %.c,%.o,$(SRCS))
