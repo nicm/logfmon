@@ -1,5 +1,7 @@
 # $Id$
 
+.PHONY: clean
+
 PROG = logfmon
 VERSION = 0.9
 

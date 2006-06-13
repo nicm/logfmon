@@ -1,6 +1,7 @@
 # $Id$
 
 .SUFFIXES: .c .o .y .l .h
+.PHONY: clean
 
 PROG= logfmon
 VERSION= 0.9
