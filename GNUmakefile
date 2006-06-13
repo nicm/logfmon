@@ -53,7 +53,7 @@ CPPFLAGS = $(DEFS) -I.
 CFLAGS = -pedantic -Wno-long-long -Wall -W -Wnested-externs		\
 	 -Wformat-security -Wmissing-prototypes -Wstrict-prototypes	\
 	 -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual	\
-	-Wsign-compare 
+	 -Wsign-compare 
 
 LIBS_fam = -lfam
 LIBS_linux = 
