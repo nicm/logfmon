@@ -1,6 +1,6 @@
 # $Id$
 
-.SUFFIXES: .c .o .y .l .h .8 .8.gz .5 .5.gz
+.SUFFIXES: .c .o .y .l .h
 
 PROG= logfmon
 VERSION= 0.9
