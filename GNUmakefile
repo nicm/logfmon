@@ -31,7 +31,7 @@ SRCS =	logfmon.c log.c rules.c xmalloc.c file.c	\
 	y.tab.c lex.yy.c
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
-DEFS = -D_GNU_SOURCE -D_LARGEFILE_SOURCE \
+DEFS = -D_GNU_SOURCE $(shell getconf LFS_CFLAGS) \
        -DBUILD="\"$(VERSION) ($(FILEMON))\""
 CPPFLAGS = $(DEFS) -I.
 CFLAGS = -pedantic -Wno-long-long -Wall -W -Wnested-externs		\
