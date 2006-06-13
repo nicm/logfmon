@@ -41,7 +41,7 @@ DEFS = $(shell getconf LFS_CFLAGS) -DBUILD="\"$(VERSION) ($(FILEMON))\""
 
 ifeq ($(shell uname),SunOS)
 SRCS += daemon.c asprintf.c
-DEFS += -DNO_PROGNAME -DNO_ASPRINTF -DNO_STRLCPY -DNO_DAEMON -DNO_QUEUE_H
+DEFS += -DNO_PROGNAME -DNO_ASPRINTF -DNO_DAEMON -DNO_QUEUE_H
 endif
 ifeq ($(shell uname),Linux)
 SRCS += strlcpy.c
