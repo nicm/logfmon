@@ -116,7 +116,6 @@ read_line(struct file *file, int *error)
 	int      eol;
 
 	buf = getln(file->fd, error, &eol, &len); 
-	printf("+++ %d\n", *error);
 	if (buf == NULL)
 		return (NULL);
 	if (len == 0) {
@@ -448,7 +447,6 @@ main(int argc, char **argv)
 				log_debug("new size=%lld, new offset=%lld",
 				    file->size, file->offset);
                         }
-			printf("--- %d %p\n", error, line);
                         if (error) {
                                 fclose(file->fd);
                                 file->fd = NULL;
