@@ -218,6 +218,10 @@ parse_line(char *line, struct file *file)
                 case ACT_CLOSE:
                         act_close(file, t, rule, match);
 			continue; /* falls-through to following rules */
+		case ACT_WRITE:
+		case ACT_WRITEAPPEND:
+			log_warnx("action invalid here: %s", 
+			    actions[rule->action]);
                 }
 
 		/* NOTREACHED */ /* shut lint up */

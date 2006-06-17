@@ -28,9 +28,12 @@
 
 #include "logfmon.h"
 
+const char *actions[] = { "ignore", "exec", "pipe", "open", "append", 
+			  "close", "write", "write-append", NULL };
+
 #define ENSURE_SIZE(buf, len, req) do {					\
 	while (len <= (req)) {						\
-		if (len > SIZE_MAX / 2)				\
+		if (len > SIZE_MAX / 2)					\
 			fatal("size too large");			\
 		len *= 2;						\
 		buf = xrealloc(buf, 1, len);				\
@@ -223,11 +226,9 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         if (count_msgs(context) >= context->rule->params.ent_max) {
 		log_debug("context %s reached limit of %u entries",
 		    context->key, context->rule->params.ent_max);
-
-                if (context->rule->params.ent_cmd != NULL)
-                        pipe_context(context,
-                            context->rule->params.ent_cmd);
-
+		
+		act_context(context, context->rule->params.ent_act,
+		    context->rule->params.ent_str);
                 delete_context(file, context);
         }
 }
@@ -235,29 +236,31 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 void
 act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
-        char		*cmd;
         struct context	*context;
+        char		*key, *str;
 
         if (rule->params.key == NULL || *(rule->params.key) == '\0')
                 return;
 
-        cmd = repl_matches(t, rule->params.key, match);
+        key = repl_matches(t, rule->params.key, match);
 
-	log_debug("matched: (%s) %s -- closing: '%s'", file->tag.name, t, cmd);
+	log_debug("matched: (%s) %s -- closing: '%s'", file->tag.name, t, key);
 
-        context = find_context_by_key(file, cmd);
+        context = find_context_by_key(file, key);
         if (context == NULL) {
-		log_debug("missing context %s for close", cmd);
-                xfree(cmd);
+		log_debug("missing context %s for close", key);
+                xfree(key);
                 return;
         }
-	xfree(cmd);
+	xfree(key);
 
-        if (rule->params.cmd != NULL && *(rule->params.cmd) != '\0') {
-                cmd = repl_matches(t, rule->params.cmd, match);
-                pipe_context(context, cmd);
-                xfree(cmd);
-        }
+	if (rule->params.close_str != NULL)
+                str = repl_matches(t, rule->params.close_str, match);
+	else
+		str = NULL;
+	act_context(context, rule->params.close_act, str);
+	if (str != NULL)
+                xfree(str);
 
         delete_context(file, context);
 }

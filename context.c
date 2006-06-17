@@ -39,7 +39,7 @@ add_context(struct file *file, char *key, struct rule *rule)
 	TAILQ_INIT(&context->msgs);
 
         context->rule = rule;
-        context->expiry = time(NULL) + rule->params.expiry;
+        context->expiry = time(NULL) + rule->params.exp_time;
         context->key = xstrdup(key);
 
 	log_debug("added context: key=%s", key);
@@ -128,10 +128,8 @@ expire_contexts(struct file *file)
 	TAILQ_FOREACH(context, &file->contexts, entry) {
                 if (now >= context->expiry) {
 			log_debug("expired context: key=%s", context->key);
-                        if (context->rule != NULL &&
-			    context->rule->params.cmd != NULL)
-                                pipe_context(context,
-				    context->rule->params.cmd);
+			act_context(context, context->rule->params.exp_act,
+			    context->rule->params.exp_str);
 			TAILQ_INSERT_HEAD(&exp_contexts, context, exp_entry);
                 }
         }
@@ -140,6 +138,37 @@ expire_contexts(struct file *file)
 		context = TAILQ_FIRST(&exp_contexts);
 		TAILQ_REMOVE(&exp_contexts, context, exp_entry);
 		delete_context(file, context);
+	}
+}
+
+void
+act_context(struct context *context, enum action act, char *str)
+{
+	log_debug("acting on context: action=%s, target=%s", 
+	    actions[act], str);
+	switch (act) {
+	case ACT_IGNORE:
+		break;
+	case ACT_EXEC:
+		exec_context(context, str);
+		break;
+	case ACT_PIPE:
+		pipe_context(context, str);
+		break;
+	case ACT_WRITE:
+		write_context(context, str, 0);
+		break;			
+	case ACT_WRITEAPPEND:
+		write_context(context, str, 1);
+		break;
+	case ACT_OPEN:
+	case ACT_APPEND:
+	case ACT_CLOSE:
+		log_warnx("action invalid here: %s", actions[act]);
+		break;
+	default:
+		log_warnx("unknown action: %d\n", act);
+		break;
 	}
 }
 
@@ -179,4 +208,56 @@ pipe_context(struct context *context, char *cmd)
                 fatalx("pthread_create failed");
 
         xfree(cmd);
+}
+
+void
+exec_context(struct context *context, char *cmd)
+{
+        pthread_t	 thread;
+
+        if (cmd == NULL || *cmd == '\0') {
+                log_warnx("empty exec command");
+                return;
+        }
+
+        cmd = repl_one(cmd, context->key);
+
+	if (pthread_create(&thread, NULL, exec_thread, cmd) != 0)
+		fatalx("pthread_create failed");
+}
+
+void
+write_context(struct context *context, char *path, int append)
+{
+        FILE		*fd;
+        struct msg	*msg;
+
+        if (path == NULL || *path == '\0') {
+                log_warnx("empty write path");
+                return;
+        }
+	
+        path = repl_one(path, context->key);
+
+        fd = fopen(path, append ? "a" : "w");
+        if (fd == NULL) {
+                log_warn("%s", path);
+                xfree(path);
+                return;
+        }
+
+	TAILQ_FOREACH(msg, &context->msgs, entry) {
+                if (fwrite(msg->str, strlen(msg->str), 1, fd) != 1) {
+			log_warn("fwrite");
+                        break;
+		}
+                if (fputc('\n', fd) == EOF) {
+			log_warn("fputc");
+                        break;
+		}
+        }
+
+	fclose(fd);
+
+        xfree(path);
 }

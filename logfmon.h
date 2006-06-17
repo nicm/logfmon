@@ -156,8 +156,13 @@ enum action {
         ACT_PIPE,
         ACT_OPEN,
         ACT_APPEND,
-        ACT_CLOSE
+        ACT_CLOSE,
+	ACT_WRITE,
+	ACT_WRITEAPPEND
 };
+
+/* Action strings. Defined in action.c */
+extern const char *actions[];
 
 /* Rule entry */
 struct rule {
@@ -172,10 +177,17 @@ struct rule {
         {
                 char		*cmd;
                 char		*key;
-                time_t		 expiry;
 
+		enum action	 close_act;
+		char		*close_str;
+
+		enum action	 exp_act;
+                time_t		 exp_time;
+		char		*exp_str;
+
+		enum action	 ent_act;
                 unsigned int	 ent_max;
-                char		*ent_cmd;
+                char		*ent_str;
         } params;
 
         TAILQ_ENTRY(rule)	 entry;
@@ -265,7 +277,10 @@ void		 reset_context(struct context *);
 void		 delete_context(struct file *, struct context *);
 struct context	*find_context_by_key(struct file *, char *);
 void		 expire_contexts(struct file *);
+void		 act_context(struct context *, enum action, char *);
 void		 pipe_context(struct context *, char *);
+void		 exec_context(struct context *, char *);
+void		 write_context(struct context *, char *, int);
 unsigned int	 count_msgs(struct context *);
 
 /* event.c */

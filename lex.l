@@ -195,13 +195,24 @@ tag return (TOKTAG);
 set return (TOKSET);
 match return (TOKMATCH);
 ignore return (TOKIGNORE);
-exec return (TOKEXEC);
 open return (TOKOPEN);
 expire return (TOKEXPIRE);
 append return (TOKAPPEND);
 close return (TOKCLOSE);
-pipe return (TOKPIPE);
 when return (TOKWHEN);
+(exec|pipe|write|write-append) {
+	int	i;
+
+	for (i = 0; actions[i] != NULL; i++) {
+		if (strcmp(yytext, actions[i]) == 0)
+			break;
+	}
+	if (actions[i] == NULL)
+		yyerror("unknown action");
+	yylval.action = i;
+	    
+	return (BASICACTION);
+}
 \* {
         yylval.tags = xmalloc(sizeof (struct tags));
 	TAILQ_INIT(&yylval.tags->tags);

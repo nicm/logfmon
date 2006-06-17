@@ -64,8 +64,8 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
                 }
         }
 
-	log_debug("added rule: re=%s, not_re=%s, action=%d",
-	    re, not_re != NULL ? not_re : "<none>", action);
+	log_debug("added rule: re=%s, not_re=%s, action=%s",
+	    re, not_re != NULL ? not_re : "<none>", actions[action]);
 	TAILQ_INSERT_TAIL(&conf.rules, rule, entry);
         return (rule);
 }
