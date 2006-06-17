@@ -28,27 +28,33 @@
 
 /* getline() */
 char *
-getln(FILE *fd, int *error)
+getln(FILE *fd, int *error, int *eol, size_t *read_len)
 {
 	char	*buf = NULL;
 	size_t	 len = 0;
 	ssize_t	 res;
 
+	*error = 0;
+	*eol = 0;
+
 	res = getline(&buf, &len, fd);
 	if (res == -1) {
 		if (feof(fd)) {
 			clearerr(fd);
-			*error = 0;
 			return (NULL);
 		}
 		*error = 1;
 		return (NULL);
 	}
 
-	len = strlen(buf);
-	if (len >= 1 && buf[len - 1] == '\n')
-		buf[len - 1] = '\0';
+	len = res;
+	if (len >= 1 && buf[len - 1] == '\n') {
+		*eol = 1;
+		--len;
+		buf[len] = '\0';
+	}
 
+	*read_len = len;
 	return (buf);
 }
 
@@ -58,16 +64,18 @@ getln(FILE *fd, int *error)
 
 /* fgetln() */
 char *
-getln(FILE *fd, int *error)
+getln(FILE *fd, int *error, int *eol, size_t *read_len)
 {
 	char	*buf, *lbuf;
 	size_t	 len;
+
+	*error = 0;
+	*eol = 0;
 
 	buf = fgetln(fd, &len);
 	if (buf == NULL) {
 		if (feof(fd)) {
 			clearerr(fd);
-			*error = 0;
 			return (NULL);
 		}
 		clearerr(fd);
@@ -75,13 +83,16 @@ getln(FILE *fd, int *error)
 		return (NULL);
 	}
 
-	if (buf[len - 1] == '\n')
+	if (buf[len - 1] == '\n') {
+		*eol = 1;
 		len--;
+	}
 
 	lbuf = xmalloc(len + 1);
 	memcpy(lbuf, buf, len);
 	lbuf[len] = '\0';
 
+	*read_len = len;
 	return (lbuf);
 
 }
@@ -89,11 +100,14 @@ getln(FILE *fd, int *error)
 #else /* USE_FGETLN */
 
 char *
-getln(FILE *fd, int *error)
+getln(FILE *fd, int *error, int *eol, size_t *read_len)
 {
 	char	*buf;
 	int	 ch;
 	size_t	 len, used;
+
+	*error = 0;
+	*eol = 0;
 
 	len = 256;
 	buf = xmalloc(len);
@@ -103,13 +117,20 @@ getln(FILE *fd, int *error)
 		ch = fgetc(fd);
 		if (ch == EOF) {
 			if (feof(fd)) {
+				if (used == 0) {
+					clearerr(fd);
+					return (NULL);
+				}
+				/* fake an EOL so that final unterminated
+				   lines are returned */
+				ch = '\n';
+			} else {
+				/* errors are always bad, even if there is
+				   data sitting here */
 				clearerr(fd);
-				*error = 0;
+				*error = 1;
 				return (NULL);
 			}
-			clearerr(fd);
-			*error = 1;
-			return (NULL);
 		}
 
 		while (used >= len) {
@@ -120,6 +141,9 @@ getln(FILE *fd, int *error)
 	} while (ch != '\n');
 
 	buf[used - 1] = '\0';
+	*eol = 1;
+
+	*read_len = used - 1;
 	return (buf);
 }
 

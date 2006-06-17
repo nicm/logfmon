@@ -193,6 +193,10 @@ struct file {
         off_t		 	 size;
         off_t		 	 offset;
 
+	char			*buf;
+	size_t			 buflen;
+	size_t			 bufused;
+
         TAILQ_HEAD(, context)	 contexts;
 	TAILQ_HEAD(, msg)	 saves;
 	pthread_mutex_t		 saves_mutex;
@@ -267,7 +271,7 @@ unsigned int	 count_msgs(struct context *);
 /* event.c */
 void		 init_events(void);
 void		 close_events(void);
-struct file 	*get_event(enum event *, int timeout);
+struct file 	*get_event(enum event *, int);
 
 /* file.c */
 struct file	*add_file(char *, char *);
@@ -283,7 +287,7 @@ struct file 	*find_file_by_fd(int);
 struct file	*find_file_mismatch(void);
 
 /* getln.c */
-char		*getln(FILE *, int *);
+char		*getln(FILE *, int *, int *, size_t *);
 
 /* log.c */
 void		 log_init(int);

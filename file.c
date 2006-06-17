@@ -146,6 +146,8 @@ open_files(void)
 				res = fseeko(file->fd, file->offset, SEEK_SET);
 				if (res != 0)
                                         log_warn("fseeko");
+
+				file->buf = NULL;
                         }
                 }
         }
@@ -163,6 +165,11 @@ reopen_files(unsigned int *failed)
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (file->fd == NULL) {
+			if (file->buf != NULL) {
+				xfree(file->buf);
+				file->buf = NULL;
+			}
+
                         if (file->timer != 0 && file->timer > time(NULL)) {
                                 if (failed != NULL)
                                         (*failed)++;
@@ -194,6 +201,11 @@ close_files(void)
                 if (file->fd != NULL) {
                         fclose(file->fd);
                         file->fd = NULL;
+
+			if (file->buf) {
+				xfree(file->buf);
+				file->buf = NULL;
+			}
                 }
         }
 }

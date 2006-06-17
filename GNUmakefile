@@ -61,7 +61,7 @@ LIBS = -lm -lpthread $(LIBS_$(FILEMON))
 
 CLEANFILES = $(PROG) y.tab.c lex.yy.c y.tab.h $(OBJS) depends.mk
 
-all: logfmon
+all: logfmon depends.mk
 
 $(PROG): $(OBJS)
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $+
@@ -83,4 +83,6 @@ install:
 clean:
 	-rm -f $(CLEANFILES)
 
-#include depends.mk
+ifeq ($(wildcard depends.mk),depends.mk)
+include depends.mk
+endif

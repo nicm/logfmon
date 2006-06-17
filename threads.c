@@ -36,7 +36,8 @@ exec_thread(void *arg)
 {
 	FILE	*fd;
 	char	*cmd, *line;
-	int	 error;
+	int	 error, eol;
+	size_t   len;
 
 	if (conf.debug) {
 		xasprintf(&cmd, "%s 2>&1", (char *) arg);
@@ -47,7 +48,10 @@ exec_thread(void *arg)
 	if (fd == NULL)
 		log_warn("%s", (char *) arg);
 
-	while ((line = getln(fd, &error)) != NULL) {
+	while ((line = getln(fd, &error, &eol, &len)) != NULL) {
+		if (!eol)
+			log_warnx("partial read from pipe");
+
 		log_warnx("%s: %s", (char *) arg, line);
 		xfree(line);
 	}

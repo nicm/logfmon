@@ -61,8 +61,8 @@ save_cache(void)
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (fprintf(fd,
-		    "%lu %s %lld %lld\n", strlen(file->path), file->path,
-		    (long long) file->size,
+		    "%lu %s %lld %lld\n", (unsigned long) strlen(file->path),
+		    file->path, (long long) file->size,
 		    (long long) file->offset) == -1) {
                         fclose(fd);
                         log_warnx("error writing cache");

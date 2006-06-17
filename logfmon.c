@@ -55,6 +55,7 @@ struct conf		 conf;
 int			 reload_conf(void);
 int			 load_conf(void);
 void			 sighandler(int);
+char			*read_line(struct file *, int *);
 int			 parse_line(char *, struct file *);
 void			 usage(void);
 
@@ -105,6 +106,59 @@ reload_conf(void)
 	init_events();
 
 	return (0);
+}
+
+char *
+read_line(struct file *file, int *error)
+{
+	char	*buf;
+	size_t	 len;
+	int      eol;
+
+	buf = getln(file->fd, error, &eol, &len); 
+	printf("+++ %d\n", *error);
+	if (buf == NULL)
+		return (NULL);
+	if (len == 0) {
+		xfree(buf);
+		return (NULL);
+	}
+
+	if (file->buf == NULL) {
+		/* no previous buffer and a complete read. return the line. */
+		if (eol)
+			return (buf);
+		/* no previous buffer and partial read. save this as buffer */
+		file->buf = buf;
+		file->buflen = len;
+		file->bufused = len;
+		return (NULL);
+	}
+
+	/* there is an existing buffer, so expand it to fit if necessary.
+	   add an extra byte on to the length in case the data is finished
+	   and we need to add a \0 */
+	while (file->bufused + len + 1 > file->buflen) {
+		file->buflen *= 2;
+		file->buf = xrealloc(file->buf, 1, file->buflen);
+	}
+
+	/* append our data */
+	memcpy(file->buf + file->bufused, buf, len);
+	file->bufused += len;
+	
+	/* if the new data didn't include an EOL, it cannot be returned yet */
+	if (!eol)
+		return (NULL);
+
+	/* the buffer holds a complete line, so return it. note that the 
+	   various getln functions should never return /more/ than a line
+	   (ie any data after a \n) so we do not need to worry about leftover 
+	   data in the buffer */
+	file->buf[file->buflen] = '\0';
+	buf = file->buf;
+	file->buf = NULL;
+	return (buf);
 }
 
 int
@@ -384,7 +438,7 @@ main(int argc, char **argv)
                         break;
                 case EVENT_READ:
 			log_debug("read: tag=%s", file->tag.name);
-			while ((line = getln(file->fd, &error)) != NULL) {
+			while ((line = read_line(file, &error)) != NULL) {
 				if (parse_line(line, file) != 0)
 					exit(1);
 				xfree(line);
@@ -394,10 +448,12 @@ main(int argc, char **argv)
 				log_debug("new size=%lld, new offset=%lld",
 				    file->size, file->offset);
                         }
-                        if (error == 1) {
+			printf("--- %d %p\n", error, line);
+                        if (error) {
                                 fclose(file->fd);
                                 file->fd = NULL;
                         }
+
                         dirty = 1;
                         break;
                 }
