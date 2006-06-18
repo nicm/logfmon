@@ -180,7 +180,7 @@ parse_line(char *line, struct file *file)
 		log_warnx("invalid log message: %s", line);
 		return (1);
 	}
-	mlen = (size_t) (match[1].rm_eo - match[1].rm_so);
+	mlen = match[1].rm_eo - match[1].rm_so;
 	if (mlen == 0) {
 		log_warnx("invalid log message: %s", line);
 		return (1);
