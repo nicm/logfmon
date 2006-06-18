@@ -60,12 +60,12 @@ messages that kicked them off aren't seen again, they may not be executed.
 In practice, unless you are restarting logfmon every day this isn't really
 much of a worry but just so you know :-).
 
-At the moment, the program assumes each log line has a 15 character date,
+The default log entry regexp assumes each log line has a 15 character date,
 followed by a space, the hostname, another space and the message, for example:
 
 Nov 16 11:46:34 hostname message
 
-If this isn't the case, it almost certainly won't work properly.
+If this isn't the case, you can alter it with the "set logregexp" directive.
 
 If you are doing any kind of log rotation, you may occasionally see 
 `No such file or directory' messages from logfmon in your logs. This happens
