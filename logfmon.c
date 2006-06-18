@@ -163,60 +163,63 @@ read_line(struct file *file, int *error)
 int
 parse_line(char *line, struct file *file)
 {
-        char		*t;
+        char		*entry, *s;
         struct rule	*rule;
         regmatch_t	 match[10];
 	struct msg	*save;
+	size_t		 mlen;
+	
+	/* replace ctrl chars with _ */
+	for (s = line; *s != '\0'; s++) {
+		if (*s < 32)
+			*s = '_';
+	}
 
-	if (strlen(line) < 17) {
+	/* extract the part we want from the log line */
+	if (regexec(&conf.entry_re, line, 2, match, 0) != 0) {
 		log_warnx("invalid log message: %s", line);
 		return (1);
 	}
-
-	/* replace ctrl chars with _ */
-	for (t = line; *t != '\0'; t++) {
-		if (*t < 32)
-			*t = '_';
+	mlen = (size_t) (match[1].rm_eo - match[1].rm_so);
+	if (mlen == 0) {
+		log_warnx("invalid log message: %s", line);
+		return (1);
 	}
-
-	/* skip the hostname and any subsequent spaces and return immediately
-	   for blank log messages */
-        t = strchr(line + 16, ' ');
-        if (t == NULL)
-                return (0);
-	t++;
-        if (*t == '\0')
-                return (0);
+	entry = xmalloc(mlen + 1);
+	memcpy(entry, line + match[1].rm_so, mlen);
+	entry[mlen] = '\0';
+	if (conf.debug > 1)
+		log_debug("found entry: %s", entry);
 
         TAILQ_FOREACH(rule, &conf.rules, entry) {
 		if (!has_tag(rule, file->tag.name))
                         continue;
 
-                if (regexec(rule->re, t, 10, match, 0) != 0)
+                if (regexec(rule->re, entry, 10, match, 0) != 0)
                         continue;
                 if (rule->not_re != NULL &&
-		    regexec(rule->not_re, t, 0, NULL, 0) == 0)
+		    regexec(rule->not_re, entry, 0, NULL, 0) == 0)
 			continue;
 
 		/* perform action and return */
                 switch (rule->action) {
                 case ACT_IGNORE:
-                        act_ignore(file, t);
-			return (0);
+                        act_ignore(file, entry);
+			goto done;
                 case ACT_EXEC:
-                        act_exec(file, t, rule, match);
-			return (0);
+                        act_exec(file, entry, rule, match);
+			goto done;
                 case ACT_PIPE:
-                        act_pipe(file, t, rule, match, line);
-			return (0);
+                        act_pipe(file, entry, rule, match, line);
+			goto done;
                 case ACT_OPEN:
-                        act_open(file, t, rule, match);
+                        act_open(file, entry, rule, match);
 			continue; /* falls-through to following rules */
                 case ACT_APPEND:
-                        act_appd(file, t, rule, match, line);
+                        act_appd(file, entry, rule, match, line);
 			continue; /* falls-through to following rules */
                 case ACT_CLOSE:
-                        act_close(file, t, rule, match);
+                        act_close(file, entry, rule, match);
 			continue; /* falls-through to following rules */
 		case ACT_WRITE:
 		case ACT_WRITEAPPEND:
@@ -226,11 +229,11 @@ parse_line(char *line, struct file *file)
 
 		/* NOTREACHED */ /* shut lint up */
 		log_warnx("unknown action: %d", rule->action);
-		return (1);
+		goto error;
         }
 
 	/* no matching rule found */
-	log_debug("unmatched: (%s) %s", file->tag.name, t);
+	log_debug("unmatched: (%s) %s", file->tag.name, entry);
 
         if (conf.mail_cmd != NULL && *conf.mail_cmd != '\0') {
 		/* append the line to the saves list */
@@ -241,7 +244,13 @@ parse_line(char *line, struct file *file)
 		UNLOCK_MUTEX(file->saves_mutex);
         }
 
+done:
+	xfree(entry);
 	return (0);
+
+error:
+	xfree(entry);
+	return (1);
 }
 
 __dead void
@@ -276,7 +285,7 @@ main(int argc, char **argv)
                         conf.cache_file = xstrdup(optarg);
                         break;
                 case 'd':
-                        conf.debug = 1;
+                        conf.debug++;
                         break;
                 case 'f':
                         conf.conf_file = xstrdup(optarg);
@@ -292,6 +301,9 @@ main(int argc, char **argv)
                         usage();
                 }
         }
+
+	if (regcomp(&conf.entry_re, LOGREGEXP, REG_EXTENDED) != 0)
+		fatalx("invalid log regexp: " LOGREGEXP);
 
 	conf.mail_time = MAILTIME;
 	conf.mail_cmd = NULL;

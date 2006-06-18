@@ -186,6 +186,7 @@ mailcmd return (OPTMAILCMD);
 mailtime return (OPTMAILTIME);
 cachefile return (OPTCACHEFILE);
 pidfile return (OPTPIDFILE);
+logregexp return (OPTLOGREGEXP);
 user return (OPTUSER);
 group return (OPTGROUP);
 not return (TOKNOT);

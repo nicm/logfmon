@@ -42,6 +42,9 @@
 #define CACHEFILE	"/var/db/logfmon.cache"
 #define PIDFILE		"/var/run/logfmon.pid"
 
+#define LOGREGEXP	"^[A-Z][a-z][a-z] [0-9][0-9] " \
+			    "[0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* (.*)$"
+
 #define EXPIRETIMEOUT	10	/* context expiry check time */
 #define CACHETIMEOUT	10	/* cache save check time */
 #define DEFAULTTIMEOUT	5	/* default event timeout */
@@ -229,6 +232,8 @@ struct conf {
 	char			*conf_file;
 	char			*cache_file;
 	char			*pid_file;
+
+	regex_t			 entry_re;
 
 	TAILQ_HEAD(, rule)	 rules;
 	TAILQ_HEAD(, file)	 files;

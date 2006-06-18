@@ -54,7 +54,8 @@ yywrap(void)
 
 %token TOKMATCH TOKIGNORE TOKSET TOKFILE TOKIN TOKTAG
 %token TOKOPEN TOKAPPEND TOKCLOSE TOKEXPIRE TOKWHEN TOKNOT
-%token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE OPTPIDFILE
+%token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE 
+%token OPTPIDFILE OPTLOGREGEXP
 
 %union
 {
@@ -171,6 +172,15 @@ set: TOKSET OPTMAILCMD STRING
              conf.gid = gr->gr_gid;
 
              endgrent();
+     }
+   | TOKSET OPTLOGREGEXP STRING
+     {
+	     if (regcomp(&conf.entry_re, $3, REG_EXTENDED) != 0) {
+		     log_warnx("invalid log regexp: %s", $3);
+		     exit(1);
+	     }
+
+             xfree($3);
      }
    ;
 
