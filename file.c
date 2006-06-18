@@ -132,7 +132,7 @@ void
 open_files(void)
 {
         struct file	*file;
-	int		 res;
+	struct stat	 st;
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (file->fd == NULL) {
@@ -140,14 +140,21 @@ open_files(void)
                         if (file->fd == NULL)
                                 log_warn("%s", file->path);
                         else {
-                                file->timer = 0;
-                                if (file->offset == 0)
-                                        continue;
-				res = fseeko(file->fd, file->offset, SEEK_SET);
-				if (res != 0)
-                                        log_warn("fseeko");
+				if (fstat(fileno(file->fd), &st) < 0) {
+					log_warn("%s", file->path);
+					fclose(file->fd);
+					file->fd = NULL;
+				} else {
+					file->timer = 0;
+					file->size = st.st_size;
+					if (file->offset == 0)
+						continue;
+					if (fseeko(file->fd, file->offset,
+					    SEEK_SET) != 0)
+						log_warn("fseeko");
 
-				file->buf = NULL;
+					file->buf = NULL;
+				}
                         }
                 }
         }
