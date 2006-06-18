@@ -33,6 +33,8 @@
 #include <pthread.h>
 #include <stdarg.h>
 
+#define THREADLIMIT	100
+
 #define MAXTAGLEN	32
 
 #define MAILTIME	900
@@ -73,6 +75,42 @@
 #define TAILQ_EMPTY(head) (TAILQ_FIRST(head) == TAILQ_END(head))
 #endif
 
+#define CREATE_THREAD(thread, fn, arg) do {				\
+	LOCK_MUTEX(conf.thr_mutex);					\
+        if (conf.debug > 1)						\
+		log_debug("new thread: cur=%d, limit=%d", 		\
+		    conf.thr_count, conf.thr_limit);			\
+	while (conf.thr_count >= conf.thr_limit) {			\
+		log_debug("reached thread limit; sleeping");		\
+		if (pthread_cond_wait(&conf.thr_cond, 			\
+		    &conf.thr_mutex) != 0) {				\
+			log_warnx("pthread_mutex_init failed: %s:%d",	\
+			    __FILE__, __LINE__);			\
+		}							\
+        	if (conf.debug > 1)					\
+			log_debug("woken after sleep on thread limit");	\
+	}								\
+	UNLOCK_MUTEX(conf.thr_mutex);					\
+        if (pthread_create(thread, NULL, fn, arg) != 0)			\
+                fatalx("pthread_create failed");			\
+} while (0)
+
+#define ENTER_THREAD() do {						\
+	LOCK_MUTEX(conf.thr_mutex);					\
+	conf.thr_count++;						\
+	UNLOCK_MUTEX(conf.thr_mutex);					\
+} while (0)
+
+#define LEAVE_THREAD() do {						\
+	LOCK_MUTEX(conf.thr_mutex);					\
+	conf.thr_count--;						\
+	UNLOCK_MUTEX(conf.thr_mutex);					\
+	if (pthread_cond_broadcast(&conf.thr_cond) != 0) {		\
+		log_warnx("pthread_cond_broadcast failed: %s:%d",	\
+		    __FILE__, __LINE__);				\
+	}								\
+} while (0)
+
 #define INIT_MUTEX(mutex) do {						\
 	if (pthread_mutex_init(&(mutex), NULL) != 0) {		 	\
 		log_warnx("pthread_mutex_init failed: %s:%d",		\
@@ -87,7 +125,7 @@
 		if (mtx_error == EBUSY)				 	\
 			continue;				 	\
 		log_warnx("pthread_mutex_destroy failed: %s:%d", 	\
-		__FILE__, __LINE__);		 		 	\
+		    __FILE__, __LINE__);	 		 	\
 		exit(1);					 	\
 	}							 	\
 } while (0)
@@ -95,7 +133,7 @@
 #define LOCK_MUTEX(mutex) do {						\
 	if (pthread_mutex_lock(&(mutex)) != 0) {			\
 		log_warnx("pthread_mutex_lock failed: %s:%d",		\
-		__FILE__, __LINE__);		 			\
+		    __FILE__, __LINE__);	 			\
 		exit(1);						\
 	}								\
 } while (0)
@@ -103,7 +141,7 @@
 #define UNLOCK_MUTEX(mutex) do {                        		\
 	if (pthread_mutex_unlock(&(mutex)) != 0) {			\
 		log_warnx("pthread_mutex_unlock failed: %s:%d",		\
-		__FILE__, __LINE__);		 			\
+		    __FILE__, __LINE__);	 			\
 		exit(1);					 	\
 	}							 	\
 } while (0)
@@ -242,6 +280,12 @@ struct conf {
 	   main thread, for iterating this mutex only needs to be held in the
 	   save thread. */
 	pthread_mutex_t		 files_mutex;
+
+	/* Thread limit variables. */
+	int			 thr_limit;
+	int			 thr_count;
+	pthread_mutex_t		 thr_mutex;
+	pthread_cond_t		 thr_cond;
 };
 extern struct conf		 conf;
 

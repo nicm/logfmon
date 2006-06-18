@@ -126,10 +126,8 @@ act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
         if (s == NULL || *s == '\0') {
                 log_warnx("empty command for exec");
                 xfree(s);
-        } else {
-                if (pthread_create(&thread, NULL, exec_thread, s) != 0)
-                        fatalx("pthread_create failed");
-        }
+        } else 
+                CREATE_THREAD(&thread, exec_thread, s);
 }
 
 void
@@ -159,9 +157,7 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
                         if (fwrite(line, strlen(line), 1, fd) == 1)
                                 fputc('\n', fd);
 
-                        if (pthread_create(&thread, NULL, pclose_thread,
-			    fd) != 0)
-                                fatalx("pthread_create failed");
+			CREATE_THREAD(&thread, pclose_thread, fd);
 
                         xfree(cmd);
                 }

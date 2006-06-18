@@ -27,7 +27,11 @@
 void *
 pclose_thread(void *arg)
 {
+	ENTER_THREAD();
+
         pclose((FILE *) arg);
+
+	LEAVE_THREAD();
         return (NULL);
 }
 
@@ -38,6 +42,8 @@ exec_thread(void *arg)
 	char	*cmd, *line;
 	int	 error, eol;
 	size_t   len;
+
+	ENTER_THREAD();
 
 	if (conf.debug) {
 		xasprintf(&cmd, "%s 2>&1", (char *) arg);
@@ -61,6 +67,7 @@ exec_thread(void *arg)
 	xfree(cmd);
 
         xfree(arg);
+	LEAVE_THREAD();
         return (NULL);
 }
 

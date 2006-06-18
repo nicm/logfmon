@@ -203,11 +203,10 @@ pipe_context(struct context *context, char *cmd)
                         break;
 		}
         }
+	
+	CREATE_THREAD(&thread, pclose_thread, fd);
 
-        if (pthread_create(&thread, NULL, pclose_thread, fd) != 0)
-                fatalx("pthread_create failed");
-
-        xfree(cmd);
+	xfree(cmd);
 }
 
 void
@@ -222,8 +221,7 @@ exec_context(struct context *context, char *cmd)
 
         cmd = repl_one(cmd, context->key);
 
-	if (pthread_create(&thread, NULL, exec_thread, cmd) != 0)
-		fatalx("pthread_create failed");
+	CREATE_THREAD(&thread, exec_thread, cmd);
 }
 
 void

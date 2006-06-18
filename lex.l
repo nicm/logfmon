@@ -187,6 +187,7 @@ mailtime return (OPTMAILTIME);
 cachefile return (OPTCACHEFILE);
 pidfile return (OPTPIDFILE);
 logregexp return (OPTLOGREGEXP);
+maxthreads return (OPTMAXTHREADS);
 user return (OPTUSER);
 group return (OPTGROUP);
 not return (TOKNOT);

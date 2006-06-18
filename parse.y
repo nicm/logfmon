@@ -55,7 +55,7 @@ yywrap(void)
 %token TOKMATCH TOKIGNORE TOKSET TOKFILE TOKIN TOKTAG
 %token TOKOPEN TOKAPPEND TOKCLOSE TOKEXPIRE TOKWHEN TOKNOT
 %token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE 
-%token OPTPIDFILE OPTLOGREGEXP
+%token OPTPIDFILE OPTLOGREGEXP OPTMAXTHREADS
 
 %union
 {
@@ -181,6 +181,12 @@ set: TOKSET OPTMAILCMD STRING
 	     }
 
              xfree($3);
+     }
+   | TOKSET OPTMAXTHREADS NUMBER
+     {
+             if ($3 < 10)
+                     yyerror("max threads must be at least 10");
+             conf.thr_limit = $3;
      }
    ;
 

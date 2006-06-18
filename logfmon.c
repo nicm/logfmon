@@ -302,6 +302,11 @@ main(int argc, char **argv)
                 }
         }
 
+	conf.thr_limit = THREADLIMIT;
+	INIT_MUTEX(conf.thr_mutex);
+	if (pthread_cond_init(&conf.thr_cond, NULL) != 0) 
+		fatalx("pthread_cond_init failed");
+
 	if (regcomp(&conf.entry_re, LOGREGEXP, REG_EXTENDED) != 0)
 		fatalx("invalid log regexp: " LOGREGEXP);
 
