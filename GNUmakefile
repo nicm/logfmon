@@ -59,15 +59,15 @@ LIBS_fam = -lfam
 LIBS_linux = 
 LIBS = -lm -lpthread $(LIBS_$(FILEMON))
 
-CLEANFILES = $(PROG) y.tab.c lex.yy.c y.tab.h $(OBJS) depends.mk
+CLEANFILES = $(PROG) y.tab.c lex.yy.c y.tab.h $(OBJS) .depend
 
-all: logfmon depends.mk
+all: logfmon
 
 $(PROG): $(OBJS)
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $+
 
-depends.mk: $(SRCS)
-	$(CC) -MM $(SRCS) > $@
+depend: $(SRCS)
+	$(CC) -MM $(SRCS) > .depend
 
 y.tab.c y.tab.h: parse.y
 	$(YACC) $(YFLAGS) $<
@@ -81,8 +81,8 @@ install:
 	$(INSTALLMAN) $(PROG).conf.5 $(PREFIX)/man/man5/$(PROG).conf.5
 
 clean:
-	-rm -f $(CLEANFILES)
+	rm -f $(CLEANFILES)
 
-ifeq ($(wildcard depends.mk),depends.mk)
-include depends.mk
+ifeq ($(wildcard .depend),.depend)
+include .depend
 endif
