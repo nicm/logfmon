@@ -213,7 +213,7 @@ struct rule {
 
         struct
         {
-                char		*cmd;
+                char		*str;
                 char		*key;
 
 		enum action	 close_act;
@@ -311,6 +311,7 @@ void	 act_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
 void	 act_open(struct file *, char *, struct rule *, regmatch_t []);
 void	 act_appd(struct file *, char *, struct rule *, regmatch_t [], char *);
 void	 act_close(struct file *, char *, struct rule *, regmatch_t []);
+void	 act_write(struct file *, char *, struct rule *, regmatch_t [], char *, int);
 
 /* cache.c */
 int		 save_cache(void);

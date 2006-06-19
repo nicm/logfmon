@@ -223,10 +223,11 @@ parse_line(char *line, struct file *file)
                         act_close(file, entry, rule, match);
 			continue; /* falls-through to following rules */
 		case ACT_WRITE:
+			act_write(file, entry, rule, match, line, 0);
+			goto done;
 		case ACT_WRITEAPPEND:
-			log_warnx("action invalid here: %s", 
-			    actions[rule->action]);
-			goto error;
+			act_write(file, entry, rule, match, line, 1);
+			goto done;
                 }
 
 		/* NOTREACHED */ /* shut lint up */

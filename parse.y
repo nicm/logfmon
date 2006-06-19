@@ -195,14 +195,12 @@ rule: /* match, exec|pipe */
       {
               struct rule *rule;
 	      
-	      if ($3 != ACT_EXEC && $3 != ACT_PIPE)
-		      yyerror("invalid action in this context");
               rule = add_rule($3, NULL, $2, NULL);
 
               if (rule == NULL)
                       exit(1);
 
-              rule->params.cmd = $4;
+              rule->params.str = $4;
 
               xfree($2);
       }
@@ -210,14 +208,12 @@ rule: /* match, exec|pipe */
       {
               struct rule *rule;
 
-	      if ($5 != ACT_EXEC && $5 != ACT_PIPE)
-		      yyerror("invalid action in this context");
               rule = add_rule($5, NULL, $2, $4);
 
               if (rule == NULL)
                       exit(1);
 
-              rule->params.cmd = $6;
+              rule->params.str = $6;
 
               xfree($2);
               xfree($4);
@@ -229,14 +225,12 @@ rule: /* match, exec|pipe */
               if ($3 == NULL)
                       yyerror("no tags or illegal tag");
 
-	      if ($5 != ACT_EXEC && $5 != ACT_PIPE)
-		      yyerror("invalid action in this context");
               rule = add_rule($5, $3, $4, NULL);
 
               if (rule == NULL)
                       exit(1);
 
-              rule->params.cmd = $6;
+              rule->params.str = $6;
 
               xfree($4);
       }
@@ -247,14 +241,12 @@ rule: /* match, exec|pipe */
               if ($3 == NULL)
                       yyerror("no tags or illegal tag");
 
-	      if ($7 != ACT_EXEC && $7 != ACT_PIPE)
-		      yyerror("invalid action in this context");
               rule = add_rule($7, $3, $4, $6);
 
               if (rule == NULL)
                       exit(1);
 
-              rule->params.cmd = $8;
+              rule->params.str = $8;
 
               xfree($4);
               xfree($6);

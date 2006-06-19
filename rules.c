@@ -90,8 +90,8 @@ free_rule(struct rule *rule)
 		xfree(rule->not_re);
 	}
 
-	if (rule->params.cmd != NULL)
-		xfree(rule->params.cmd);
+	if (rule->params.str != NULL)
+		xfree(rule->params.str);
 	if (rule->params.key != NULL)
 		xfree(rule->params.key);
 
