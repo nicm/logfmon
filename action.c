@@ -34,7 +34,7 @@ const char *actions[] = { "ignore", "exec", "pipe", "open", "append",
 #define ENSURE_SIZE(buf, len, req) do {					\
 	while (len <= (req)) {						\
 		if (len > SIZE_MAX / 2)					\
-			fatal("size too large");			\
+			fatalx("size too large");			\
 		len *= 2;						\
 		buf = xrealloc(buf, 1, len);				\
 	}								\
