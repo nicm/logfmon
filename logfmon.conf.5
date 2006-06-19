@@ -104,6 +104,12 @@ regexp is set for
 .Bd -ragged -offset indent
 ^[A-Z][a-z][a-z] [0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* (.*)$
 .Ed
+.It Ic maxthreads Ar number
+This sets the maximum number of threads
+.Xr logfmon 8
+will attempt to start simultaneously. If this number is reached,
+.Xr logfmon 8
+will block until some of the threads exit. The default is 100.
 .Sh FILES
 The
 .Ic file
