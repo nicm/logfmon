@@ -92,8 +92,11 @@
 	}								\
 	conf.thr_count++;						\
 	UNLOCK_MUTEX(conf.thr_mutex);					\
-        if (pthread_create(thread, NULL, fn, arg) != 0)			\
-                fatalx("pthread_create failed");			\
+        if (pthread_create(thread, NULL, fn, arg) != 0) {		\
+		log_warnx("pthread_create failed: %s:%d",		\
+		__FILE__, __LINE__);		 			\
+		exit(1);						\
+	}							 	\
 } while (0)
 
 #define ENTER_THREAD()
@@ -105,6 +108,7 @@
 	if (pthread_cond_broadcast(&conf.thr_cond) != 0) {		\
 		log_warnx("pthread_cond_broadcast failed: %s:%d",	\
 		    __FILE__, __LINE__);				\
+		exit(1);						\
 	}								\
 } while (0)
 
