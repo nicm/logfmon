@@ -142,9 +142,10 @@ read_line(struct file *file, int *error)
 		file->buf = xrealloc(file->buf, 1, file->buflen);
 	}
 
-	/* append our data */
+	/* append our data and free the old buffer */
 	memcpy(file->buf + file->bufused, buf, len);
 	file->bufused += len;
+	xfree(buf);
 	
 	/* if the new data didn't include an EOL, it cannot be returned yet */
 	if (!eol)
