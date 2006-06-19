@@ -226,6 +226,7 @@ parse_line(char *line, struct file *file)
 		case ACT_WRITEAPPEND:
 			log_warnx("action invalid here: %s", 
 			    actions[rule->action]);
+			goto error;
                 }
 
 		/* NOTREACHED */ /* shut lint up */
