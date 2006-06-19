@@ -179,12 +179,13 @@ pipe_context(struct context *context, char *cmd)
         struct msg	*msg;
         pthread_t	 thread;
 
+        cmd = repl_one(cmd, context->key);
         if (cmd == NULL || *cmd == '\0') {
                 log_warnx("empty pipe command");
+		if (cmd != NULL)
+			xfree(cmd);
                 return;
         }
-
-        cmd = repl_one(cmd, context->key);
 
         fd = popen(cmd, "w");
         if (fd == NULL) {
@@ -214,12 +215,13 @@ exec_context(struct context *context, char *cmd)
 {
         pthread_t	 thread;
 
+        cmd = repl_one(cmd, context->key);
         if (cmd == NULL || *cmd == '\0') {
                 log_warnx("empty exec command");
+		if (cmd != NULL)
+			xfree(cmd);
                 return;
         }
-
-        cmd = repl_one(cmd, context->key);
 
 	CREATE_THREAD(&thread, exec_thread, cmd);
 }
@@ -230,13 +232,14 @@ write_context(struct context *context, char *path, int append)
         FILE		*fd;
         struct msg	*msg;
 
+        path = repl_one(path, context->key);
         if (path == NULL || *path == '\0') {
                 log_warnx("empty write path");
+		if (path != NULL)
+			xfree(path);
                 return;
         }
-	
-        path = repl_one(path, context->key);
-
+       
         fd = fopen(path, append ? "a" : "w");
         if (fd == NULL) {
                 log_warn("%s", path);

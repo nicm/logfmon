@@ -46,6 +46,9 @@ repl_one(char *src, char *rpl)
         char	*buf;
         size_t	 len, pos = 0;
 
+	if (src == NULL || *src == '\0')
+		return (NULL);
+
         len = strlen(src) + 512;
         buf = xmalloc(len);
 
@@ -74,6 +77,9 @@ repl_matches(char *line, char *src, regmatch_t *match)
         char	*buf, *mptr;
         size_t	 len, mlen, pos = 0;
         int	 num;
+
+	if (src == NULL || *src == '\0')
+		return (NULL);
 
         len = strlen(src) + 512;
         buf = xmalloc(len);
@@ -116,18 +122,21 @@ act_ignore(struct file *file, char *t)
 void
 act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
-        char		*s;
+        char		*cmd;
         pthread_t	 thread;
 
-        s = repl_matches(t, rule->params.str, match);
+        cmd = repl_matches(t, rule->params.str, match);
 
-	log_debug("matched: (%s) %s -- executing: %s", file->tag.name, t, s);
+        if (cmd == NULL || *cmd == '\0') {
+                log_warnx("empty exec command");
+		if (cmd != NULL)
+			xfree(cmd);
+		return;
+	}
 
-        if (s == NULL || *s == '\0') {
-                log_warnx("empty command for exec");
-                xfree(s);
-        } else 
-                CREATE_THREAD(&thread, exec_thread, s);
+	log_debug("matched: (%s) %s -- executing: %s", file->tag.name, t, cmd);
+
+	CREATE_THREAD(&thread, exec_thread, cmd);
 }
 
 void
@@ -138,29 +147,26 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         pthread_t	 thread;
         FILE		*fd;
 
-        if (rule->params.str == NULL || *(rule->params.str) == '\0')
-                return;
-
         cmd = repl_matches(t, rule->params.str, match);
+        if (cmd == NULL || *cmd == '\0') {
+                log_warnx("empty pipe command");
+                if (cmd != NULL)
+			xfree(cmd);
+		return;
+	}
 
 	log_debug("matched: (%s) %s -- piping: %s", file->tag.name, t, cmd);
 
-        if (cmd == NULL || *cmd == '\0') {
-                log_warnx("empty command for pipe");
-                if (cmd != NULL)
-			xfree(cmd);
-        } else {
-                fd = popen(cmd, "w");
-                if (fd == NULL)
-                        log_warn("%s", cmd);
-                else {
-                        if (fwrite(line, strlen(line), 1, fd) == 1)
-                                fputc('\n', fd);
-
-			CREATE_THREAD(&thread, pclose_thread, fd);
-
-                        xfree(cmd);
-                }
+	fd = popen(cmd, "w");
+	if (fd == NULL)
+		log_warn("%s", cmd);
+	else {
+		if (fwrite(line, strlen(line), 1, fd) == 1)
+			fputc('\n', fd);
+		
+		CREATE_THREAD(&thread, pclose_thread, fd);
+		
+		xfree(cmd);
         }
 }
 
@@ -169,10 +175,13 @@ act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 {
         char	*key;
 
-        if (rule->params.key == NULL || *(rule->params.key) == '\0')
-                return;
-
         key = repl_matches(t, rule->params.key, match);
+	if (key == NULL || *key == '\0') {
+		log_warnx("empty open key");
+		if (key != NULL)
+			xfree(key);
+		return;
+	}
 
 	log_debug("matched: (%s) %s -- opening: '%s'", file->tag.name, t, key);
 
@@ -196,13 +205,16 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 	struct msg	*msg;
         char		*key;
 
-        if (rule->params.key == NULL || *(rule->params.key) == '\0')
-                return;
-
         key = repl_matches(t, rule->params.key, match);
+	if (key == NULL || *key == '\0') {
+		log_warnx("empty append key");
+		if (key != NULL)
+			xfree(key);
+		return;
+	}
 
-	log_debug("matched: (%s) %s -- appending: '%s'",
-	    file->tag.name, t, key);
+	log_debug("matched: (%s) %s -- appending: '%s'", file->tag.name, t, 
+	    key);
 
         context = find_context_by_key(file, key);
         if (context == NULL) {
@@ -235,10 +247,13 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
         struct context	*context;
         char		*key, *str;
 
-        if (rule->params.key == NULL || *(rule->params.key) == '\0')
-                return;
-
         key = repl_matches(t, rule->params.key, match);
+	if (key == NULL || *key == '\0') {
+		log_warnx("empty close key");
+		if (key != NULL)
+			xfree(key);
+		return;
+	}
 
 	log_debug("matched: (%s) %s -- closing: '%s'", file->tag.name, t, key);
 
@@ -268,28 +283,25 @@ act_write(struct file *file, char *t, struct rule *rule, regmatch_t match[],
         char		*path;
         FILE		*fd;
 
-        if (rule->params.str == NULL || *(rule->params.str) == '\0')
-                return;
-
         path = repl_matches(t, rule->params.str, match);
+        if (path == NULL || *path == '\0') {
+                log_warnx("empty write path");
+                if (path != NULL)
+			xfree(path);
+		return;
+	}
 	
 	log_debug("matched: (%s) %s -- writing: %s", file->tag.name, t, path);
 
-        if (path == NULL || *path == '\0') {
-                log_warnx("empty path for write");
-                if (path != NULL)
-			xfree(path);
-        } else {
-                fd = fopen(path, append ? "a" : "w");
-                if (fd == NULL)
-                        log_warn("%s", path);
-                else {
-                        if (fwrite(line, strlen(line), 1, fd) == 1)
-                                fputc('\n', fd);
-
-			fclose(fd);
-
-                        xfree(path);
-                }
-        }
+	fd = fopen(path, append ? "a" : "w");
+	if (fd == NULL)
+		log_warn("%s", path);
+	else {
+		if (fwrite(line, strlen(line), 1, fd) == 1)
+			fputc('\n', fd);
+		
+		fclose(fd);
+		
+		xfree(path);
+	}
 }
