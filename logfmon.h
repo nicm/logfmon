@@ -84,8 +84,9 @@
 		log_debug("reached thread limit; sleeping");		\
 		if (pthread_cond_wait(&conf.thr_cond, 			\
 		    &conf.thr_mutex) != 0) {				\
-			log_warnx("pthread_mutex_init failed: %s:%d",	\
+			log_warnx("pthread_cond_wait failed: %s:%d",	\
 			    __FILE__, __LINE__);			\
+			exit(1);					\
 		}							\
         	if (conf.debug > 1)					\
 			log_debug("woken after sleep on thread limit");	\
@@ -94,7 +95,7 @@
 	UNLOCK_MUTEX(conf.thr_mutex);					\
         if (pthread_create(thread, NULL, fn, arg) != 0) {		\
 		log_warnx("pthread_create failed: %s:%d",		\
-		__FILE__, __LINE__);		 			\
+		    __FILE__, __LINE__);		 	       	\
 		exit(1);						\
 	}							 	\
 } while (0)
@@ -115,7 +116,7 @@
 #define INIT_MUTEX(mutex) do {						\
 	if (pthread_mutex_init(&(mutex), NULL) != 0) {		 	\
 		log_warnx("pthread_mutex_init failed: %s:%d",		\
-		__FILE__, __LINE__);		 			\
+		    __FILE__, __LINE__);	 			\
 		exit(1);						\
 	}							 	\
 } while (0)
