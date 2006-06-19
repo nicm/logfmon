@@ -126,7 +126,6 @@ act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
         pthread_t	 thread;
 
         cmd = repl_matches(t, rule->params.str, match);
-
         if (cmd == NULL || *cmd == '\0') {
                 log_warnx("empty exec command");
 		if (cmd != NULL)
