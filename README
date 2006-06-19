@@ -10,10 +10,11 @@ Important changes in 0.9:
 	  notification monitor on Linux and a makefile suitable for GNU make.
 	- The number of simultaneous threads is limited to 100 by default. This
 	  limit can be changed using the "set maxthreads" directive. 
-	- The "exec" action may not be used with contexts as well as "pipe", 
-	  and there are two new actions, "write" and "write-append", for 
-	  writing or appending to a file. Thanks again to Laurent Pelecq for
+	- There are two new actions, "write" and "write-append", for 
+	  writing or appending to a file.Thanks again to Laurent Pelecq for
 	  the suggestion.
+	- Any basic (non-context) action may now be used with contexts, not just
+	  the "pipe" action.
 	- Logfmon now uses a regexp to extract the useful part of the log line.
 	  The default regexp assumes a syslog-style,
 
