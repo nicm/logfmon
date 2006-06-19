@@ -6,14 +6,14 @@
 </head>
 <body>
 <p>The project page is <a href="http://sf.net/projects/logfmon">here.</a></p>
-<pre>
-LOGFMON(8)                                                          LOGFMON(8)
+<PRE>
+LOGFMON(8)              OpenBSD System Manager's Manual             LOGFMON(8)
 
 <B>NAME</B>
      <B>logfmon </B>- log file monitoring daemon
 
 <B>SYNOPSIS</B>
-     <B>logfmon </B>[<B>-d</B>] [<B>-f </B><I>conffile</I>] [<B>-c </B><I>cachefile</I>] [<B>-p </B><I>pidfile</I>]
+     <B>logfmon </B>[<B>-dv</B>] [<B>-f </B><I>conffile</I>] [<B>-c </B><I>cachefile</I>] [<B>-p </B><I>pidfile</I>]
 
 <B>DESCRIPTION</B>
      The <B>logfmon </B>daemon monitors a set of syslog log files and matches each
@@ -40,7 +40,8 @@ LOGFMON(8)                                                          LOGFMON(8)
      <B>-d          </B>Run in the foreground and log to <I>stderr</I>.
 
                  This option also causes additional debugging messages to be
-                 generated.
+                 generated.  This option may be specified multiple times for
+                 increasing levels of verbosity.
 
      <B>-f </B><I>conffile</I>
                  Specify the configuration file location. Default is
@@ -52,19 +53,21 @@ LOGFMON(8)                                                          LOGFMON(8)
                  This overrides any location specified in the configuration
                  file.
 
+     <B>-v          </B>Display the <B>logfmon </B>version, and exit.
+
 <B>FILES</B>
      /etc/logfmon.conf     default <B>logfmon </B>configuration file
 
 <B>AUTHORS</B>
-     Nicholas Marriott
+     Nicholas Marriott &lt;nicm@users.sourceforge.net&gt;
 
 <B>SEE ALSO</B>
      logfmon.conf(5) syslog(3)
 
-                               November 8, 2004                              1
-
-
-LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
+OpenBSD 3.9                    November 8, 2004                              1
+</PRE>
+<PRE>
+LOGFMON.CONF(5)           OpenBSD Programmer's Manual          LOGFMON.CONF(5)
 
 <B>NAME</B>
      <B>logfmon.conf </B>- log file monitoring daemon configuration file
@@ -129,6 +132,15 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
              /var/run/logfmon.pid is used. Note that this option may be over-
              ridden on the command line.
 
+     <B>logregexp </B><I>regexp</I>
+             This sets the regexp that logfmon(8) uses to select the part of
+             each log line which is to be compared against the ruleset. The
+             first submatch (enclosed in parenthesis) is used. The default
+             regexp is set for syslog(3)format:
+
+                   ^[A-Z][a-z][a-z] [0-9][0-9]
+                   [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* (.*)$
+
 <B>FILES</B>
      The <B>file </B>command is used to instruct logfmon(8) to monitor a file. The
      filename must be given as a parameter.
@@ -184,10 +196,10 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
 
              An example <B>exec </B>rule is:
 
-                   match "sshd\\[[0-9]*\\]: Invalid user .* from
-                   ([0-9\.]*)" exec "grep $1 /etc/pf.ignore || (echo $1 &gt&gt
-                   /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1;
-                   echo $0 | mail -s 'ssh attempt' root)"
+                   match "sshd\\[[0-9]*\\]: Invalid user .* from ([0-9.]*)"
+                   exec "grep $1 /etc/pf.ignore || (echo $1 &gt;&gt; /etc/pf.ignore;
+                   pfctl -t ignore -T add $1; pfctl -k $1; echo $0 | mail -s
+                   'ssh attempt' root)"
 
      <B>pipe </B><I>command</I>
              With this action, the entire log entry is piped to the supplied
@@ -212,9 +224,12 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
      er, that messages matching an <B>open </B>can be included in the context with an
      <B>append </B>command, or indeed used to <B>exec </B>or <B>pipe </B>in later rules.
 
-     The forms of <B>match </B>command relating to contexts are described below.
-     <B>pipe </B>or <B>ignore </B>are the only actions permitted where <I>action </I>appears. When
-     <B>pipe </B>is used, the entire context is piped to the supplied command.
+     The forms of <B>match </B>command relating to contexts are described below. The
+     <B>ignore, pipe</B>, <B>exec </B>and two additional actions, <B>write </B>and <B>write-append</B>,
+     are permitted in rules where <I>action </I>appears below. When <B>pipe </B>is used, the
+     entire context is piped to the supplied command. When <B>write </B>or <B>write-</B>
+     <B>append </B>are used, logfmon(8) attempts to write the context to the speci-
+     fied file, overwriting with the former and appending with the latter.
 
      <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>open </B><I>name <B></I>expire </B><I>time action </I>[
              <B>when </B><I>num action </I>]
@@ -241,9 +256,9 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
 
      An example set of context rules is:
 
-           match in auth "sshd\\[([0-9]*)\\]: input_userauth_request: in-
-           valid user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s
-           \"`date` ssh attempt (expired)\" root"
+           match in auth "sshd\\[([0-9]*)\\]: input_userauth_request: invalid
+           user .*" open "sshd-$1" expire 2m pipe "/usr/bin/mail -s \"`date`
+           ssh attempt (expired)\" root"
 
            match in auth "sshd\\[([0-9]*)\\]: .*" append "sshd-$1"
 
@@ -259,12 +274,12 @@ LOGFMON.CONF(5)                                                LOGFMON.CONF(5)
      /etc/logfmon.conf     default logfmon(8) configuration file
 
 <B>AUTHORS</B>
-     Nicholas Marriott
+     Nicholas Marriott &lt;nicm@users.sourceforge.net&gt;
 
 <B>SEE ALSO</B>
      logfmon(8) re_format(7)
 
-                               November 8, 2004                              4
-</pre>
+OpenBSD 3.9                    November 8, 2004                              4
+</PRE>
 </body>
 </html>

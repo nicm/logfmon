@@ -1,7 +1,7 @@
 # $Id$
 
 .SUFFIXES: .c .o .y .l .h
-.PHONY: clean
+.PHONY: clean index.html
 
 PROG= logfmon
 VERSION= 0.9
@@ -80,6 +80,21 @@ port:
 
 depend:
 		mkdep ${CFLAGS} ${SRCS}
+
+index.html:
+		nroff -mdoc logfmon.conf.5|m2h -u > logfmon.conf.5.html
+		nroff -mdoc logfmon.8|m2h -u > logfmon.8.html
+		awk ' \
+			{ if ($$0 ~ /%%/) {			\
+				name = substr($$0, 3);		\
+				while ((getline < name) == 1) {	\
+					print $$0;		\
+				}				\
+				close(name);			\
+			} else {				\
+				print $$0;			\
+			} }' index.html.in > index.html
+		rm -d logfmon.conf.5.html logfmon.8.html
 
 install:	all
 		${INSTALLBIN} ${PROG} ${PREFIX}/sbin/${PROG}
