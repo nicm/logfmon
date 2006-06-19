@@ -13,7 +13,7 @@ Important changes in 0.9:
 	- The "exec" action may not be used with contexts as well as "pipe", 
 	  and there are two new actions, "write" and "write-append", for 
 	  writing or appending to a file. Thanks again to Laurent Pelecq for
-	  the the suggestion.
+	  the suggestion.
 	- Logfmon now uses a regexp to extract the useful part of the log line.
 	  The default regexp assumes a syslog-style,
 
