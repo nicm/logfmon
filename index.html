@@ -208,7 +208,14 @@ LOGFMON.CONF(5)           OpenBSD Programmer's Manual          LOGFMON.CONF(5)
 
      <B>pipe </B><I>command</I>
              With this action, the entire log entry is piped to the supplied
-             command.
+             command
+
+     <B>write </B><I>file</I>
+             This action writes the log entry to the specified file, creating
+             it if it does not exist and truncating it if it does.
+
+     <B>write-append </B><I>file</I>
+             This appends the entire log entry to a file.
 
 <B>CONTEXTS</B>
      A context is a set of log entries that has been collected together. A
@@ -229,12 +236,12 @@ LOGFMON.CONF(5)           OpenBSD Programmer's Manual          LOGFMON.CONF(5)
      er, that messages matching an <B>open </B>can be included in the context with an
      <B>append </B>command, or indeed used to <B>exec </B>or <B>pipe </B>in later rules.
 
-     The forms of <B>match </B>command relating to contexts are described below. The
-     <B>ignore, pipe</B>, <B>exec </B>and two additional actions, <B>write </B>and <B>write-append</B>,
-     are permitted in rules where <I>action </I>appears below. When <B>pipe </B>is used, the
-     entire context is piped to the supplied command. When <B>write </B>or <B>write-</B>
-     <B>append </B>are used, logfmon(8) attempts to write the context to the speci-
-     fied file, overwriting with the former and appending with the latter.
+     The forms of <B>match </B>command relating to contexts are described below. All
+     the non-context actions, <B>ignore, pipe</B>, <B>exec</B>, <B>write </B>and <B>write-append</B>, are
+     permitted in rules where <I>action </I>appears below. When <B>pipe </B>is used, the en-
+     tire context is piped to the supplied command. When <B>write </B>or <B>write-append</B>
+     are used, logfmon(8) attempts to write the context to the specified file,
+     overwriting with the former and appending with the latter.
 
      <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>open </B><I>name <B></I>expire </B><I>time action </I>[
              <B>when </B><I>num action </I>]

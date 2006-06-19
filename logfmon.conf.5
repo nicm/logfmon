@@ -199,7 +199,11 @@ rule is:
 match "sshd\\\\[[0-9]*\\\\]: Invalid user .* from ([0-9.]*)" exec "grep $1 /etc/pf.ignore || (echo $1 >> /etc/pf.ignore; pfctl -t ignore -T add $1; pfctl -k $1; echo $0 | mail -s 'ssh attempt' root)"
 .Ed
 .It Ic pipe Ar command
-With this action, the entire log entry is piped to the supplied command.
+With this action, the entire log entry is piped to the supplied command
+.It Ic write Ar file
+This action writes the log entry to the specified file, creating it if it does not exist and truncating it if it does.
+.It Ic write-append Ar file
+This appends the entire log entry to a file.
 .El
 .Sh CONTEXTS
 A context is a set of log entries that has been collected together. A context
@@ -244,11 +248,10 @@ in later rules.
 .Pp
 The forms of
 .Ic match
-command relating to contexts are described below. The 
+command relating to contexts are described below. All the non-context actions, 
 .Ic ignore,
 .Ic pipe ,
-.Ic exec 
-and two additional actions,
+.Ic exec ,
 .Ic write
 and
 .Ic write-append ,
