@@ -90,16 +90,13 @@
         	if (conf.debug > 1)					\
 			log_debug("woken after sleep on thread limit");	\
 	}								\
+	conf.thr_count++;						\
 	UNLOCK_MUTEX(conf.thr_mutex);					\
         if (pthread_create(thread, NULL, fn, arg) != 0)			\
                 fatalx("pthread_create failed");			\
 } while (0)
 
-#define ENTER_THREAD() do {						\
-	LOCK_MUTEX(conf.thr_mutex);					\
-	conf.thr_count++;						\
-	UNLOCK_MUTEX(conf.thr_mutex);					\
-} while (0)
+#define ENTER_THREAD()
 
 #define LEAVE_THREAD() do {						\
 	LOCK_MUTEX(conf.thr_mutex);					\
