@@ -305,6 +305,8 @@ rule: /* match, action=* */
               rule->params.exp_time = $8;
 
               rule->params.ent_max = $11;
+	      rule->params.ent_act = $12.act;
+	      rule->params.ent_str = $12.str;
 
               xfree($3);
 	      if ($4 != NULL)
