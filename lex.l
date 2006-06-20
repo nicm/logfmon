@@ -215,7 +215,7 @@ when return (TOKWHEN);
 	}
 	if (actions[i] == NULL)
 		yyerror("unknown action");
-	yylval.action = i;
+	yylval.action.act = i;
 	    
 	return (BASICACTION);
 }
