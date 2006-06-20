@@ -13,8 +13,8 @@ Important changes in 0.9:
 	- There are two new actions, "write" and "write-append", for 
 	  writing or appending to a file.Thanks again to Laurent Pelecq for
 	  the suggestion.
-	- Any basic (non-context) action may now be used with contexts, not just
-	  the "pipe" action.
+	- Any basic (non-context) action may now be used with contexts, not 
+	  just the "pipe" action.
 	- Logfmon now uses a regexp to extract the useful part of the log line.
 	  The default regexp assumes a syslog-style,
 
