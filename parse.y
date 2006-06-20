@@ -387,7 +387,7 @@ file: TOKFILE STRING TOKTAG TAGS
               if (*$2 == '\0')
                       yyerror("path cannot be empty string");
 
-              for(n = 1; n > 0; n++) {
+              for (n = 1; n > 0; n++) {
                       snprintf(name, sizeof name, "__%u", n);
                       if (!find_file_by_tag(name))
                               break;

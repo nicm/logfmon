@@ -73,7 +73,7 @@ get_event(enum event *event, int timeout)
         int		n;
 
         n = 0;
-        for(;;) {
+        for (;;) {
                 *event = EVENT_NONE;
 
                 if (usleep(100000L) == -1) {

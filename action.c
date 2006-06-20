@@ -36,7 +36,7 @@ const char *actions[] = { "ignore", "exec", "pipe", "open", "append",
 		len *= 2;						\
 		buf = xrealloc(buf, 1, len);				\
 	}								\
-} while(0)
+} while (0)
 
 char *
 repl_one(char *src, char *rpl)
