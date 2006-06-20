@@ -16,11 +16,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef NO_QUEUE_H
-#include "queue.h"
-#else
-#include <sys/queue.h>
-#endif
+#include <sys/types.h>
 
 #include <regex.h>
 #include <string.h>

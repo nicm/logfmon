@@ -27,11 +27,12 @@
 #include <sys/queue.h>
 #endif
 
-#include <signal.h>
-#include <regex.h>
-#include <stdio.h>
 #include <pthread.h>
+#include <regex.h>
+#include <signal.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #define THREADLIMIT	100
 

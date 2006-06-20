@@ -19,13 +19,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-
-#ifdef NO_QUEUE_H
-#include "queue.h"
-#else
-#include <sys/queue.h>
-#endif
-
+ 
 #include <errno.h>
 #include <grp.h>
 #include <pthread.h>

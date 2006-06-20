@@ -16,15 +16,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef __GLIBC__
-#include <stdint.h>
-#endif
 
 #include "logfmon.h"
 

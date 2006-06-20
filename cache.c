@@ -20,12 +20,6 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#ifdef NO_QUEUE_H
-#include "queue.h"
-#else
-#include <sys/queue.h>
-#endif
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
