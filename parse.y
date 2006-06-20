@@ -409,32 +409,28 @@ file: TOKFILE STRING TOKTAG TAGS
 	      len = strlen(name);
 
 	      if (find_file_by_tag(name)) {
-		      n = 1;
-		      do {
+		      for (n = 1; n > 0; n++) {
 			      snprintf(num, sizeof num, "%u", n);
 			      nlen = strlen(num);
 			      
 			      if (len + nlen > sizeof name)
-				      name[(sizeof name) - nlen] = '\0';
+				      name[(sizeof name) - nlen - 1] = '\0';
 			      else
-				      name[len] = '\0';
+				      name[len - 1] = '\0';
 
 			      strlcat(name, num, sizeof name);
-			      log_debug("testing tag: %s", name);
+			      log_debug("testing tag: %s (%u)", name, n);
 			      
 			      if (!find_file_by_tag(name))
 				      break;
-
-			      n++;
-		      } while (n > 0);
+		      }
 	      }
-              if (n > 0) {
-                      if (add_file($2, name) == NULL)
-                              exit(1);
-              } else {
+              if (n == 0) {
                       log_warnx("%s: unable to find unused tag", $2);
 		      exit(1);
 	      }
+	      if (add_file($2, name) == NULL)
+		      exit(1);
               xfree($2);
       }
 
