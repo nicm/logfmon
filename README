@@ -21,6 +21,9 @@ Important changes in 0.9:
 		Nov 16 11:46:34 hostname message
 	
 	  format. It can be changed with the "set logregexp" option.
+	- If a tag is not specified, Logfmon will now attempt to use the file's
+	  base filename, truncated to 32 characters. If the tag is already in 
+	  use, numbers are appended, truncating the name further if necessary.
 
 Logfmon supports three different methods of monitoring log files:
 

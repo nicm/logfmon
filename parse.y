@@ -22,6 +22,7 @@
 #include <sys/types.h>
 
 #include <grp.h>
+#include <libgen.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -395,16 +396,38 @@ file: TOKFILE STRING TOKTAG TAGS
     | TOKFILE STRING
       {
               unsigned int	n;
-              char		name[13];
+              char		name[MAXTAGLEN], num[13], *ptr;
+	      size_t		len, nlen;
 
               if (*$2 == '\0')
                       yyerror("path cannot be empty string");
 
-              for (n = 1; n > 0; n++) {
-                      snprintf(name, sizeof name, "__%u", n);
-                      if (!find_file_by_tag(name))
-                              break;
-              }
+	      if ((ptr = basename($2)) != NULL)
+		      strlcpy(name, ptr, sizeof name);
+	      else 
+		      strlcpy(name, "__", sizeof name);
+	      len = strlen(name);
+
+	      if (find_file_by_tag(name)) {
+		      n = 1;
+		      do {
+			      snprintf(num, sizeof num, "%u", n);
+			      nlen = strlen(num);
+			      
+			      if (len + nlen > sizeof name)
+				      name[(sizeof name) - nlen] = '\0';
+			      else
+				      name[len] = '\0';
+
+			      strlcat(name, num, sizeof name);
+			      log_debug("testing tag: %s", name);
+			      
+			      if (!find_file_by_tag(name))
+				      break;
+
+			      n++;
+		      } while (n > 0);
+	      }
               if (n > 0) {
                       if (add_file($2, name) == NULL)
                               exit(1);
