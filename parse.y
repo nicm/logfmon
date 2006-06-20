@@ -78,6 +78,8 @@ yywrap(void)
 %type  <action> action
 %type  <tags> tags
 %type  <string> not
+%type  <number> user
+%type  <number> group
 
 %%
 
@@ -89,11 +91,73 @@ cmds:
      | cmds file
 
 time:
-        TIME
-      | NUMBER
-        {
-		$$ = $1;
-        }
+      TIME
+    | NUMBER
+      {
+	      $$ = $1;
+      }
+
+user:
+      NUMBER
+      {
+             struct passwd *pw;
+
+             pw = getpwuid($1);
+             if (pw == NULL) {
+                     log_warnx("unknown uid: %d", $1);
+		     exit(1);
+	     }
+
+	     $$ = pw->pw_uid;
+
+             endpwent();
+      }
+    | STRING
+      {
+             struct passwd *pw;
+
+             pw = getpwnam($1);
+             if (pw == NULL) {
+                     log_warnx("unknown user: %s", $1);
+		     exit(1);
+	     }
+
+             $$ = pw->pw_uid;
+
+             endpwent();
+             xfree($1);
+      }
+
+group:
+      NUMBER
+      {
+             struct group *gr;
+
+             gr = getgrgid($1);
+             if (gr == NULL) {
+                     log_warnx("unknown gid: %d", $1);
+		     exit(1);
+	     }
+
+             $$ = gr->gr_gid;
+
+             endgrent();
+      }
+    | STRING
+      {
+             struct group *gr;
+
+             gr = getgrnam($1);
+             if (gr == NULL) {
+                     log_warnx("unknown group: %s", $1);
+		     exit(1);
+	     }
+
+             $$ = gr->gr_gid;
+
+             endgrent();
+             xfree($1);
+      }
 
 set: TOKSET OPTMAILCMD STRING
      {
@@ -122,63 +186,13 @@ set: TOKSET OPTMAILCMD STRING
 
              conf.mail_time = $3;
      }
-   | TOKSET OPTUSER STRING
+   | TOKSET OPTUSER user
      {
-             struct passwd *pw;
-
-             pw = getpwnam($3);
-             if (pw == NULL) {
-                     log_warnx("unknown user: %s", $3);
-		     exit(1);
-	     }
-
-             conf.uid = pw->pw_uid;
-
-             endpwent();
-             xfree($3);
+             conf.uid = $3;
      }
-   | TOKSET OPTUSER NUMBER
+   | TOKSET OPTGROUP group
      {
-             struct passwd *pw;
-
-             pw = getpwuid($3);
-             if (pw == NULL) {
-                     log_warnx("unknown uid: %d", $3);
-		     exit(1);
-	     }
-
-             conf.uid = pw->pw_uid;
-
-             endpwent();
-     }
-   | TOKSET OPTGROUP STRING
-     {
-             struct group *gr;
-
-             gr = getgrnam($3);
-             if (gr == NULL) {
-                     log_warnx("unknown group: %s", $3);
-		     exit(1);
-	     }
-
-             conf.gid = gr->gr_gid;
-
-             endgrent();
-             xfree($3);
-     }
-   | TOKSET OPTGROUP NUMBER
-     {
-             struct group *gr;
-
-             gr = getgrgid($3);
-             if (gr == NULL) {
-                     log_warnx("unknown gid: %d", $3);
-		     exit(1);
-	     }
-
-             conf.gid = gr->gr_gid;
-
-             endgrent();
+	     conf.gid = $3;
      }
    | TOKSET OPTLOGREGEXP STRING
      {
