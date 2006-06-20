@@ -87,7 +87,6 @@ cmds:
      | cmds rule
      | cmds set
      | cmds file
-     ;
 
 time:
         TIME
@@ -196,7 +195,6 @@ set: TOKSET OPTMAILCMD STRING
                      yyerror("max threads must be at least 10");
              conf.thr_limit = $3;
      }
-   ;
 
 action: 
         BASICACTION STRING
@@ -355,7 +353,6 @@ rule: /* match, action=* */
 	      if ($4 != NULL)
 		      xfree($4);
       }
-    ;
 
 file: TOKFILE STRING TOKTAG TAGS
       {
@@ -403,7 +400,6 @@ file: TOKFILE STRING TOKTAG TAGS
 	      }
               xfree($2);
       }
-    ;
 
 %%
 
