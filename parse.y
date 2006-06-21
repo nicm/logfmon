@@ -283,8 +283,7 @@ rule: /* match, action=* */
 
               if (*$6 == '\0')
                       yyerror("context key cannot be empty string");
-
-              if ($9 == 0)
+	      if ($9 == 0)
                       yyerror("expiry time cannot be zero");
 
               rule = add_rule(ACT_OPEN, $2, $3, $4);
@@ -317,10 +316,8 @@ rule: /* match, action=* */
 
               if (*$6 == '\0')
                       yyerror("context key cannot be empty string");
-
               if ($9 == 0)
                       yyerror("expiry time cannot be zero");
-
               if ($12 == 0)
                       yyerror("number of entries cannot be zero");
 
@@ -399,7 +396,6 @@ file: TOKFILE STRING TOKTAG TAGS
 
               if (*$2 == '\0')
                       yyerror("path cannot be empty string");
-
               if ($4 == NULL)
                       yyerror("no tags or illegal tag");
 
