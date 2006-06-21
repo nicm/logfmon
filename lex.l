@@ -44,11 +44,9 @@ extern __dead void yyerror(const char *);
 	unsigned int	 pos = 0;
         char	 	 name[MAXTAGLEN];
 	struct tag	*tag;
-	struct tags	*tags;
 
         yylval.tags = xmalloc(sizeof (struct tags));
-	tags = yylval.tags;
-        TAILQ_INIT(&tags->tags);
+        TAILQ_INIT(yylval.tags);
 
         while (!done) {
                 switch (ch = input()) {
@@ -63,7 +61,7 @@ extern __dead void yyerror(const char *);
                                 *(name + pos) = '\0';
 				tag = xmalloc(sizeof (struct tag));
 				strlcpy(tag->name, name, sizeof tag->name);
-				TAILQ_INSERT_TAIL(&tags->tags, tag, entry);
+				TAILQ_INSERT_TAIL(yylval.tags, tag, entry);
                                 pos = 0;
                         }
                         break;
@@ -89,10 +87,10 @@ extern __dead void yyerror(const char *);
 		*(name + pos) = '\0';
 		tag = xmalloc(sizeof (struct tag));
 		strlcpy(tag->name, name, sizeof tag->name);
-		TAILQ_INSERT_TAIL(&yylval.tags->tags, tag, entry);
+		TAILQ_INSERT_TAIL(yylval.tags, tag, entry);
         }
 
-        if (TAILQ_EMPTY(&yylval.tags->tags))
+        if (TAILQ_EMPTY(yylval.tags))
 		yyerror("empty tag list");
 
         return (TAGS);
@@ -224,7 +222,7 @@ when return (TOKWHEN);
 }
 \* {
         yylval.tags = xmalloc(sizeof (struct tags));
-	TAILQ_INIT(&yylval.tags->tags);
+	TAILQ_INIT(yylval.tags);
 
         return (TAGS);
 }
@@ -235,11 +233,11 @@ when return (TOKWHEN);
 		yyerror("tag too long");
 
         yylval.tags = xmalloc(sizeof (struct tags));
-	TAILQ_INIT(&yylval.tags->tags);
+	TAILQ_INIT(yylval.tags);
 
 	tag = xmalloc(sizeof (struct tag));
 	strlcpy(tag->name, yytext, sizeof tag->name);
-	TAILQ_INSERT_HEAD(&yylval.tags->tags, tag, entry);
+	TAILQ_INSERT_HEAD(yylval.tags, tag, entry);
 
         return (TAGS);
 }
