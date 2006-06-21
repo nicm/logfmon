@@ -274,6 +274,42 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 }
 
 void
+act_clear(struct file *file, char *t, struct rule *rule, regmatch_t match[])
+{
+        struct context	*context;
+        char		*key, *str;
+
+        key = repl_matches(t, rule->params.key, match);
+	if (key == NULL || *key == '\0') {
+		log_warnx("empty clear key");
+		if (key != NULL)
+			xfree(key);
+		return;
+	}
+
+	log_debug("matched: (%s) %s -- clearing: '%s'", file->tag.name, t,
+	    key);
+
+        context = find_context_by_key(file, key);
+        if (context == NULL) {
+		log_debug("missing context %s for clear", key);
+                xfree(key);
+                return;
+        }
+	xfree(key);
+
+	if (rule->params.clear_str != NULL)
+                str = repl_matches(t, rule->params.clear_str, match);
+	else
+		str = NULL;
+	act_context(context, rule->params.clear_act, str);
+	if (str != NULL)
+                xfree(str);
+
+        reset_context(context);
+}
+
+void
 act_write(struct file *file, char *t, struct rule *rule, regmatch_t match[],
     char *line, int append)
 {

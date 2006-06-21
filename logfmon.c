@@ -218,6 +218,9 @@ parse_line(char *line, struct file *file)
                 case ACT_CLOSE:
                         act_close(file, entry, rule, match);
 			continue; /* falls-through to following rules */
+		case ACT_CLEAR:
+                        act_clear(file, entry, rule, match);
+			continue; /* falls-through to following rules */
 		case ACT_WRITE:
 			act_write(file, entry, rule, match, line, 0);
 			goto done;

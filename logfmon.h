@@ -196,11 +196,12 @@ enum action {
         ACT_IGNORE,
         ACT_EXEC,
         ACT_PIPE,
+	ACT_WRITE,
+	ACT_WRITEAPPEND,
         ACT_OPEN,
         ACT_APPEND,
         ACT_CLOSE,
-	ACT_WRITE,
-	ACT_WRITEAPPEND
+	ACT_CLEAR
 };
 
 /* Action strings. Defined in action.c */
@@ -222,6 +223,9 @@ struct rule {
 
 		enum action	 close_act;
 		char		*close_str;
+
+		enum action	 clear_act;
+		char		*clear_str;
 
 		enum action	 exp_act;
                 time_t		 exp_time;
@@ -320,6 +324,7 @@ void	 act_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
 void	 act_open(struct file *, char *, struct rule *, regmatch_t []);
 void	 act_appd(struct file *, char *, struct rule *, regmatch_t [], char *);
 void	 act_close(struct file *, char *, struct rule *, regmatch_t []);
+void	 act_clear(struct file *, char *, struct rule *, regmatch_t []);
 void	 act_write(struct file *, char *, struct rule *, regmatch_t [], char *, int);
 
 /* cache.c */

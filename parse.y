@@ -54,7 +54,7 @@ yywrap(void)
 %}
 
 %token TOKMATCH TOKIGNORE TOKSET TOKFILE TOKIN TOKTAG TOKAUTOAPPEND
-%token TOKOPEN TOKAPPEND TOKCLOSE TOKEXPIRE TOKWHEN TOKNOT
+%token TOKOPEN TOKAPPEND TOKCLOSE TOKEXPIRE TOKWHEN TOKNOT TOKCLEAR
 %token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE 
 %token OPTPIDFILE OPTLOGREGEXP OPTMAXTHREADS
 
@@ -387,6 +387,30 @@ rule: /* match, action=* */
 
 	      rule->params.close_act = $7.act;
 	      rule->params.close_str = $7.str;
+
+	      free_tags($2);
+	      xfree($2);
+              xfree($3);
+	      if ($4 != NULL)
+		      xfree($4);
+      }
+
+      /* match, action=clear */
+    | TOKMATCH tags STRING not TOKCLEAR STRING action
+      {
+              struct rule 	*rule;
+
+              if (*$6 == '\0')
+                      yyerror("context key cannot be empty string");
+
+              rule = add_rule(ACT_CLEAR, $2, $3, $4);
+              if (rule == NULL)
+                      exit(1);
+
+              rule->params.key = $6;
+
+	      rule->params.clear_act = $7.act;
+	      rule->params.clear_str = $7.str;
 
 	      free_tags($2);
 	      xfree($2);
