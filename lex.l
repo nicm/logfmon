@@ -131,6 +131,8 @@ extern __dead void yyerror(const char *);
 }
 [0-9]+ {
 	long long	num;
+
+	errno = 0;
         num = strtol(yytext, NULL, 10);
 	if (num == 0 && (errno == EINVAL || errno == ERANGE))
 		yyerror("illegal number");
