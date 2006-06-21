@@ -210,7 +210,7 @@ extern const char *actions[];
 
 /* Rule entry */
 struct rule {
-	TAILQ_HEAD(, tag)	 tags;
+	struct tags		 tags;
 
         regex_t			*re;
         regex_t			*not_re;
@@ -368,6 +368,7 @@ __dead void	 fatal(const char *);
 __dead void	 fatalx(const char *);
 
 /* rules.c */
+void		 free_tags(struct tags *);
 struct rule	*add_rule(enum action, struct tags *, char *, char *);
 void		 free_rules(void);
 int		 has_tag(struct rule *, char *);

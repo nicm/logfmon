@@ -24,21 +24,18 @@
 
 #include "logfmon.h"
 
+void	copy_tags(struct tags *, struct tags *);
 void	free_rule(struct rule *);
 
 struct rule *
 add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 {
         struct rule	*rule;
-	struct tag	*tag;
 
         rule = xmalloc(sizeof (struct rule));
 	memset(rule, 0, sizeof (struct rule));
 
-	TAILQ_INIT(&rule->tags);
-	TAILQ_FOREACH(tag, &tags->tags, entry) {
-		TAILQ_INSERT_TAIL(&rule->tags, tag, entry);
-	}
+	copy_tags(tags, &rule->tags);
 
         rule->action = action;
 
@@ -68,13 +65,7 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 void
 free_rule(struct rule *rule)
 {
-	struct tag	*tag;
-
-	while (!TAILQ_EMPTY(&rule->tags)) {
-		tag = TAILQ_FIRST(&rule->tags);
-		TAILQ_REMOVE(&rule->tags, tag, entry);
-		xfree(tag);
-	}
+	free_tags(&rule->tags);
 
 	if (rule->re != NULL) {
 		regfree(rule->re);
@@ -111,13 +102,38 @@ has_tag(struct rule *rule, char *name)
 	struct tag	*tag;
 
 	/* empty tags list means any tag matches */
-	if (TAILQ_EMPTY(&rule->tags))
+	if (TAILQ_EMPTY(&rule->tags.tags))
 		return (1);
 
-	TAILQ_FOREACH(tag, &rule->tags, entry) {
+	TAILQ_FOREACH(tag, &rule->tags.tags, entry) {
 		if (strcmp(name, tag->name) == 0)
 			return (1);
 	}
 
 	return (0);
 }
+
+void
+copy_tags(struct tags *src, struct tags *dst)
+{
+	struct tag	*t_src, *t_dst;
+
+	TAILQ_INIT(&dst->tags);
+	TAILQ_FOREACH(t_src, &src->tags, entry) {
+		t_dst = xmalloc(sizeof (struct tag));
+		strlcpy(t_dst->name, t_src->name, sizeof t_dst->name);
+	}
+}
+
+void
+free_tags(struct tags *tags)
+{
+	struct tag	*tag;
+
+	while (!TAILQ_EMPTY(&tags->tags)) {
+		tag = TAILQ_FIRST(&tags->tags);
+		TAILQ_REMOVE(&tags->tags, tag, entry);
+		xfree(tag);
+	}
+}
+

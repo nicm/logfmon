@@ -270,6 +270,7 @@ rule: /* match, action=* */
 
               rule->params.str = $5.str;
 
+	      free_tags($2);
 	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
@@ -302,6 +303,7 @@ rule: /* match, action=* */
 			      exit(1);
 	      }
 
+	      free_tags($2);
 	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
@@ -312,7 +314,7 @@ rule: /* match, action=* */
     | TOKMATCH tags STRING not TOKOPEN STRING autoappend TOKEXPIRE time action 
           TOKWHEN NUMBER action
       {
-              struct rule *rule;
+              struct rule 	*rule;
 
               if (*$6 == '\0')
                       yyerror("context key cannot be empty string");
@@ -341,6 +343,7 @@ rule: /* match, action=* */
 			      exit(1);
 	      }
 
+	      free_tags($2);
 	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
@@ -350,7 +353,7 @@ rule: /* match, action=* */
       /* match, action=append */
     | TOKMATCH tags STRING not TOKAPPEND STRING
       {
-              struct rule *rule;
+              struct rule 	*rule;
 
               if (*$6 == '\0')
                       yyerror("context key cannot be empty string");
@@ -361,6 +364,7 @@ rule: /* match, action=* */
 
               rule->params.key = $6;
 
+	      free_tags($2);
 	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
@@ -370,7 +374,7 @@ rule: /* match, action=* */
       /* match, action=close */
     | TOKMATCH tags STRING not TOKCLOSE STRING action
       {
-              struct rule *rule;
+              struct rule 	*rule;
 
               if (*$6 == '\0')
                       yyerror("context key cannot be empty string");
@@ -384,6 +388,7 @@ rule: /* match, action=* */
 	      rule->params.close_act = $7.act;
 	      rule->params.close_str = $7.str;
 
+	      free_tags($2);
 	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
@@ -405,12 +410,11 @@ file: TOKFILE STRING TOKTAG TAGS
               if (TAILQ_NEXT(tag, entry) != NULL)
                       yyerror("only one tag may be assigned to a file");
 
-              if (add_file($2, tag->name) == NULL)
+              if (add_file($2, xstrdup(tag->name)) == NULL)
                       exit(1);
 
               xfree($2);
-
-              xfree(tag);
+	      free_tags($4);
               xfree($4);
       }
     | TOKFILE STRING
