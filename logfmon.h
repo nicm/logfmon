@@ -279,10 +279,10 @@ struct conf {
 
 	/* Files list mutex. Since entries only can be added and deleted in the
 	   main thread, for iterating this mutex only needs to be held in the
-	   save thread. */
+	   save thread */
 	pthread_mutex_t		 files_mutex;
 
-	/* Thread limit variables. */
+	/* Thread limit variables */
 	int			 thr_limit;
 	int			 thr_count;
 	pthread_mutex_t		 thr_mutex;
