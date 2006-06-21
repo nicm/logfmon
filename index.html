@@ -220,8 +220,9 @@ LOGFMON.CONF(5)           OpenBSD Programmer's Manual          LOGFMON.CONF(5)
 <B>CONTEXTS</B>
      A context is a set of log entries that has been collected together. A
      context is opened by an <B>open </B>action on a <B>match </B>rule, messages may be ap-
-     pended to it with an <B>append </B>action and it may be closed and an action
-     taken with a <B>close </B>rule.
+     pended to it with an <B>append </B>action, it may be closed and an action taken
+     with a <B>close </B>rule and an action taken on the collected log entries and
+     the context emptied without being removed by using the <B>clear </B>action.
 
      A context expires and is removed after a time supplied to the <B>open </B>rule.
      An action may be taken when a context expires, or, with a <B>when </B>command,
@@ -268,6 +269,10 @@ LOGFMON.CONF(5)           OpenBSD Programmer's Manual          LOGFMON.CONF(5)
 
      <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>close </B><I>name action</I>
              This applies the specified action and removes the context.
+
+     <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>clear </B><I>name action</I>
+             This applies the specified action and clears all accumulated log
+             entries from the context.
 
      An example set of context rules is:
 

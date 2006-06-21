@@ -213,9 +213,11 @@ action on a
 .Ic match
 rule, messages may be appended to it with an
 .Ic append
-action and it may be closed and an action taken with a
+action, it may be closed and an action taken with a
 .Ic close
-rule.
+rule and an action taken on the collected log entries and the context emptied without being removed by using the
+.Ic clear
+action.
 .Pp
 A context expires and is removed after a time supplied to the
 .Ic open
@@ -319,6 +321,13 @@ this rule is silently ignored.
 .Ic close Ar name Ar action
 .Xc
 This applies the specified action and removes the context.
+.It Xo Ic match
+.Li [\&  Ic in Ar tags Li ]
+.Ar regexp
+.Li [\&  Ic not Ar regexp Li ]
+.Ic clear Ar name Ar action
+.Xc
+This applies the specified action and clears all accumulated log entries from the context.
 .El
 .Pp
 An example set of context rules is:

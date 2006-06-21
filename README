@@ -27,6 +27,9 @@ Important changes in 0.9:
 	- The "autoappend" keyword may be added to "open" rules to auto-
 	  matically create an "append" rule with the same regexp(s) and 
 	  context key.
+	- There is now a "clear" context action which has the same syntax and
+	  behaviour as "close", but does not close the context, merely wipes
+	  the accumulated messages.
 
 Logfmon supports three different methods of monitoring log files:
 
