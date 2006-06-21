@@ -26,8 +26,8 @@
 
 #include "logfmon.h"
 
-const char *actions[] = { "ignore", "exec", "pipe", "open", "append", 
-			  "close", "write", "write-append", NULL };
+const char *actions[] = { "ignore", "exec", "pipe", "write", "write-append"
+			  "open", "append", "close", "clear", NULL };
 
 #define ENSURE_SIZE(buf, len, req) do {					\
 	while (len <= (req)) {						\
