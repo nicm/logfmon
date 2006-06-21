@@ -295,6 +295,11 @@ extern struct conf		 conf;
 size_t	 strlcpy(char *, const char *, size_t);
 #endif
 
+#ifdef NO_STRLCAT
+/* strlcat.c */
+size_t	 strlcat(char *, const char *, size_t);
+#endif
+
 #ifdef NO_DAEMON
 /* daemon.c */
 int	 daemon(int, int);

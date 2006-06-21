@@ -21,7 +21,7 @@ YACC = yacc
 YFLAGS = -d
 else
 YACC = bison
-YFLAGS = -d -y
+YFLAGS = -dy
 endif
 
 LEX = flex
@@ -44,8 +44,8 @@ SRCS += daemon.c asprintf.c
 DEFS += -DNO_PROGNAME -DNO_ASPRINTF -DNO_DAEMON -DNO_QUEUE_H
 endif
 ifeq ($(shell uname),Linux)
-SRCS += strlcpy.c
-DEFS += -D_GNU_SOURCE -DNO_STRLCPY -DUSE_GETLINE
+SRCS += strlcpy.c strlcat.c
+DEFS += -D_GNU_SOURCE -DNO_STRLCPY -DNO_STRLCAT -DUSE_GETLINE
 endif
 
 OBJS = $(patsubst %.c,%.o,$(SRCS))
