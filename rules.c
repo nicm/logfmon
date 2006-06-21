@@ -102,10 +102,10 @@ has_tag(struct rule *rule, char *name)
 	struct tag	*tag;
 
 	/* empty tags list means any tag matches */
-	if (TAILQ_EMPTY(&rule->tags.tags))
+	if (TAILQ_EMPTY(&rule->tags))
 		return (1);
 
-	TAILQ_FOREACH(tag, &rule->tags.tags, entry) {
+	TAILQ_FOREACH(tag, &rule->tags, entry) {
 		if (strcmp(name, tag->name) == 0)
 			return (1);
 	}
@@ -118,8 +118,8 @@ copy_tags(struct tags *src, struct tags *dst)
 {
 	struct tag	*t_src, *t_dst;
 
-	TAILQ_INIT(&dst->tags);
-	TAILQ_FOREACH(t_src, &src->tags, entry) {
+	TAILQ_INIT(dst);
+	TAILQ_FOREACH(t_src, src, entry) {
 		t_dst = xmalloc(sizeof (struct tag));
 		strlcpy(t_dst->name, t_src->name, sizeof t_dst->name);
 	}
@@ -130,9 +130,9 @@ free_tags(struct tags *tags)
 {
 	struct tag	*tag;
 
-	while (!TAILQ_EMPTY(&tags->tags)) {
-		tag = TAILQ_FIRST(&tags->tags);
-		TAILQ_REMOVE(&tags->tags, tag, entry);
+	while (!TAILQ_EMPTY(tags)) {
+		tag = TAILQ_FIRST(tags);
+		TAILQ_REMOVE(tags, tag, entry);
 		xfree(tag);
 	}
 }

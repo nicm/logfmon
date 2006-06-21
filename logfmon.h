@@ -170,9 +170,7 @@ struct tag {
 };
 
 /* Tag list */
-struct tags {
-	TAILQ_HEAD(, tag)	 tags;
-};
+TAILQ_HEAD(tags, tag);
 
 /* Message entry */
 struct msg {

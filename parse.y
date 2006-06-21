@@ -236,7 +236,7 @@ tags:
     | /* empty */ 
       {
 	      $$ = xmalloc(sizeof (struct tags));
-	      TAILQ_INIT(&$$->tags);
+	      TAILQ_INIT($$);
       }
 
 not:
@@ -404,7 +404,7 @@ file: TOKFILE STRING TOKTAG TAGS
               if ($4 == NULL)
                       yyerror("no tags or illegal tag");
 
-	      tag = TAILQ_FIRST(&$4->tags);
+	      tag = TAILQ_FIRST($4);
 	      if (tag == NULL)
                       yyerror("at least one tag must be given");
               if (TAILQ_NEXT(tag, entry) != NULL)
