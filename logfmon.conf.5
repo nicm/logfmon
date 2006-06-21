@@ -273,6 +273,7 @@ former and appending with the latter.
 .Ar regexp
 .Li [\&  Ic not Ar regexp Li ]
 .Ic open Ar name
+.Li [\&  Ic autoappend Li ]
 .Ic expire Ar time
 .Ar action
 .Li [\&  Ic when Ar num
@@ -297,6 +298,12 @@ part of the rule is supplied, the specified
 is taken and the context is removed when the context holds
 .Ar num
 entries.
+.Pp
+The
+.Ic autoappend
+keyword may be included to automatically create a subsequent
+.Ic append
+rule with the same regexps and context name.
 .It Xo Ic match
 .Li [\&  Ic in Ar tags Li ]
 .Ar regexp

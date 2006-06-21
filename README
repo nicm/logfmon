@@ -24,6 +24,9 @@ Important changes in 0.9:
 	- If a tag is not specified, Logfmon will now attempt to use the file's
 	  base filename, truncated to 32 characters. If the tag is already in 
 	  use, numbers are appended, truncating the name further if necessary.
+	- The "autoappend" keyword may be added to "open" rules to auto-
+	  matically create an "append" rule with the same regexp(s) and 
+	  context key.
 
 Logfmon supports three different methods of monitoring log files:
 

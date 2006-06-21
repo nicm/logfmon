@@ -53,7 +53,7 @@ yywrap(void)
 }
 %}
 
-%token TOKMATCH TOKIGNORE TOKSET TOKFILE TOKIN TOKTAG
+%token TOKMATCH TOKIGNORE TOKSET TOKFILE TOKIN TOKTAG TOKAUTOAPPEND
 %token TOKOPEN TOKAPPEND TOKCLOSE TOKEXPIRE TOKWHEN TOKNOT
 %token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE 
 %token OPTPIDFILE OPTLOGREGEXP OPTMAXTHREADS
@@ -62,6 +62,7 @@ yywrap(void)
 {
         int 	 	 number;
         char 		*string;
+	int		 flag;
         struct tags 	*tags;
 	struct {
 		enum action	 act;
@@ -81,6 +82,7 @@ yywrap(void)
 %type  <string> not
 %type  <number> user
 %type  <number> group
+%type  <flag> autoappend
 
 %%
 
@@ -247,52 +249,68 @@ not:
 	      $$ = NULL;
       }
 
+autoappend:
+      TOKAUTOAPPEND
+      {
+	      $$ = 1;
+      }
+    | /* empty */
+      {
+	      $$ = 0;
+      }	
+
 rule: /* match, action=* */
       TOKMATCH tags STRING not action
       {
               struct rule *rule;
 	      
               rule = add_rule($5.act, $2, $3, $4);
-
               if (rule == NULL)
                       exit(1);
 
               rule->params.str = $5.str;
 
+	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
 		      xfree($4);
       }
 
     /* match, action=open, expire=* */
-    | TOKMATCH tags STRING not TOKOPEN STRING TOKEXPIRE time action
+    | TOKMATCH tags STRING not TOKOPEN STRING autoappend TOKEXPIRE time action
       {
               struct rule *rule;
 
               if (*$6 == '\0')
                       yyerror("context key cannot be empty string");
 
-              if ($8 == 0)
+              if ($9 == 0)
                       yyerror("expiry time cannot be zero");
 
               rule = add_rule(ACT_OPEN, $2, $3, $4);
-
               if (rule == NULL)
                       exit(1);
 
               rule->params.key = $6;
 
-	      rule->params.exp_act = $9.act;
-	      rule->params.exp_str = $9.str;
-              rule->params.exp_time = $8;
+	      rule->params.exp_act = $10.act;
+	      rule->params.exp_str = $10.str;
+              rule->params.exp_time = $9;
 
+	      if ($7) {
+		      rule = add_rule(ACT_APPEND, $2, $3, $4);
+		      if (rule == NULL)
+			      exit(1);
+	      }
+
+	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
 		      xfree($4);
       }
 
     /* match, action=open, expire=*, when=* */
-    | TOKMATCH tags STRING not TOKOPEN STRING TOKEXPIRE time action 
+    | TOKMATCH tags STRING not TOKOPEN STRING autoappend TOKEXPIRE time action 
           TOKWHEN NUMBER action
       {
               struct rule *rule;
@@ -300,27 +318,33 @@ rule: /* match, action=* */
               if (*$6 == '\0')
                       yyerror("context key cannot be empty string");
 
-              if ($8 == 0)
+              if ($9 == 0)
                       yyerror("expiry time cannot be zero");
 
-              if ($11 == 0)
+              if ($12 == 0)
                       yyerror("number of entries cannot be zero");
 
               rule = add_rule(ACT_OPEN, $2, $3, $4);
-
               if (rule == NULL)
                       exit(1);
 
               rule->params.key = $6;
 
-	      rule->params.exp_act = $9.act;
-	      rule->params.exp_str = $9.str;
-              rule->params.exp_time = $8;
+	      rule->params.exp_act = $10.act;
+	      rule->params.exp_str = $10.str;
+              rule->params.exp_time = $9;
 
-              rule->params.ent_max = $11;
-	      rule->params.ent_act = $12.act;
-	      rule->params.ent_str = $12.str;
+              rule->params.ent_max = $12;
+	      rule->params.ent_act = $13.act;
+	      rule->params.ent_str = $13.str;
 
+	      if ($7) {
+		      rule = add_rule(ACT_APPEND, $2, $3, $4);
+		      if (rule == NULL)
+			      exit(1);
+	      }
+
+	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
 		      xfree($4);
@@ -335,12 +359,12 @@ rule: /* match, action=* */
                       yyerror("context key cannot be empty string");
 
               rule = add_rule(ACT_APPEND, $2, $3, $4);
-
               if (rule == NULL)
                       exit(1);
 
               rule->params.key = $6;
 
+	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
 		      xfree($4);
@@ -355,7 +379,6 @@ rule: /* match, action=* */
                       yyerror("context key cannot be empty string");
 
               rule = add_rule(ACT_CLOSE, $2, $3, $4);
-
               if (rule == NULL)
                       exit(1);
 
@@ -364,6 +387,7 @@ rule: /* match, action=* */
 	      rule->params.close_act = $7.act;
 	      rule->params.close_str = $7.str;
 
+	      xfree($2);
               xfree($3);
 	      if ($4 != NULL)
 		      xfree($4);
@@ -424,10 +448,10 @@ file: TOKFILE STRING TOKTAG TAGS
 			      if (!find_file_by_tag(name))
 				      break;
 		      }
-	      }
-              if (n == 0) {
-                      log_warnx("%s: unable to find unused tag", $2);
-		      exit(1);
+		      if (n == 0) {
+			      log_warnx("%s: unable to find unused tag", $2);
+			      exit(1);
+		      }
 	      }
 	      if (add_file($2, name) == NULL)
 		      exit(1);

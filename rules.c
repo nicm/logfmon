@@ -39,7 +39,6 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 	TAILQ_FOREACH(tag, &tags->tags, entry) {
 		TAILQ_INSERT_TAIL(&rule->tags, tag, entry);
 	}
-	xfree(tags);
 
         rule->action = action;
 

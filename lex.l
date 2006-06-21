@@ -206,6 +206,7 @@ expire return (TOKEXPIRE);
 append return (TOKAPPEND);
 close return (TOKCLOSE);
 when return (TOKWHEN);
+(auto-append|autoappend) return (TOKAUTOAPPEND);
 (exec|pipe|write|write-append) {
 	int	i;
 
