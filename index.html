@@ -243,8 +243,8 @@ LOGFMON.CONF(5)           OpenBSD Programmer's Manual          LOGFMON.CONF(5)
      are used, logfmon(8) attempts to write the context to the specified file,
      overwriting with the former and appending with the latter.
 
-     <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>open </B><I>name <B></I>expire </B><I>time action </I>[
-             <B>when </B><I>num action </I>]
+     <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>open </B><I>name </I>[ <B>autoappend </B>] <B>expire</B>
+             <I>time action </I>[ <B>when </B><I>num action </I>]
              This opens a context with name <I>name </I>and sets it to expire after
              the time specified.  <I>time </I>is in the same format as for the <B>set</B>
              <B>mailtime </B>command. $0 to $9 are replaced as normal in the context
@@ -258,6 +258,9 @@ LOGFMON.CONF(5)           OpenBSD Programmer's Manual          LOGFMON.CONF(5)
              If the optional <B>when </B>part of the rule is supplied, the specified
              <I>action </I>is taken and the context is removed when the context holds
              <I>num </I>entries.
+
+             The <B>autoappend </B>keyword may be included to automatically create a
+             subsequent <B>append </B>rule with the same regexps and context name.
 
      <B>match </B>[ <B>in </B><I>tags </I>] <I>regexp </I>[ <B>not </B><I>regexp </I>] <B>append </B><I>name</I>
              This appends a matching log entry to a context. If the context
