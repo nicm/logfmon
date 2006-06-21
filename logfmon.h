@@ -203,9 +203,7 @@ enum action {
         ACT_CLOSE,
 	ACT_CLEAR
 };
-
-/* Action strings. Defined in action.c */
-extern const char *actions[];
+extern const char *actions[];	/* defined in action.c */
 
 /* Rule entry */
 struct rule {
