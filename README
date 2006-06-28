@@ -42,7 +42,7 @@ Logfmon supports three different methods of monitoring log files:
 - fam:    This uses the FAM notification system. It is recommended to choose
 	  this on Linux if possible but the seperate FAM software is required
 	  (on Debian, with their fetish for splitting things into a million
-	  packages, you also need the headers from libfam-devel). Note that 
+	  packages, you also need the headers from libfam-dev). Note that 
 	  FAM will not work if the log files are on NFS.
 
 To build with a specific system, use:
