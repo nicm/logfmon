@@ -2,7 +2,7 @@
 
 COMMENT=	"monitors logfiles and performs commands"
 
-DISTNAME=	logfmon-0.9
+DISTNAME=	logfmon-0.9a
 CATEGORIES=	security
 
 MAINTAINER=     Nicholas Marriott <nicm@users.sourceforge.net>
