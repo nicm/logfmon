@@ -4,7 +4,7 @@
 .PHONY: clean index.html
 
 PROG= logfmon
-VERSION= 0.9
+VERSION= 0.9a
 
 OS!= uname
 REL!= uname -r
@@ -19,7 +19,7 @@ LEX= lex
 YACC= yacc -d
 
 CC= cc
-CFLAGS+= -g -ggdb
+#CFLAGS+= -g -ggdb
 #CFLAGS+= -DDEBUG
 CFLAGS+= -pedantic -Wno-long-long
 CFLAGS+= -Wall -W -Wnested-externs -Wformat-security
