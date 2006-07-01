@@ -45,7 +45,7 @@
 #define CACHEFILE	"/var/db/logfmon.cache"
 #define PIDFILE		"/var/run/logfmon.pid"
 
-#define LOGREGEXP	"^[A-Z][a-z][a-z] [0-9][0-9] " \
+#define LOGREGEXP	"^[A-Z][a-z][a-z] [0-9 ][0-9] " \
 			    "[0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* (.*)$"
 
 #define EXPIRETIMEOUT	10	/* context expiry check time */
