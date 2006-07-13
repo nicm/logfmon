@@ -41,6 +41,8 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 
 	res = getline(&buf, &len, fd);
 	if (res == -1) {
+		if (buf != NULL)
+			xfree(buf);
 		if (feof(fd)) {
 			clearerr(fd);
 			return (NULL);
