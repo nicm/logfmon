@@ -151,7 +151,7 @@ read_line(struct file *file, int *error)
 	   various getln functions should never return /more/ than a line
 	   (ie any data after a \n) so we do not need to worry about leftover 
 	   data in the buffer */
-	file->buf[file->buflen] = '\0';
+	file->buf[file->bufused] = '\0';
 	buf = file->buf;
 	file->buf = NULL;
 	return (buf);

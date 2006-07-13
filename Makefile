@@ -4,7 +4,7 @@
 .PHONY: clean index.html
 
 PROG= logfmon
-VERSION= 0.9b
+VERSION= 0.9c
 
 OS!= uname
 REL!= uname -r

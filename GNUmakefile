@@ -3,7 +3,7 @@
 .PHONY: clean
 
 PROG = logfmon
-VERSION = 0.9b
+VERSION = 0.9c
 
 ## Installation parameters
 
