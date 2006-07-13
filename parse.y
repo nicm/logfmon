@@ -88,20 +88,18 @@ yywrap(void)
 
 /* Rules */
 
-cmds:
-     | cmds rule
-     | cmds set
-     | cmds file
+cmds: /* empty */
+    | cmds rule
+    | cmds set
+    | cmds file
 
-time:
-      TIME
+time: TIME
     | NUMBER
       {
 	      $$ = $1;
       }
 
-user:
-      NUMBER
+user: NUMBER
       {
              struct passwd *pw;
 
@@ -131,36 +129,35 @@ user:
              xfree($1);
       }
 
-group:
-      NUMBER
-      {
-             struct group *gr;
+group: NUMBER
+       {
+	       struct group *gr;
 
-             gr = getgrgid($1);
-             if (gr == NULL) {
-                     log_warnx("unknown gid: %d", $1);
-		     exit(1);
-	     }
+	       gr = getgrgid($1);
+	       if (gr == NULL) {
+		       log_warnx("unknown gid: %d", $1);
+		       exit(1);
+	       }
 
-             $$ = gr->gr_gid;
-
+	       $$ = gr->gr_gid;
+	       
              endgrent();
-      }
-    | STRING
-      {
-             struct group *gr;
+       }
+     | STRING
+       {
+	       struct group *gr;
 
-             gr = getgrnam($1);
-             if (gr == NULL) {
-                     log_warnx("unknown group: %s", $1);
-		     exit(1);
-	     }
+	       gr = getgrnam($1);
+	       if (gr == NULL) {
+		       log_warnx("unknown group: %s", $1);
+		       exit(1);
+	       }
+	       
+	       $$ = gr->gr_gid;
 
-             $$ = gr->gr_gid;
-
-             endgrent();
-             xfree($1);
-      }
+	       endgrent();
+	       xfree($1);
+       }
 
 set: TOKSET OPTMAILCMD STRING
      {
@@ -213,8 +210,7 @@ set: TOKSET OPTMAILCMD STRING
              conf.thr_limit = $3;
      }
 
-action: 
-        BASICACTION STRING
+action: BASICACTION STRING
         {
 		$$.act = $1;
 		$$.str = $2;
@@ -225,8 +221,7 @@ action:
 		$$.str = NULL;
         }
 
-tags:
-      TOKIN TAGS
+tags: TOKIN TAGS
       {
 	      if ($2 == NULL)
                       yyerror("no tags or illegal tag");		      
@@ -239,25 +234,23 @@ tags:
 	      TAILQ_INIT($$);
       }
 
-not:
-      TOKNOT STRING
-      {
-	      $$ = $2;
-      }
-    | /* empty */
-      {
-	      $$ = NULL;
-      }
+not: TOKNOT STRING
+     {
+	     $$ = $2;
+     }
+   | /* empty */
+     {
+	     $$ = NULL;
+     }
 
-autoappend:
-      TOKAUTOAPPEND
-      {
-	      $$ = 1;
-      }
-    | /* empty */
-      {
-	      $$ = 0;
-      }	
+autoappend: TOKAUTOAPPEND
+	    {
+		    $$ = 1;
+	    }
+          | /* empty */
+	    {
+		    $$ = 0;
+	    }	
 
 rule: /* match, action=* */
       TOKMATCH tags STRING not action
