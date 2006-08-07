@@ -118,7 +118,7 @@ read_line(struct file *file, int *error)
 	}
 
 	if (file->buf == NULL) {
-		/* no previous buffer and a complete read. return the line. */
+		/* no previous buffer and a complete read. return the line */
 		if (eol)
 			return (buf);
 		/* no previous buffer and partial read. save this as buffer */
@@ -147,7 +147,7 @@ read_line(struct file *file, int *error)
 	if (!eol)
 		return (NULL);
 
-	/* the buffer holds a complete line, so return it. note that the 
+	/* the buffer holds a complete line, so return it. note that the
 	   various getln functions should never return /more/ than a line
 	   (ie any data after a \n) so we do not need to worry about leftover 
 	   data in the buffer */
@@ -303,6 +303,10 @@ main(int argc, char **argv)
                         usage();
                 }
         }
+	argc -= optind;
+	argv += optind;
+	if (argc != 0)
+		usage();
 
 	conf.thr_limit = THREADLIMIT;
 	INIT_MUTEX(conf.thr_mutex);

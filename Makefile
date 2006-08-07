@@ -94,7 +94,7 @@ index.html:
 			} else {				\
 				print $$0;			\
 			} }' index.html.in > index.html
-		rm -d logfmon.conf.5.html logfmon.8.html
+		rm -f logfmon.conf.5.html logfmon.8.html
 
 install:	all
 		${INSTALLBIN} ${PROG} ${PREFIX}/sbin/${PROG}
