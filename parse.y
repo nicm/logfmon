@@ -101,32 +101,34 @@ time: TIME
 
 user: NUMBER
       {
-             struct passwd *pw;
-
-             pw = getpwuid($1);
-             if (pw == NULL) {
-                     log_warnx("unknown uid: %d", $1);
-		     exit(1);
-	     }
-
-	     $$ = pw->pw_uid;
-
-             endpwent();
+	      struct passwd *pw;
+	      
+	      pw = getpwuid($1);
+	      if (pw == NULL) {
+		      log_warnx("%s: unknown uid at line %d: %d", 
+			  conf.conf_file, yylineno, $1);
+		      exit(1);
+	      }
+	      
+	      $$ = pw->pw_uid;
+	      
+	      endpwent();
       }
-    | STRING
+| STRING
       {
-             struct passwd *pw;
-
-             pw = getpwnam($1);
-             if (pw == NULL) {
-                     log_warnx("unknown user: %s", $1);
-		     exit(1);
-	     }
-
-             $$ = pw->pw_uid;
-
-             endpwent();
-             xfree($1);
+	      struct passwd *pw;
+	     
+	      pw = getpwnam($1);
+	      if (pw == NULL) {
+		      log_warnx("%s: unknown user at line %d: %s", 
+			  conf.conf_file, yylineno, $1);
+		      exit(1);
+	      }
+	      
+	      $$ = pw->pw_uid;
+	      
+	      endpwent();
+	      xfree($1);
       }
 
 group: NUMBER
@@ -135,7 +137,8 @@ group: NUMBER
 
 	       gr = getgrgid($1);
 	       if (gr == NULL) {
-		       log_warnx("unknown gid: %d", $1);
+		       log_warnx("%s: unknown gid at line %d: %d", 
+			   conf.conf_file, yylineno, $1);
 		       exit(1);
 	       }
 
@@ -149,7 +152,8 @@ group: NUMBER
 
 	       gr = getgrnam($1);
 	       if (gr == NULL) {
-		       log_warnx("unknown group: %s", $1);
+		       log_warnx("%s: unknown group at line %d: %s", 
+			   conf.conf_file, yylineno, $1);
 		       exit(1);
 	       }
 	       
@@ -197,7 +201,8 @@ set: TOKSET OPTMAILCMD STRING
    | TOKSET OPTLOGREGEXP STRING
      {
 	     if (regcomp(&conf.entry_re, $3, REG_EXTENDED) != 0) {
-		     log_warnx("invalid log regexp: %s", $3);
+		     log_warnx("%s: invalid log regexp at line %d: %s", 
+			 conf.conf_file, yylineno, $3);
 		     exit(1);
 	     }
 
@@ -466,7 +471,8 @@ file: TOKFILE STRING TOKTAG TAGS
 				      break;
 		      }
 		      if (n == 0) {
-			      log_warnx("%s: unable to find unused tag", $2);
+			      log_warnx("%s: unable to find unused tag: %s",
+				  conf.conf_file, $2);
 			      exit(1);
 		      }
 	      }
