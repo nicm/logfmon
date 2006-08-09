@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -84,10 +85,29 @@ xfree(void *ptr)
 }
 
 int
+xsnprintf(char *str, size_t size, const char *fmt, ...)
+{
+	int	i;
+
+	va_list	ap;
+	
+	va_start(ap, fmt);
+	i = vsnprintf(str, size, fmt, ap);
+	va_end(ap);
+
+	if (i > 0 && (size_t) i >= size) {	/* truncation is failure */
+		i = -1;
+		errno = EINVAL;
+	}
+	
+	return (i);
+}
+
+int
 xasprintf(char **ret, const char *fmt, ...)
 {
         va_list ap;
-        int i;
+        int	i;
 
         va_start(ap, fmt);
         i = vasprintf(ret, fmt, ap);

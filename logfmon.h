@@ -399,5 +399,6 @@ void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t, size_t);
 void		 xfree(void *);
 int		 xasprintf(char **, const char *, ...);
+int		 xsnprintf(char *, size_t, const char *, ...);
 
 #endif

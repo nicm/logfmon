@@ -41,8 +41,8 @@ save_cache(void)
 
 	log_debug("saving cache");
 
-        res = snprintf(path, sizeof path, "%s.new", conf.cache_file);
-	if (res < 0 || (unsigned int) res > sizeof path) {
+        res = xsnprintf(path, sizeof path, "%s.new", conf.cache_file);
+	if (res < 0) {
                 log_warnx("bad cache file");
 		return (1);
         }
@@ -103,8 +103,8 @@ int load_cache(void)
 		if (len >= sizeof path)
 			goto error;
 
-		res = snprintf(fmt, sizeof fmt, "%%%uc %%lld %%lld", len);
-		if (res < 0 || (unsigned int) res > sizeof fmt)
+		res = xsnprintf(fmt, sizeof fmt, "%%%uc %%lld %%lld", len);
+		if (res < 0)
 			goto error;
 
 		memset(path, 0, sizeof path);
