@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "logfmon.h"
@@ -34,16 +35,24 @@
 extern int yylineno;
 
 int yyparse(void);
-void yyerror(const char *);
+void yyerror(const char *, ...);
 int yywrap(void);
 
 extern int yylex(void);
 
 __dead void
-yyerror(const char *s)
+yyerror(const char *fmt, ...)
 {
-        log_warnx("%s: %s at line %d", conf.conf_file, s, yylineno);
-	exit(1);
+        va_list  ap;
+        char    *s;
+
+        xasprintf(&s, "%s: %s at line %d", conf.conf_file, fmt, yylineno);
+
+        va_start(ap, fmt);
+        vlog(LOG_CRIT, s, ap);
+        va_end(ap);
+
+        exit(1);
 }
 
 int
@@ -104,11 +113,8 @@ user: NUMBER
 	      struct passwd *pw;
 	      
 	      pw = getpwuid($1);
-	      if (pw == NULL) {
-		      log_warnx("%s: unknown uid at line %d: %d", 
-			  conf.conf_file, yylineno, $1);
-		      exit(1);
-	      }
+	      if (pw == NULL)
+		      yyerror("unknown uid %d", $1);
 	      
 	      $$ = pw->pw_uid;
 	      
@@ -119,11 +125,8 @@ user: NUMBER
 	      struct passwd *pw;
 	     
 	      pw = getpwnam($1);
-	      if (pw == NULL) {
-		      log_warnx("%s: unknown user at line %d: %s", 
-			  conf.conf_file, yylineno, $1);
-		      exit(1);
-	      }
+	      if (pw == NULL)
+		      yyerror("unknown user \"%s\"", $1);
 	      
 	      $$ = pw->pw_uid;
 	      
@@ -136,11 +139,8 @@ group: NUMBER
 	       struct group *gr;
 
 	       gr = getgrgid($1);
-	       if (gr == NULL) {
-		       log_warnx("%s: unknown gid at line %d: %d", 
-			   conf.conf_file, yylineno, $1);
-		       exit(1);
-	       }
+	       if (gr == NULL)
+		       yyerror("unknown gid %d", $1);
 
 	       $$ = gr->gr_gid;
 	       
@@ -151,11 +151,8 @@ group: NUMBER
 	       struct group *gr;
 
 	       gr = getgrnam($1);
-	       if (gr == NULL) {
-		       log_warnx("%s: unknown group at line %d: %s", 
-			   conf.conf_file, yylineno, $1);
-		       exit(1);
-	       }
+	       if (gr == NULL)
+		       yyerror("unknown group \"%s\"", $1);
 	       
 	       $$ = gr->gr_gid;
 
@@ -200,11 +197,8 @@ set: TOKSET OPTMAILCMD STRING
      }
    | TOKSET OPTLOGREGEXP STRING
      {
-	     if (regcomp(&conf.entry_re, $3, REG_EXTENDED) != 0) {
-		     log_warnx("%s: invalid log regexp at line %d: %s", 
-			 conf.conf_file, yylineno, $3);
-		     exit(1);
-	     }
+	     if (regcomp(&conf.entry_re, $3, REG_EXTENDED) != 0)
+		     yyerror("invalid log regexp", $3);
 
              xfree($3);
      }
@@ -470,11 +464,8 @@ file: TOKFILE STRING TOKTAG TAGS
 			      if (!find_file_by_tag(name))
 				      break;
 		      }
-		      if (n == 0) {
-			      log_warnx("%s: unable to find unused tag: %s",
-				  conf.conf_file, $2);
-			      exit(1);
-		      }
+		      if (n == 0)
+			      yyerror("unable to find unused tag");
 	      }
 	      if (add_file($2, name) == NULL)
 		      exit(1);
