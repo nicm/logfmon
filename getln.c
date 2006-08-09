@@ -137,12 +137,7 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 			}
 		}
 
-		while (used >= len) {
-			if (len > SIZE_MAX / 2)
-				fatalx("len too large");
-			len *= 2;
-			buf = xrealloc(buf, 1, len);
-		}
+		ENSURE_SIZE(buf, len, used);
 		buf[used++] = ch;
 	} while (ch != '\n');
 

@@ -149,6 +149,14 @@
 	}							 	\
 } while (0)
 
+/* Ensure buffer size */
+#define ENSURE_SIZE(buf, len, req) do {                                 \
+        while (len <= (req)) {                                          \
+                buf = xrealloc(buf, 2, len);                            \
+                len *= 2;                                               \
+        }                                                               \
+} while (0)
+
 extern char			*__progname;
 
 extern volatile sig_atomic_t	 reload;

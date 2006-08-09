@@ -29,15 +29,6 @@
 const char *actions[] = { "ignore", "exec", "pipe", "write", "write-append"
 			  "open", "append", "close", "clear", NULL };
 
-#define ENSURE_SIZE(buf, len, req) do {					\
-	while (len <= (req)) {						\
-		if (len > SIZE_MAX / 2)					\
-			fatalx("size too large");			\
-		len *= 2;						\
-		buf = xrealloc(buf, 1, len);				\
-	}								\
-} while (0)
-
 char *
 repl_one(char *src, char *rpl)
 {

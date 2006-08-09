@@ -174,12 +174,7 @@ extern __dead void yyerror(const char *);
 
                 *(yylval.string + pos) = ch;
                 pos++;
-                if (pos >= len) {
-			if (len > SIZE_MAX / 2)
-				fatalx("len too large");
-                        len *= 2;
-                        yylval.string = xrealloc(yylval.string, 1, len + 1);
-                }
+		ENSURE_SIZE(yylval.string, len, pos);
         }
 
         *(yylval.string + pos) = '\0';

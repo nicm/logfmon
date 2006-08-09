@@ -131,12 +131,7 @@ read_line(struct file *file, int *error)
 	/* there is an existing buffer, so expand it to fit if necessary.
 	   add an extra byte on to the length in case the data is finished
 	   and we need to add a \0 */
-	while (file->bufused + len + 1 > file->buflen) {
-		if (file->buflen > SIZE_MAX / 2)
-			fatalx("file->buflen too large");
-		file->buflen *= 2;
-		file->buf = xrealloc(file->buf, 1, file->buflen);
-	}
+	ENSURE_SIZE(file->buf, file->buflen, file->bufused + len + 1);
 
 	/* append our data and free the old buffer */
 	memcpy(file->buf + file->bufused, buf, len);
