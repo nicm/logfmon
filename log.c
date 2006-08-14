@@ -105,7 +105,7 @@ log_warn(const char *emsg, ...)
 void
 log_warnx(const char *emsg, ...)
 {
-	va_list	 ap;
+	va_list	ap;
 
 	va_start(ap, emsg);
 	vlog(LOG_CRIT, emsg, ap);
@@ -115,7 +115,7 @@ log_warnx(const char *emsg, ...)
 void
 log_info(const char *emsg, ...)
 {
-	va_list	 ap;
+	va_list	ap;
 
 	va_start(ap, emsg);
 	vlog(LOG_INFO, emsg, ap);
