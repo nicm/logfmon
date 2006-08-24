@@ -43,13 +43,13 @@ log_init(int n_debug)
 	debug = n_debug;
 
 	if (!debug)
-		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_MAIL);
 
 	tzset();
 }
 
-void
-logit(int pri, const char *fmt, ...)
+void printflike2
+logit(int pri, const char *fmt, ...) 
 {
 	va_list	ap;
 
@@ -78,7 +78,7 @@ vlog(int pri, const char *fmt, va_list ap)
 }
 
 
-void
+void printflike1
 log_warn(const char *emsg, ...)
 {
 	char	*nfmt;
@@ -102,7 +102,7 @@ log_warn(const char *emsg, ...)
 	}
 }
 
-void
+void printflike1
 log_warnx(const char *emsg, ...)
 {
 	va_list	ap;
@@ -112,7 +112,7 @@ log_warnx(const char *emsg, ...)
 	va_end(ap);
 }
 
-void
+void printflike1
 log_info(const char *emsg, ...)
 {
 	va_list	ap;
@@ -122,12 +122,36 @@ log_info(const char *emsg, ...)
 	va_end(ap);
 }
 
-void
+void printflike1
 log_debug(const char *emsg, ...)
 {
 	va_list	ap;
 
-	if (conf.debug) { /* don't log debug messages unless real debug set */
+	if (conf.debug > 0) {
+		va_start(ap, emsg);
+		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void printflike1
+log_debug2(const char *emsg, ...)
+{
+	va_list	ap;
+
+	if (conf.debug > 1) {
+		va_start(ap, emsg);
+		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void printflike1
+log_debug3(const char *emsg, ...)
+{
+	va_list	ap;
+
+	if (conf.debug > 2) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);

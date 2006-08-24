@@ -84,7 +84,7 @@ xfree(void *ptr)
 	free(ptr);
 }
 
-int
+int printflike3
 xsnprintf(char *str, size_t size, const char *fmt, ...)
 {
 	int	i;
@@ -103,7 +103,7 @@ xsnprintf(char *str, size_t size, const char *fmt, ...)
 	return (i);
 }
 
-int
+int printflike2
 xasprintf(char **ret, const char *fmt, ...)
 {
         va_list ap;

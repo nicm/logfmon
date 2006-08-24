@@ -57,6 +57,11 @@
 #define __dead
 #endif
 
+/* Attribute to make gcc check printf-like arguments. */
+#define printflike1 __attribute__ ((format (printf, 1, 2)))
+#define printflike2 __attribute__ ((format (printf, 2, 3)))
+#define printflike3 __attribute__ ((format (printf, 3, 4)))
+
 #ifndef TAILQ_FIRST
 #define TAILQ_FIRST(head) (head)->tqh_first
 #endif
@@ -372,14 +377,16 @@ struct file	*find_file_mismatch(void);
 char		*getln(FILE *, int *, int *, size_t *);
 
 /* log.c */
-void		 log_init(int);
-void    	 vlog(int, const char *, va_list);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-__dead void	 fatal(const char *);
-__dead void	 fatalx(const char *);
+void		 	 log_init(int);
+void    	 	 vlog(int, const char *, va_list);
+void printflike1	 log_warn(const char *, ...);
+void printflike1	 log_warnx(const char *, ...);
+void printflike1	 log_info(const char *, ...);
+void printflike1	 log_debug(const char *, ...);
+void printflike1	 log_debug2(const char *, ...);
+void printflike1	 log_debug3(const char *, ...);
+__dead void		 fatal(const char *);
+__dead void		 fatalx(const char *);
 
 /* rules.c */
 void		 free_tags(struct tags *);
@@ -398,7 +405,7 @@ void		*xcalloc(size_t, size_t);
 void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t, size_t);
 void		 xfree(void *);
-int		 xasprintf(char **, const char *, ...);
-int		 xsnprintf(char *, size_t, const char *, ...);
+int printflike2	 xasprintf(char **, const char *, ...);
+int printflike3	 xsnprintf(char *, size_t, const char *, ...);
 
 #endif
