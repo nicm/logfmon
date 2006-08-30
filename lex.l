@@ -96,20 +96,16 @@ extern __dead void yyerror(const char *);
         return (TAGS);
 }
 [0-9]+[HhMmSs] {
-        char		ch;
-	long long	num;
+	const char	*errstr;
+        char	       *cp, ch;
 
-        ch = *(yytext + strlen(yytext) - 1);
-        *(yytext + strlen(yytext) - 1) = '\0';
+	cp = yytext + strlen(yytext) - 1;
+	ch = *cp;
+	*cp = '\0';
 
-	errno = 0;
-	num = strtoll(yytext, NULL, 10);
-	if (num == 0 && (errno == EINVAL || errno == ERANGE))
-		yyerror("illegal time");
-	if (num > INT_MAX)
-		yyerror("time too large");
-	yylval.number = num;
-
+        yylval.number = strtonum(yytext, 0, INT_MAX, &errstr);
+	if (errstr != NULL)
+		yyerror("illegal number");
         switch (ch) {
         case 'h':
 	case 'H':
@@ -128,15 +124,11 @@ extern __dead void yyerror(const char *);
         return (TIME);
 }
 [0-9]+ {
-	long long	num;
+	const char	*errstr;
 
-	errno = 0;
-        num = strtol(yytext, NULL, 10);
-	if (num == 0 && (errno == EINVAL || errno == ERANGE))
+        yylval.number = strtonum(yytext, 0, INT_MAX, &errstr);
+	if (errstr != NULL)
 		yyerror("illegal number");
-	if (num > INT_MAX)
-		yyerror("number too large");
-	yylval.number = num;
 
         return (NUMBER);
 }

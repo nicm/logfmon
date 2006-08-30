@@ -4,7 +4,7 @@
 .PHONY: clean index.html
 
 PROG= logfmon
-VERSION= 0.9c
+VERSION= 1.0
 
 OS!= uname
 REL!= uname -r
@@ -19,14 +19,14 @@ LEX= lex
 YACC= yacc -d
 
 CC= cc
-#CFLAGS+= -g -ggdb
-#CFLAGS+= -DDEBUG
+CFLAGS+= -std=c99
+CFLAGS+= -g -ggdb -DDEBUG
 CFLAGS+= -pedantic -Wno-long-long
-CFLAGS+= -Wall -W -Wnested-externs -Wformat-security
+CFLAGS+= -Wall -W -Wnested-externs -Wformat=2
 CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
-CFLAGS+= -Wsign-compare
+CFLAGS+= -Wsign-compare -Wredundant-decls
 CFLAGS+= -DBUILD="\"$(VERSION) ($(FILEMON))\""
 CFLAGS+= -DUSE_FGETLN
 
@@ -43,7 +43,6 @@ LDFLAGS+= -pthread
 LIBS+= -lpthread
 .endif
 
-TARFLAGS= 
 DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd \
 	GNUmakefile Makefile *.[1-9] README \
 	rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10

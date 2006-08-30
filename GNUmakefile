@@ -44,16 +44,16 @@ SRCS += daemon.c asprintf.c
 DEFS += -DNO_PROGNAME -DNO_ASPRINTF -DNO_DAEMON -DNO_QUEUE_H
 endif
 ifeq ($(shell uname),Linux)
-SRCS += strlcpy.c strlcat.c
-DEFS += -D_GNU_SOURCE -DNO_STRLCPY -DNO_STRLCAT -DUSE_GETLINE
+SRCS += strlcpy.c strlcat.c strtonum.c
+DEFS += -D_GNU_SOURCE -DNO_STRLCPY -DNO_STRLCAT -DUSE_GETLINE -DNO_STRTONUM
 endif
 
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 CPPFLAGS = $(DEFS) -I.
-CFLAGS = -pedantic -Wno-long-long -Wall -W -Wnested-externs		\
-	 -Wformat-security -Wmissing-prototypes -Wstrict-prototypes	\
-	 -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual	\
-	 -Wsign-compare 
+CFLAGS+= -std=c99 -pedantic -Wno-long-long -Wall -W -Wnested-externs \
+	-Wformat=2 -Wmissing-prototypes -Wstrict-prototypes \
+	-Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual \
+	-Wsign-compare -Wredundant-decls
 
 LIBS_fam = -lfam
 LIBS_linux = 

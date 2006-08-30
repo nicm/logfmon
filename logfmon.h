@@ -305,6 +305,12 @@ struct conf {
 };
 extern struct conf		 conf;
 
+#ifdef NO_STRTONUM
+/* strtonum.c */
+long long                strtonum(const char *, long long, long long,
+    			     const char **);
+#endif
+
 #ifdef NO_STRLCPY
 /* strlcpy.c */
 size_t	 strlcpy(char *, const char *, size_t);
