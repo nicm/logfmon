@@ -100,7 +100,7 @@ This sets the regexp that
 uses to select the part of each log line which is to be compared against the
 ruleset. The first submatch (enclosed in parenthesis) is used. The default
 regexp is set for
-.Xr syslog 3 
+.Xr syslog 3
 format:
 .Bd -ragged -offset indent
 ^[A-Z][a-z][a-z] [0-9 ][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* (.*)$
@@ -251,8 +251,8 @@ in later rules.
 .Pp
 The forms of
 .Ic match
-command relating to contexts are described below. All the non-context actions, 
-.Ic ignore,
+command relating to contexts are described below. All the non-context actions,
+.Ic ignore ,
 .Ic pipe ,
 .Ic exec ,
 .Ic write
@@ -265,8 +265,8 @@ appears below. When
 is used, the entire context is piped to the supplied command. When
 .Ic write
 or
-.Ic write-append 
-are used, 
+.Ic write-append
+are used,
 .Xr logfmon 8
 attempts to write the context to the specified file, overwriting with the
 former and appending with the latter.
@@ -350,9 +350,8 @@ default
 .Xr logfmon 8
 configuration file
 .El
+.Sh SEE ALSO
+.Xr re_format 7 ,
+.Xr logfmon 8
 .Sh AUTHORS
 .An Nicholas Marriott Aq nicm@users.sourceforge.net
-.Sh SEE ALSO
-.Xr logfmon 8 ,
-.Xr re_format 7
-.Rs
