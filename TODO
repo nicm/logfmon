@@ -1,0 +1,5 @@
+- Timeouts if no matches.
+- Options for linux wakeup time, reopen time, etc
+- Parse tags using yacc rather than lex loop
+- Differentiate between file closed from error and file went missing and try to restore file ptr on the former
+- Logging and error handling is all over the place, and some functions have too many side-effects
