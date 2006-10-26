@@ -254,12 +254,13 @@ struct rule {
 struct file {
         time_t		 	 timer;
 
+	void			*data;	/* event data */
+
         char			*path;
 	struct tag		 tag;
 
         FILE			*fd;
 
-        off_t		 	 size;
         off_t		 	 offset;
 
 	char			*buf;
@@ -371,6 +372,7 @@ struct file	*add_file(char *, char *);
 void		 free_files(void);
 void		 reset_file(struct file *);
 unsigned int	 count_open_files(void);
+int		 file_size(struct file *, off_t *);
 void		 open_files(void);
 unsigned int	 reopen_files(unsigned int *);
 void		 close_files(void);

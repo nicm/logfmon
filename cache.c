@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -54,9 +53,8 @@ save_cache(void)
         }
 
         TAILQ_FOREACH(file, &conf.files, entry) {
-                if (fprintf(fd,
-		    "%lu %s %lld %lld\n", (unsigned long) strlen(file->path),
-		    file->path, (long long) file->size,
+                if (fprintf(fd, "%lu %s 0 %lld\n",
+		    (unsigned long) strlen(file->path), file->path,
 		    (long long) file->offset) == -1) {
                         fclose(fd);
                         log_warnx("error writing cache");
@@ -76,13 +74,13 @@ save_cache(void)
         return (0);
 }
 
-int load_cache(void)
+int
+load_cache(void)
 {
         struct file	*file;
-        struct stat	 sb;
         FILE		*fd;
         char		 path[MAXPATHLEN], fmt[32];
-        off_t	         size, off;
+        off_t	         off;
 	int		 res;
         unsigned int	 len;
 
@@ -103,28 +101,20 @@ int load_cache(void)
 		if (len >= sizeof path)
 			goto error;
 
-		res = xsnprintf(fmt, sizeof fmt, "%%%uc %%lld %%lld", len);
+		res = xsnprintf(fmt, sizeof fmt, "%%%uc %%*lld %%lld", len);
 		if (res < 0)
 			goto error;
 
 		memset(path, 0, sizeof path);
-                if (fscanf(fd, fmt, path, &size, &off) != 3)
+                if (fscanf(fd, fmt, path, &off) != 2)
 			goto error;
                 path[len] = '\0';
 
                 file = find_file_by_path(path);
                 if (file != NULL) {
-                        file->offset = 0;
-                        if (stat(path, &sb) != 0)
-                                log_warn("%s", path);
-                        else {
-                                if (sb.st_size >= size) {
-                                        file->offset = off;
-                                        file->size = sb.st_size;
-                                }
-                        }
-			log_debug("file %s, was %lld/%lld now %lld/%lld",
-			    path, off, size, file->offset, file->size);
+			file->offset = off;
+			log_debug("file %s, was %lld now %lld",
+			    path, off, file->offset);
                 }
         }
 

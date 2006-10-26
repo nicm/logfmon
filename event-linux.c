@@ -69,8 +69,9 @@ close_events(void)
 struct file *
 get_event(enum event *event, int timeout)
 {
-        struct stat	sb;
-        int		n;
+        struct stat	 sb;
+        int		 n;
+	off_t		*size;
 
         n = 0;
         for (;;) {
@@ -96,12 +97,21 @@ get_event(enum event *event, int timeout)
                                         *event = EVENT_REOPEN;
                                         return (evfile);
                                 }
-                                if (sb.st_size < evfile->size) {
+
+				if (evfile->data == NULL) {
+					evfile->data = xmalloc(sizeof (off_t));
+					size = evfile->data;
+					*size = sb.st_size;
+					return (NULL);
+				}
+
+				size = evfile->data;
+                                if (sb.st_size < *size) {
                                         *event = EVENT_REOPEN;
                                         return (evfile);
                                 }
-                                if (sb.st_size > evfile->size) {
-                                        evfile->size = sb.st_size;
+                                if (sb.st_size > *size) {
+					*size = sb.st_size;
                                         *event = EVENT_READ;
                                         return (evfile);
                                 }

@@ -78,6 +78,8 @@ free_file(struct file *file)
 	reset_file(file);
 	free_contexts(file);
 	DESTROY_MUTEX(file->saves_mutex);
+	if (file->data != NULL)
+		xfree(file->data);
 	xfree(file->path);
 	xfree(file);
 }
@@ -96,6 +98,18 @@ free_files(void)
 		free_file(file);
 	}
 	UNLOCK_MUTEX(conf.files_mutex);
+}
+
+int
+file_size(struct file *file, off_t *size)
+{
+	struct stat	sb;
+
+	if (file->fd == NULL || fstat(fileno(file->fd), &sb) != 0)
+		return (1);
+
+	*size = sb.st_size;
+	return (0);
 }
 
 void
@@ -132,31 +146,30 @@ void
 open_files(void)
 {
         struct file	*file;
-	struct stat	 st;
+	off_t		 size;
 
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (file->fd == NULL) {
                         file->fd = fopen(file->path, "r");
-                        if (file->fd == NULL)
+                        if (file->fd == NULL) {
                                 log_warn("%s", file->path);
-                        else {
-				if (fstat(fileno(file->fd), &st) < 0) {
-					log_warn("%s", file->path);
-					fclose(file->fd);
-					file->fd = NULL;
-				} else {
-					file->timer = 0;
-					file->size = st.st_size;
-					if (file->offset == 0)
-						continue;
-					if (fseeko(file->fd, file->offset,
-					    SEEK_SET) != 0)
-						log_warn("fseeko");
+				continue;
+			}
 
-					file->buf = NULL;
-				}
-                        }
-                }
+			file->timer = 0;
+			file->buf = NULL;
+
+			if (file_size(file, &size) != 0) {
+				fclose(file->fd);
+				file->fd = NULL;
+				continue;
+			}
+			/* if the offset is outside the file, reset it */
+			if (file->offset > size)
+				file->offset = 0;
+			if (fseeko(file->fd, file->offset, SEEK_SET) != 0)
+				log_warn("fseeko");
+		}
         }
 }
 
@@ -171,30 +184,33 @@ reopen_files(unsigned int *failed)
         opened = 0;
 
         TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd == NULL) {
-			if (file->buf != NULL) {
-				xfree(file->buf);
-				file->buf = NULL;
+                if (file->fd != NULL)
+			continue;
+		if (file->buf != NULL) {
+			xfree(file->buf);
+			file->buf = NULL;
+		}
+		if (file->timer != 0 && file->timer > time(NULL)) {
+			if (failed != NULL)
+				(*failed)++;
+			continue;
+		}
+		
+		file->fd = fopen(file->path, "r");
+		if (file->fd == NULL) {
+			if (file->fd != NULL) {
+				fclose(file->fd);
+				file->fd = NULL;
 			}
-
-                        if (file->timer != 0 && file->timer > time(NULL)) {
-                                if (failed != NULL)
-                                        (*failed)++;
-                                continue;
-                        }
-
-			file->fd = fopen(file->path, "r");
-			if (file->fd == NULL) {
-				if (failed != NULL)
-					(*failed)++;
-			} else {
-				file->timer = 0;
-				file->size = 0;
-				file->offset = 0;
-				opened++;
-			}
-                }
-        }
+			if (failed != NULL)
+				(*failed)++;
+			continue;
+		}
+			
+		file->timer = 0;
+		file->offset = 0;
+		opened++;
+	}
 
         return (opened);
 }
@@ -252,19 +268,6 @@ find_file_by_fd(int fd)
         TAILQ_FOREACH(file, &conf.files, entry) {
                 if (file->fd != NULL && fileno(file->fd) == fd)
                         return (file);
-        }
-
-        return (NULL);
-}
-
-struct file *
-find_file_mismatch(void)
-{
-        struct file	*file;
-
-        TAILQ_FOREACH(file, &conf.files, entry) {
-		if (file->fd != NULL && file->size != file->offset)
-			return (file);
         }
 
         return (NULL);

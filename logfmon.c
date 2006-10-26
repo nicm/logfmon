@@ -49,6 +49,7 @@ struct conf		 conf;
 int			 reload_conf(void);
 int			 load_conf(void);
 void			 sighandler(int);
+int			 read_lines(struct file *);
 char			*read_line(struct file *, int *);
 int			 parse_line(char *, struct file *);
 void			 usage(void);
@@ -100,6 +101,21 @@ reload_conf(void)
 	init_events();
 
 	return (0);
+}
+
+int
+read_lines(struct file *file)
+{
+	char		*line;
+	int	 	error;
+
+	while ((line = read_line(file, &error)) != NULL) {
+		if (parse_line(line, file) != 0)
+			exit(1);
+		xfree(line);
+	}
+	
+	return (error);
 }
 
 char *
@@ -261,14 +277,14 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-        int		 opt, timeout, dirty, error;
+        int		 opt, timeout, dirty;
 	unsigned int	 failed;
         pthread_t	 thread;
         time_t		 expiretime, cachetime;
         enum event	 event;
         struct file	*file;
         FILE		*fd;
-	char		*line;
+	off_t		 size;
 
 	memset(&conf, 0, sizeof conf);
 	TAILQ_INIT(&conf.rules);
@@ -363,8 +379,6 @@ main(int argc, char **argv)
 
         log_info("started");
 
-        load_cache();
-
         reload = 0;
         quit = 0;
 
@@ -394,7 +408,27 @@ main(int argc, char **argv)
                 }
         }
 
+        load_cache();
         open_files();
+
+	/* read as much of files as possible before entering main loop. this
+	   deals with the anything added since last cache write and gets up to
+	   date on new files */
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->fd == NULL || file_size(file, &size) != 0) 
+			continue;
+
+		if (file->offset < size) {
+			log_debug("mismatch: tag=%s", file->tag.name);
+			if (read_lines(file) != 0) {
+				fclose(file->fd);
+				file->fd = NULL;
+			} else
+				log_debug("new offset=%lld", file->offset);
+		}
+        }
+	save_cache();
+
         init_events();
 
         dirty = 0;
@@ -437,17 +471,8 @@ main(int argc, char **argv)
                 if (failed > 0)
                         timeout = REOPENTIMEOUT;
 
-		file = find_file_mismatch();
-		if (file == NULL) {
-			/* get an event */
-			file = get_event(&event, timeout);
-		} else {
-			/* force read event */
-			event = EVENT_READ;
-			log_debug("file mismatch: size=%lld offset=%lld",
-			    file->size, file->offset);
-		}
-
+		/* get an event */
+		file = get_event(&event, timeout);
                 switch (event) {
                 case EVENT_NONE:
                 case EVENT_TIMEOUT:
@@ -459,21 +484,11 @@ main(int argc, char **argv)
                         break;
                 case EVENT_READ:
 			log_debug("read: tag=%s", file->tag.name);
-			while ((line = read_line(file, &error)) != NULL) {
-				if (parse_line(line, file) != 0)
-					exit(1);
-				xfree(line);
-				file->offset = ftello(file->fd);
-				if (file->size < file->offset)
-					file->size = file->offset;
-				log_debug("new size=%lld, new offset=%lld",
-				    file->size, file->offset);
-                        }
-                        if (error) {
-                                fclose(file->fd);
-                                file->fd = NULL;
-                        }
-
+			if (read_lines(file) != 0) {
+				fclose(file->fd);
+				file->fd = NULL;
+			} else
+				log_debug("new offset=%lld", file->offset);
                         dirty = 1;
                         break;
                 }

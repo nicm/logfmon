@@ -106,10 +106,8 @@ get_event(enum event *event, int timeout)
         case EVFILT_READ:
                 if (kev.data < 0)
                         *event = EVENT_REOPEN;
-                else {
-                        file->size += kev.data;
+                else
                         *event = EVENT_READ;
-                }
                 return (file);
         }
 
