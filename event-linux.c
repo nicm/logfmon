@@ -72,6 +72,7 @@ get_event(enum event *event, int timeout)
         struct stat	 sb;
         int		 n;
 	off_t		*size;
+	struct file	*file;
 
         n = 0;
         for (;;) {
@@ -92,30 +93,32 @@ get_event(enum event *event, int timeout)
                 if (evfile == NULL)
                         evfile = TAILQ_FIRST(&conf.files);
 		while (evfile != NULL) {
-                        if (evfile->fd != NULL) {
-                                if (stat(evfile->path, &sb) != 0) {
+			file = evfile;
+			evfile = TAILQ_NEXT(evfile, entry);
+
+                        if (file->fd != NULL) {
+                                if (stat(file->path, &sb) != 0) {
                                         *event = EVENT_REOPEN;
-                                        return (evfile);
+                                        return (file);
                                 }
 
-				if (evfile->data == NULL) {
-					evfile->data = xmalloc(sizeof (off_t));
-					*((off_t *) evfile->data) = sb.st_size;
+				if (file->data == NULL) {
+					file->data = xmalloc(sizeof (off_t));
+					*((off_t *) file->data) = sb.st_size;
 					return (NULL);
 				}
 
-				size = evfile->data;
+				size = file->data;
                                 if (sb.st_size < *size) {
                                         *event = EVENT_REOPEN;
-                                        return (evfile);
+                                        return (file);
                                 }
                                 if (sb.st_size > *size) {
 					*size = sb.st_size;
                                         *event = EVENT_READ;
-                                        return (evfile);
+                                        return (file);
                                 }
                         }
-			evfile = TAILQ_NEXT(evfile, entry);
                 }
         }
 }
