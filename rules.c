@@ -122,6 +122,7 @@ copy_tags(struct tags *src, struct tags *dst)
 	TAILQ_FOREACH(t_src, src, entry) {
 		t_dst = xmalloc(sizeof (struct tag));
 		strlcpy(t_dst->name, t_src->name, sizeof t_dst->name);
+		TAILQ_INSERT_TAIL(dst, t_dst, entry);
 	}
 }
 
