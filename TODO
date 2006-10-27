@@ -3,3 +3,8 @@
 - Parse tags using yacc rather than lex loop
 - Differentiate between file closed from error and file went missing and try to restore file ptr on the former
 - Logging and error handling is all over the place, and some functions have too many side-effects
+- Regexp expressions "x and y or not z"
+- Multiple actions on match?
+- Define user actions 
+- Macros
+- Include
