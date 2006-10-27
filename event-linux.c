@@ -100,8 +100,7 @@ get_event(enum event *event, int timeout)
 
 				if (evfile->data == NULL) {
 					evfile->data = xmalloc(sizeof (off_t));
-					size = evfile->data;
-					*size = sb.st_size;
+					*((off_t *) evfile->data) = sb.st_size;
 					return (NULL);
 				}
 
