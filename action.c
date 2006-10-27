@@ -26,7 +26,7 @@
 
 #include "logfmon.h"
 
-const char *actions[] = { "ignore", "exec", "pipe", "write", "write-append"
+const char *actions[] = { "ignore", "exec", "pipe", "write", "write-append",
 			  "open", "append", "close", "clear", NULL };
 
 char *
