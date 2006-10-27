@@ -106,14 +106,16 @@ reload_conf(void)
 int
 read_lines(struct file *file)
 {
-	char		*line;
-	int	 	error;
+	char	*line;
+	int	 error;
 
 	while ((line = read_line(file, &error)) != NULL) {
 		if (parse_line(line, file) != 0)
 			exit(1);
-		xfree(line);
+		xfree(line);		
 	}
+	if (!error)
+		file->offset = ftello(file->fd);
 	
 	return (error);
 }
