@@ -276,6 +276,7 @@ usage(void)
         exit(1);
 }
 
+#ifndef REGRESS
 int
 main(int argc, char **argv)
 {
@@ -508,3 +509,4 @@ main(int argc, char **argv)
 
 	return (0);
 }
+#endif
