@@ -32,7 +32,9 @@
 
 #include "logfmon.h"
 
-extern int yylineno;
+struct macros	macros = TAILQ_HEAD_INITIALIZER(macros);
+
+extern int 	yylineno;
 
 int		yyparse(void);
 void 		yyerror(const char *, ...);
@@ -40,21 +42,6 @@ int 		yywrap(void);
 struct macro   *find_macro(char *);
 
 extern int yylex(void);
-
-struct macro {
-	char			*name;
-	union {
-		int	 	 number;
-		char		*string;
-	} value;
-	enum {
-		MACRO_NUMBER,
-		MACRO_STRING
-	} type;
-
-	TAILQ_ENTRY(macro)	entry;
-};
-TAILQ_HEAD(macros, macro)	macros = TAILQ_HEAD_INITIALIZER(macros);
 
 __dead void
 yyerror(const char *fmt, ...)
@@ -79,7 +66,6 @@ yywrap(void)
 	while (!TAILQ_EMPTY(&macros)) {
 		macro = TAILQ_FIRST(&macros);
 		TAILQ_REMOVE(&macros, macro, entry);
-		xfree(macro->name);
 		if (macro->type == MACRO_STRING)
 			xfree(macro->value.string);
 		xfree(macro);
@@ -120,7 +106,7 @@ find_macro(char *name)
 }
 
 %token <number> NUMBER TIME
-%token <string> STRING STRMACRO NUMMACRO
+%token <string> STRING STRMACRO STRMACROB NUMMACRO NUMMACROB
 %token <tags> TAGS
 %token <action.act> BASICACTION
 
@@ -137,9 +123,10 @@ find_macro(char *name)
 /* Rules */
 
 cmds: /* empty */
+    | cmds defmacro
+    | cmds file
     | cmds rule
     | cmds set
-    | cmds file
 
 time: TIME
     | num
@@ -155,12 +142,39 @@ str: STRING
      {
 	     struct macro	*macro;
 
+	     if (strlen($1) > MAXNAMESIZE)
+		     yyerror("macro name too long: %s", $1);
+
 	     if ((macro = find_macro($1)) == NULL)
 		     yyerror("undefined macro: %s", $1);
 	     if (macro->type != MACRO_STRING)
 		     yyerror("string macro expected: %s", $1);
 
-	     $$ = macro->value.string;
+	     $$ = xstrdup(macro->value.string);
+
+	     xfree($1);
+     }
+   | STRMACROB
+     {
+	     struct macro	*macro;
+	     char 		 name[MAXNAMESIZE];
+
+	     if (strlen($1) > MAXNAMESIZE)
+ 		     yyerror("macro name too long: %s", $1);
+
+	     name[0] = $1[0];
+	     name[1] = '\0';
+	     strlcat(name, $1 + 2, MAXNAMESIZE);
+	     name[strlen(name) - 1] = '\0';
+
+	     if ((macro = find_macro(name)) == NULL)
+		     yyerror("undefined macro: %s", name);
+	     if (macro->type != MACRO_STRING)
+		     yyerror("string macro expected: %s", name);
+
+	     $$ = xstrdup(macro->value.string);
+
+	     xfree($1);
      }
 
 num: NUMBER
@@ -171,13 +185,71 @@ num: NUMBER
      {
 	     struct macro	*macro;
 
+	     if (strlen($1) > MAXNAMESIZE)
+		     yyerror("macro name too long: %s", $1);
+
 	     if ((macro = find_macro($1)) == NULL)
 		     yyerror("undefined macro: %s", $1);
 	     if (macro->type != MACRO_NUMBER)
 		     yyerror("number macro expected: %s", $1);
 
 	     $$ = macro->value.number;
+
+	     xfree($1);
      }
+   | NUMMACROB
+     {
+	     struct macro	*macro;
+	     char 		 name[MAXNAMESIZE];
+
+	     if (strlen($1) > MAXNAMESIZE)
+		     yyerror("macro name too long: %s", $1);
+
+	     name[0] = $1[0];
+	     name[1] = '\0';
+	     strlcat(name, $1 + 2, MAXNAMESIZE);
+	     name[strlen(name) - 1] = '\0';
+
+	     if ((macro = find_macro(name)) == NULL)
+		     yyerror("undefined macro: %s", name);
+	     if (macro->type != MACRO_NUMBER)
+		     yyerror("number macro expected: %s", name);
+
+	     $$ = macro->value.number;
+
+	     xfree($1);
+     }
+
+defmacro: STRMACRO '=' STRING
+     	  {
+		  struct macro	*macro;
+		  
+		  if ((macro = find_macro($1)) == NULL) {
+			  macro = xmalloc(sizeof *macro);
+			  if (strlen($1) > MAXNAMESIZE)
+				  yyerror("macro name too long: %s", $1);
+			  strlcpy(macro->name, $1, sizeof macro->name);
+			  TAILQ_INSERT_HEAD(&macros, macro, entry);
+		  }
+		  macro->type = MACRO_STRING;
+		  macro->value.string = $3;
+		  xfree($1);
+	  }
+        | NUMMACRO '=' NUMBER
+	  {	
+	     struct macro	*macro;
+	     
+	     if ((macro = find_macro($1)) == NULL) {
+		     macro = xmalloc(sizeof *macro);
+		     if (strlen($1) > MAXNAMESIZE)
+			     yyerror("macro name too long: %s", $1);
+		     strlcpy(macro->name, $1, sizeof macro->name);
+		     TAILQ_INSERT_HEAD(&macros, macro, entry);
+	     }
+	     macro->type = MACRO_NUMBER;
+	     macro->value.number = $3;
+	     xfree($1);
+	  }
 
 user: num
       {
@@ -278,30 +350,6 @@ set: TOKSET OPTMAILCMD str
              if ($3 < 10)
                      yyerror("max threads must be at least 10");
              conf.thr_limit = $3;
-     }
-   | TOKSET STRMACRO STRING
-     {
-	     struct macro	*macro;
-
-	     if ((macro = find_macro($2)) == NULL) {
-		     macro = xmalloc(sizeof *macro);
-		     macro->name = $2;
-		     TAILQ_INSERT_HEAD(&macros, macro, entry);
-	     }
-	     macro->type = MACRO_STRING;
-	     macro->value.string = $3;
-     }
-   | TOKSET NUMMACRO NUMBER
-     {
-	     struct macro	*macro;
-
-	     if ((macro = find_macro($2)) == NULL) {
-		     macro = xmalloc(sizeof *macro);
-		     macro->name = $2;
-		     TAILQ_INSERT_HEAD(&macros, macro, entry);
-	     }
-	     macro->type = MACRO_NUMBER;
-	     macro->value.number = $3;
      }
 
 action: BASICACTION str

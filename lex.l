@@ -33,8 +33,11 @@
 #include "logfmon.h"
 #include "y.tab.h"
 
-extern int yylex(void);
-extern __dead void yyerror(const char *);
+extern int 			 yylex(void);
+extern __dead printflike1 void	 yyerror(const char *, ...);
+
+extern struct macros		 macros;
+extern struct macro		*find_macro(char *);
 %}
 
 %%
@@ -133,9 +136,12 @@ extern __dead void yyerror(const char *);
         return (NUMBER);
 }
 \" {
-	int		done = 0, ch;
-	size_t		pos = 0, len = 24;
+	int		 done = 0, ch, valid;
+	size_t		 pos = 0, len, off, slen;
+	char	         name[MAXNAMESIZE], *s;
+	struct macro	*macro;
 
+	len = 24;
         yylval.string = xmalloc(len + 1);
 
         while (!done) {
@@ -159,6 +165,55 @@ extern __dead void yyerror(const char *);
                                 break;
                         }
                         break;
+		case '$':
+		case '%':
+			name[0] = ch;
+			off = 1;
+
+			/* first character */
+			ch = input();
+			if (ch == 0 || ch == EOF)
+				yyerror("unterminated string");
+			if (ch != '{') {
+				unput(ch);
+				ch = name[0];
+				break;
+			}
+			
+			/* remaining characters */
+			valid = 1;
+			do {
+				ch = input();
+				if (ch == 0 || ch == EOF)
+					yyerror("unterminated string");
+				if (ch == '}')
+					break;
+				if (!ismacro(ch))
+					valid = 0;
+				name[off++] = ch;
+			} while (off < (sizeof name));
+			if (ch != '}')
+				yyerror("missing } or macro name too long");
+			name[off] = '\0';
+			if (!valid || !ismacrofirst(name[1]))
+				yyerror("invalid macro name: %s", name);
+
+			if ((macro = find_macro(name)) == NULL)
+				yyerror("undefined macro: %s", name);
+			
+			if (macro->type == MACRO_NUMBER)
+ 				xasprintf(&s, "%lld", macro->value.number);
+			else
+				s = macro->value.string;
+			slen = strlen(s);
+			
+			ENSURE_SIZE(yylval.string, len, pos + slen + 1);
+			memcpy(yylval.string + pos, s, slen);
+			pos += slen;
+
+			if (macro->type == MACRO_NUMBER)
+				xfree(s);
+			continue;
                 case '"':
                         done = 1;
                         continue;
@@ -166,7 +221,7 @@ extern __dead void yyerror(const char *);
 
                 *(yylval.string + pos) = ch;
                 pos++;
-		ENSURE_SIZE(yylval.string, len, pos);
+                ENSURE_SIZE(yylval.string, len, pos);
         }
 
         *(yylval.string + pos) = '\0';
@@ -214,13 +269,21 @@ when return (TOKWHEN);
 
         return (TAGS);
 }
-\$[A-Za-z][A-Za-z0-9_-]* {
+\$[A-Za-z][A-Za-z0-9_]* {
         yylval.string = xstrdup(yytext);
 	return (STRMACRO);
 }
-\%[A-Za-z][A-Za-z0-9_-]* {
+\$\{[A-Za-z][A-Za-z0-9_]*\} {
+        yylval.string = xstrdup(yytext);
+	return (STRMACROB);
+}
+\%[A-Za-z][A-Za-z0-9_]* {
         yylval.string = xstrdup(yytext);
 	return (NUMMACRO);
+}
+\%\{[A-Za-z][A-Za-z0-9_]*\} {
+        yylval.string = xstrdup(yytext);
+	return (NUMMACROB);
 }
 [A-Za-z][A-Za-z0-9_-]* {
 	struct tag	*tag;
@@ -237,6 +300,7 @@ when return (TOKWHEN);
 
         return (TAGS);
 }
+= return ('=');
 \#.*\n /* ignore comments */;
 \n /* ignore end of line */;
 [ \t]+ /* ignore whitespace */;

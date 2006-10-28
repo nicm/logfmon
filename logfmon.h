@@ -37,6 +37,7 @@
 #define THREADLIMIT	100
 
 #define MAXTAGLEN	32
+#define MAXNAMESIZE	32
 
 #define MAILTIME	900
 #define MAILCMD		"/usr/bin/mail root"
@@ -170,6 +171,32 @@ extern char			*__progname;
 
 extern volatile sig_atomic_t	 reload;
 extern volatile sig_atomic_t	 quit;
+
+/* Macros in configuration file. */
+struct macro {
+	char			 name[MAXNAMESIZE];
+	union {
+		long long	 number;
+		char		*string;
+	} value;
+	enum {
+		MACRO_NUMBER,
+		MACRO_STRING
+	} type;
+
+	TAILQ_ENTRY(macro)	entry;
+};
+TAILQ_HEAD(macros, macro);
+
+/* Valid macro name chars. */
+#define ismacrofirst(c) (						\
+	((c) >= 'a' && (c) <= 'z') || 					\
+	((c) >= 'A' && (c) <= 'Z'))
+#define ismacro(c) (							\
+	((c) >= 'a' && (c) <= 'z') || 					\
+	((c) >= 'A' && (c) <= 'Z') ||					\
+	((c) >= '0' && (c) <= '9') ||					\
+	(c) == '_' || (c) == '-')
 
 /* Event types */
 enum event {

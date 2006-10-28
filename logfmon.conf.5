@@ -118,19 +118,19 @@ If this number is reached,
 will block until some of the threads exit.
 The default is 100.
 .Sh MACROS
-The
-.Ic set
-command is also be used to define macros.
-The syntax is:
+Macros may be defined using the following syntax:
 .Bl -tag -width Ds
-.It Xo Ic set Ar $name Ar string
+.It Xo Ar $name Ic = Ar string
 .Xc
-.It Xo Ic set Ar %name Ar number
+.It Xo Ar %name Ic = Ar number
 .Xc
 .El
 .Pp
 Macros are prefixed with $ to indicate a string value and % to indicate a numeric value.
-Once defined, a macro may then be used in any place a string or number is expected.
+Once defined, a macro may be used in any place a string or number is expected. Macros may be embedded in strings by surrounding their name (after the $ or %) with {}s, like so:
+.Bd -ragged -offset indent
+"abc ${mymacro} %{anothermacro} def"
+.Ed
 .Sh FILES
 The
 .Ic file
