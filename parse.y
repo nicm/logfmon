@@ -159,7 +159,7 @@ str: STRING
 	     struct macro	*macro;
 	     char 		 name[MAXNAMESIZE];
 
-	     if (strlen($1) > MAXNAMESIZE)
+	     if (strlen($1) > MAXNAMESIZE + 2)
  		     yyerror("macro name too long: %s", $1);
 
 	     name[0] = $1[0];
@@ -202,7 +202,7 @@ num: NUMBER
 	     struct macro	*macro;
 	     char 		 name[MAXNAMESIZE];
 
-	     if (strlen($1) > MAXNAMESIZE)
+	     if (strlen($1) > MAXNAMESIZE + 2)
 		     yyerror("macro name too long: %s", $1);
 
 	     name[0] = $1[0];
