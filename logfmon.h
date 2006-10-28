@@ -62,6 +62,10 @@
 #define printflike2 __attribute__ ((format (printf, 2, 3)))
 #define printflike3 __attribute__ ((format (printf, 3, 4)))
 
+#ifndef TAILQ_HEAD_INITIALIZER
+#define TAILQ_HEAD_INITIALIZER(head)					\
+	{ NULL, &(head).tqh_first }
+#endif
 #ifndef TAILQ_FIRST
 #define TAILQ_FIRST(head) (head)->tqh_first
 #endif

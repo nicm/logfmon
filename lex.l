@@ -214,6 +214,14 @@ when return (TOKWHEN);
 
         return (TAGS);
 }
+\$[A-Za-z][A-Za-z0-9_-]* {
+        yylval.string = xstrdup(yytext);
+	return (STRMACRO);
+}
+\%[A-Za-z][A-Za-z0-9_-]* {
+        yylval.string = xstrdup(yytext);
+	return (NUMMACRO);
+}
 [A-Za-z][A-Za-z0-9_-]* {
 	struct tag	*tag;
 

@@ -6,5 +6,7 @@
 - Regexp expressions "x and y or not z"
 - Multiple actions on match?
 - Define user actions 
-- Macros
-- Include
+- Include statement
+- Stop update of offset except after complete line
+- Investigate HUP no worky on linux
+- -n syntax check

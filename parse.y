@@ -34,11 +34,27 @@
 
 extern int yylineno;
 
-int yyparse(void);
-void yyerror(const char *, ...);
-int yywrap(void);
+int		yyparse(void);
+void 		yyerror(const char *, ...);
+int 		yywrap(void);
+struct macro   *find_macro(char *);
 
 extern int yylex(void);
+
+struct macro {
+	char			*name;
+	union {
+		int	 	 number;
+		char		*string;
+	} value;
+	enum {
+		MACRO_NUMBER,
+		MACRO_STRING
+	} type;
+
+	TAILQ_ENTRY(macro)	entry;
+};
+TAILQ_HEAD(macros, macro)	macros = TAILQ_HEAD_INITIALIZER(macros);
 
 __dead void
 yyerror(const char *fmt, ...)
@@ -58,7 +74,31 @@ yyerror(const char *fmt, ...)
 int
 yywrap(void)
 {
+	struct macro	*macro;
+
+	while (!TAILQ_EMPTY(&macros)) {
+		macro = TAILQ_FIRST(&macros);
+		TAILQ_REMOVE(&macros, macro, entry);
+		xfree(macro->name);
+		if (macro->type == MACRO_STRING)
+			xfree(macro->value.string);
+		xfree(macro);
+	}
+
         return (1);
+}
+
+struct macro *
+find_macro(char *name)
+{
+	struct macro	*macro;
+
+	TAILQ_FOREACH(macro, &macros, entry) {
+		if (strcmp(macro->name, name) == 0)
+			return (macro);
+	}
+
+	return (NULL);
 }
 %}
 
@@ -79,16 +119,15 @@ yywrap(void)
 	} action;
 }
 
-%token <number> NUMBER
-%token <number> TIME
-%token <string> STRING
+%token <number> NUMBER TIME
+%token <string> STRING STRMACRO NUMMACRO
 %token <tags> TAGS
 %token <action.act> BASICACTION
 
-%type  <number> time
+%type  <number> time num
 %type  <action> action
 %type  <tags> tags
-%type  <string> not
+%type  <string> not str
 %type  <number> user
 %type  <number> group
 %type  <flag> autoappend
@@ -103,12 +142,44 @@ cmds: /* empty */
     | cmds file
 
 time: TIME
-    | NUMBER
+    | num
       {
 	      $$ = $1;
       }
 
-user: NUMBER
+str: STRING
+     {
+	     $$ = $1;
+     }
+   | STRMACRO
+     {
+	     struct macro	*macro;
+
+	     if ((macro = find_macro($1)) == NULL)
+		     yyerror("undefined macro: %s", $1);
+	     if (macro->type != MACRO_STRING)
+		     yyerror("string macro expected: %s", $1);
+
+	     $$ = macro->value.string;
+     }
+
+num: NUMBER
+     {
+	     $$ = $1;
+     }
+   | NUMMACRO
+     {
+	     struct macro	*macro;
+
+	     if ((macro = find_macro($1)) == NULL)
+		     yyerror("undefined macro: %s", $1);
+	     if (macro->type != MACRO_NUMBER)
+		     yyerror("number macro expected: %s", $1);
+
+	     $$ = macro->value.number;
+     }
+
+user: num
       {
 	      struct passwd *pw;
 	      
@@ -120,7 +191,7 @@ user: NUMBER
 	      
 	      endpwent();
       }
-| STRING
+    | str
       {
 	      struct passwd *pw;
 	     
@@ -134,7 +205,7 @@ user: NUMBER
 	      xfree($1);
       }
 
-group: NUMBER
+group: num
        {
 	       struct group *gr;
 
@@ -146,7 +217,7 @@ group: NUMBER
 	       
              endgrent();
        }
-     | STRING
+     | str
        {
 	       struct group *gr;
 
@@ -160,20 +231,20 @@ group: NUMBER
 	       xfree($1);
        }
 
-set: TOKSET OPTMAILCMD STRING
+set: TOKSET OPTMAILCMD str
      {
              if (conf.mail_cmd != NULL)
                      xfree(conf.mail_cmd);
              conf.mail_cmd = $3;
      }
-   | TOKSET OPTCACHEFILE STRING
+   | TOKSET OPTCACHEFILE str
      {
              if (conf.cache_file == NULL)
                      conf.cache_file = $3;
              else
                      xfree($3);
      }
-   | TOKSET OPTPIDFILE STRING
+   | TOKSET OPTPIDFILE str
      {
              if (conf.pid_file == NULL)
                      conf.pid_file = $3;
@@ -195,21 +266,45 @@ set: TOKSET OPTMAILCMD STRING
      {
 	     conf.gid = $3;
      }
-   | TOKSET OPTLOGREGEXP STRING
+   | TOKSET OPTLOGREGEXP str
      {
 	     if (regcomp(&conf.entry_re, $3, REG_EXTENDED) != 0)
 		     yyerror("invalid log regexp", $3);
 
              xfree($3);
      }
-   | TOKSET OPTMAXTHREADS NUMBER
+   | TOKSET OPTMAXTHREADS num
      {
              if ($3 < 10)
                      yyerror("max threads must be at least 10");
              conf.thr_limit = $3;
      }
+   | TOKSET STRMACRO STRING
+     {
+	     struct macro	*macro;
 
-action: BASICACTION STRING
+	     if ((macro = find_macro($2)) == NULL) {
+		     macro = xmalloc(sizeof *macro);
+		     macro->name = $2;
+		     TAILQ_INSERT_HEAD(&macros, macro, entry);
+	     }
+	     macro->type = MACRO_STRING;
+	     macro->value.string = $3;
+     }
+   | TOKSET NUMMACRO NUMBER
+     {
+	     struct macro	*macro;
+
+	     if ((macro = find_macro($2)) == NULL) {
+		     macro = xmalloc(sizeof *macro);
+		     macro->name = $2;
+		     TAILQ_INSERT_HEAD(&macros, macro, entry);
+	     }
+	     macro->type = MACRO_NUMBER;
+	     macro->value.number = $3;
+     }
+
+action: BASICACTION str
         {
 		$$.act = $1;
 		$$.str = $2;
@@ -233,7 +328,7 @@ tags: TOKIN TAGS
 	      TAILQ_INIT($$);
       }
 
-not: TOKNOT STRING
+not: TOKNOT str
      {
 	     $$ = $2;
      }
@@ -252,7 +347,7 @@ autoappend: TOKAUTOAPPEND
 	    }	
 
 rule: /* match, action=* */
-      TOKMATCH tags STRING not action
+      TOKMATCH tags str not action
       {
               struct rule *rule;
 	      
@@ -270,7 +365,7 @@ rule: /* match, action=* */
       }
 
     /* match, action=open, expire=* */
-    | TOKMATCH tags STRING not TOKOPEN STRING autoappend TOKEXPIRE time action
+    | TOKMATCH tags str not TOKOPEN str autoappend TOKEXPIRE time action
       {
               struct rule *rule;
 
@@ -303,8 +398,8 @@ rule: /* match, action=* */
       }
 
     /* match, action=open, expire=*, when=* */
-    | TOKMATCH tags STRING not TOKOPEN STRING autoappend TOKEXPIRE time action 
-          TOKWHEN NUMBER action
+    | TOKMATCH tags str not TOKOPEN str autoappend TOKEXPIRE time action 
+          TOKWHEN num action
       {
               struct rule 	*rule;
 
@@ -343,7 +438,7 @@ rule: /* match, action=* */
       }
 
       /* match, action=append */
-    | TOKMATCH tags STRING not TOKAPPEND STRING
+    | TOKMATCH tags str not TOKAPPEND str
       {
               struct rule 	*rule;
 
@@ -364,7 +459,7 @@ rule: /* match, action=* */
       }
 
       /* match, action=close */
-    | TOKMATCH tags STRING not TOKCLOSE STRING action
+    | TOKMATCH tags str not TOKCLOSE str action
       {
               struct rule 	*rule;
 
@@ -388,7 +483,7 @@ rule: /* match, action=* */
       }
 
       /* match, action=clear */
-    | TOKMATCH tags STRING not TOKCLEAR STRING action
+    | TOKMATCH tags str not TOKCLEAR str action
       {
               struct rule 	*rule;
 
@@ -411,7 +506,7 @@ rule: /* match, action=* */
 		      xfree($4);
       }
 
-file: TOKFILE STRING TOKTAG TAGS
+file: TOKFILE str TOKTAG TAGS
       {
 	      struct tag	*tag;
 
@@ -433,7 +528,7 @@ file: TOKFILE STRING TOKTAG TAGS
 	      free_tags($4);
               xfree($4);
       }
-    | TOKFILE STRING
+    | TOKFILE str
       {
               unsigned int	n;
               char		name[MAXTAGLEN], num[13], *ptr;
