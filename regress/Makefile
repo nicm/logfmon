@@ -9,4 +9,3 @@ test-tags:
 		${CC} ${LDFLAGS} -L.. -o test-tags ${LIBS} ${OBJS:C/.*/..\/&/} test-tags.o
 		./test-tags
 		rm test-tags *.o
-
