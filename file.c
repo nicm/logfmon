@@ -78,8 +78,6 @@ free_file(struct file *file)
 	reset_file(file);
 	free_contexts(file);
 	DESTROY_MUTEX(file->saves_mutex);
-	if (file->data != NULL)
-		xfree(file->data);
 	xfree(file->path);
 	xfree(file);
 }

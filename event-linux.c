@@ -59,11 +59,27 @@ struct file	*evfile = NULL;
 void
 init_events(void)
 {
+	struct file	*file;
+
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		file->data = xmalloc(sizeof (off_t));
+
+		/* This gives us an EVENT_READ first time around which
+		   strictly speaking is not correct (get_event should only
+		   return if the file is actually changed), but who cares? */
+		*((off_t *) file->data) = 0;
+	}
 }
 
 void
 close_events(void)
 {
+	struct file	*file;
+
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		xfree(file->data);
+		file->data = NULL;
+	}
 }
 
 struct file *
@@ -91,29 +107,28 @@ get_event(enum event *event, int timeout)
                 }
 
                 if (evfile == NULL)
-                        evfile = TAILQ_FIRST(&conf.files);
+			evfile = TAILQ_FIRST(&conf.files);
 		while (evfile != NULL) {
 			file = evfile;
 			evfile = TAILQ_NEXT(evfile, entry);
 
-                        if (file->fd != NULL) {
+                        if (file->fd != NULL) {	
+				size = file->data;
+
                                 if (stat(file->path, &sb) != 0) {
+					*size = 0;
                                         *event = EVENT_REOPEN;
                                         return (file);
                                 }
 
-				if (file->data == NULL) {
-					file->data = xmalloc(sizeof (off_t));
-					*((off_t *) file->data) = sb.st_size;
-					return (NULL);
-				}
-
-				size = file->data;
-                                if (sb.st_size < *size) {
+				if (sb.st_size < *size) {
+					*size = 0;
                                         *event = EVENT_REOPEN;
                                         return (file);
                                 }
                                 if (sb.st_size > *size) {
+					if (fsync(fileno(file->fd)) != 0)
+						log_warn("fsync");
 					*size = sb.st_size;
                                         *event = EVENT_READ;
                                         return (file);

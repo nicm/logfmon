@@ -130,10 +130,6 @@ read_line(struct file *file, int *error)
 	buf = getln(file->fd, error, &eol, &len); 
 	if (buf == NULL)
 		return (NULL);
-	if (len == 0) {
-		xfree(buf);
-		return (NULL);
-	}
 
 	if (file->buf == NULL) {
 		/* no previous buffer and a complete read. return the line */
@@ -145,15 +141,17 @@ read_line(struct file *file, int *error)
 		file->bufused = len;
 		return (NULL);
 	}
-
-	/* there is an existing buffer, so expand it to fit if necessary.
-	   add an extra byte on to the length in case the data is finished
-	   and we need to add a \0 */
+	
+	/* there is an existing buffer, so expand it to fit if necessary.  add
+	   an extra byte on to the length in case the data is finished and we
+	   need to add a \0 */
 	ENSURE_SIZE(file->buf, file->buflen, file->bufused + len + 1);
 
-	/* append our data and free the old buffer */
-	memcpy(file->buf + file->bufused, buf, len);
-	file->bufused += len;
+	/* append our data, if any, and free the old buffer */
+	if (len != 0) {
+		memcpy(file->buf + file->bufused, buf, len);
+		file->bufused += len;
+	}
 	xfree(buf);
 	
 	/* if the new data didn't include an EOL, it cannot be returned yet */
@@ -178,6 +176,10 @@ parse_line(char *line, struct file *file)
         regmatch_t	 match[10];
 	struct msg	*save;
 	size_t		 mlen;
+
+	/* ignore blank lines */
+	if (*line == '\0')
+		return (0);
 	
 	/* replace ctrl chars with _ */
 	for (s = line; *s != '\0'; s++) {
