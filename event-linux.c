@@ -62,6 +62,8 @@ init_events(void)
 	struct file	*file;
 
 	TAILQ_FOREACH(file, &conf.files, entry) {
+		log_debug("init file: tag=%s", file->tag.name);
+
 		file->data = xmalloc(sizeof (off_t));
 
 		/* This gives us an EVENT_READ first time around which
