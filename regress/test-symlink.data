@@ -1,5 +1,5 @@
 .........
-added file: path=test-symlink.link, tag=test
+added file: path=/tmp/test-symlink.link, tag=test
 added rule: re=.*, not_re=<none>, action=ignore
 started
 sleeping for 900 seconds
