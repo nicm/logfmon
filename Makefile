@@ -83,7 +83,7 @@ depend:
 regress:	clean ${OBJS} ${PROG}
 		rm logfmon.o
 		${CC} -DREGRESS ${CFLAGS} ${INCDIRS} -c logfmon.c -o logfmon.o
-		cd regress && make CFLAGS='${CFLAGS}' INCDIRS='${INCDIRS}' CC='${CC}' LDFLAGS='${LDFLAGS}' LIBS='${LIBS}' OBJS='${OBJS}' FILEMON='${FILEMON}'
+		cd regress && ${MAKE} CFLAGS='${CFLAGS}' INCDIRS='${INCDIRS}' CC='${CC}' LDFLAGS='${LDFLAGS}' LIBS='${LIBS}' OBJS='${OBJS}' FILEMON='${FILEMON}'
 
 index.html:
 		nroff -mdoc logfmon.conf.5|m2h -u > logfmon.conf.5.html
