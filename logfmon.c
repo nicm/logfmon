@@ -190,12 +190,12 @@ parse_line(char *line, struct file *file)
 	/* extract the part we want from the log line */
 	if (regexec(&conf.entry_re, line, 2, match, 0) != 0) {
 		log_warnx("invalid log message: %s", line);
-		return (1);
+		return (0);
 	}
 	mlen = match[1].rm_eo - match[1].rm_so;
 	if (mlen == 0) {
 		log_warnx("invalid log message: %s", line);
-		return (1);
+		return (0);
 	}
 	entry = xmalloc(mlen + 1);
 	memcpy(entry, line + match[1].rm_so, mlen);
