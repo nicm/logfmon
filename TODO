@@ -10,3 +10,4 @@
 - Stop update of offset except after complete line
 - Investigate HUP no worky on linux
 - -n syntax check
+- make logfmon able to monitor FIFOs, /dev/stdin, sockets
