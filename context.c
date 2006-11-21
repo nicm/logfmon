@@ -194,15 +194,12 @@ pipe_context(struct context *context, char *cmd)
 
         if (cmd == NULL || *cmd == '\0') {
                 log_warnx("empty pipe command");
-		if (cmd != NULL)
-			xfree(cmd);
                 return;
         }
 
         fd = popen(cmd, "w");
         if (fd == NULL) {
                 log_warn("%s", cmd);
-                xfree(cmd);
                 return;
         }
 
