@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -294,7 +295,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-        int		 opt, timeout, dirty;
+        int		 opt, timeout, dirty, error;
 	unsigned int	 failed;
         pthread_t	 thread;
         time_t		 expiretime, cachetime;
@@ -448,7 +449,9 @@ main(int argc, char **argv)
 
 		if (file->offset < size) {
 			log_debug("mismatch: tag=%s", file->tag.name);
-			if (read_lines(file) != 0) {
+			if ((error = read_lines(file)) != 0) {
+				if (error == EINTR || error == EAGAIN)
+					continue;
 				fclose(file->fd);
 				file->fd = NULL;
 			} else
@@ -560,6 +563,8 @@ do_stdin(void)
 	struct file	*stdin_file;
 	int		 flags, error;
 	char		*line;
+	time_t		 expiretime;
+	struct pollfd	 pfd;
 
 #ifdef DEBUG
 	xmalloc_clear();
@@ -568,7 +573,7 @@ do_stdin(void)
 	setlinebuf(stdin);
 	if ((flags = fcntl(fileno(stdin), F_GETFL)) < 0)
 		fatal("fcntl");
-	flags &= ~O_NONBLOCK;
+	flags |= O_NONBLOCK;
 	if (fcntl(fileno(stdin), F_SETFL, flags) < 0)
 		fatal("fcntl");
 
@@ -587,7 +592,8 @@ restart:
 	LOCK_MUTEX(conf.files_mutex);
 	TAILQ_INSERT_TAIL(&conf.files, stdin_file, entry);
 	UNLOCK_MUTEX(conf.files_mutex);
-	
+
+        expiretime = time(NULL);	
 	while (!quit) {
                 if (reload) {
 			stdin_file->fd = NULL;
@@ -596,7 +602,27 @@ restart:
 			goto restart;
 		}
 
+		pfd.fd = fileno(stdin);
+		pfd.events = POLLIN;
+		if ((error = poll(&pfd, 1, EXPIRETIMEOUT * 1000)) < 0) {
+			if (error == EINTR)
+				continue;
+			fatal("poll");
+		}
+
+		/* expire contexts before reading lines */
+                if ((time(NULL) - expiretime) > EXPIRETIMEOUT) {
+			LOCK_MUTEX(conf.files_mutex);
+			expire_contexts(stdin_file);
+			UNLOCK_MUTEX(conf.files_mutex);
+			expiretime = time(NULL);
+		}
+
+
 		line = read_line(stdin_file, &error);
+		if (error == EINTR || error == EAGAIN)
+			continue;
+
 		if (line != NULL) {
 			if (parse_line(line, stdin_file) != 0)
 				exit(1);

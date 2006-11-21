@@ -51,11 +51,14 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 				   lines are returned */
 				ch = '\n';
 			} else {
+				/* save errno */
+				*error = errno;
+
 				clearerr(fd);
 
 				/* if interrupted, return what we have and leave
 				   it to the caller's buffering */
-				if (errno == EINTR) {
+				if (errno == EINTR || errno == EAGAIN) {
 					if (used == 0) {
 						xfree(buf);
 						return (NULL);
@@ -66,10 +69,6 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 					*read_len = used;
 					return (buf);
 				}
-
-				/* other errors are always bad, even if there is
-				   data sitting here */
-				*error = 1;
 
 				xfree(buf);
 				return (NULL);
