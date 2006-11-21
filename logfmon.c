@@ -21,6 +21,7 @@
 #include <sys/resource.h>
  
 #include <errno.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <pthread.h>
 #include <signal.h>
@@ -53,6 +54,7 @@ int			 read_lines(struct file *);
 char			*read_line(struct file *, int *);
 int			 parse_line(char *, struct file *);
 void			 usage(void);
+void			 do_stdin(void);
 
 void
 sighandler(int sig)
@@ -273,7 +275,7 @@ error:
 __dead void
 usage(void)
 {
-	printf("usage: %s [-dv] [-f conffile] [-c cachefile] [-p pidfile]\n",
+	printf("usage: %s [-dsv] [-f conffile] [-c cachefile] [-p pidfile]\n",
 	    __progname);
         exit(1);
 }
@@ -290,6 +292,7 @@ main(int argc, char **argv)
         struct file	*file;
         FILE		*fd;
 	off_t		 size;
+	u_int		 i, n;
 
 	memset(&conf, 0, sizeof conf);
 	TAILQ_INIT(&conf.rules);
@@ -297,7 +300,7 @@ main(int argc, char **argv)
 
 	log_init(1);
 
-        while ((opt = getopt(argc, argv, "c:df:p:v")) != EOF) {
+        while ((opt = getopt(argc, argv, "c:df:p:sv")) != EOF) {
                 switch (opt) {
                 case 'c':
                         conf.cache_file = xstrdup(optarg);
@@ -311,6 +314,9 @@ main(int argc, char **argv)
                 case 'p':
                         conf.pid_file = xstrdup(optarg);
                         break;
+		case 's':
+			conf.use_stdin = 1;
+			break;
 		case 'v':
 			printf("%s " BUILD "\n", __progname);
 			exit(1);
@@ -350,17 +356,29 @@ main(int argc, char **argv)
         if (conf.pid_file == NULL)
                 conf.pid_file = xstrdup(PIDFILE);
 
-        if (TAILQ_EMPTY(&conf.files)) {
+        if (!conf.use_stdin && TAILQ_EMPTY(&conf.files)) {
                 log_warnx("no files specified");
 		exit(1);
 	}
 
 	log_init(conf.debug);
 
-        if (!conf.debug) {
+        if (!conf.debug && !conf.use_stdin) {
                 if (daemon(0, 0) != 0)
                         fatal("daemon");
         }
+
+        if (conf.pid_file != NULL && *conf.pid_file != '\0') {
+                fd = fopen(conf.pid_file, "w");
+                if (fd == NULL)
+                        log_warn("%s", conf.pid_file);
+                else {
+                        if (fprintf(fd, "%ld\n", (long) getpid()) == -1)
+                                log_warnx("error writing pid");
+                        fclose(fd);
+                }
+        }
+
         if (setpriority(PRIO_PROCESS, getpid(), 1) != 0)
 		fatal("setpriority");
 
@@ -391,7 +409,7 @@ main(int argc, char **argv)
         if (pthread_create(&thread, NULL, save_thread, NULL) != 0)
                 fatalx("pthread_create failed");
 
-        if (!conf.debug) {
+        if (!conf.debug && !conf.use_stdin) {
                 if (signal(SIGINT, SIG_IGN) == SIG_ERR)
                         fatalx("signal");
                 if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
@@ -402,17 +420,12 @@ main(int argc, char **argv)
         if (signal(SIGTERM, sighandler) == SIG_ERR)
                 fatalx("signal");
 
-        if (conf.pid_file != NULL && *conf.pid_file != '\0') {
-                fd = fopen(conf.pid_file, "w");
-                if (fd == NULL)
-                        log_warn("%s", conf.pid_file);
-                else {
-                        if (fprintf(fd, "%ld\n", (long) getpid()) == -1)
-                                log_warnx("error writing pid");
-                        fclose(fd);
-                }
-        }
-
+	/* special-case stdin */
+	if (conf.use_stdin) {
+		do_stdin();
+		goto out;
+	}
+ 
         load_cache();
         open_files();
 
@@ -501,7 +514,25 @@ main(int argc, char **argv)
         }
 
 	close_events();
-        close_files();
+
+out:
+	/* close files. this will wait on files_mutex for the save thread to
+	   finish if it is going */
+        close_files();	
+
+	/* wait some time for all threads to exit */
+	LOCK_MUTEX(conf.thr_mutex);
+	n = conf.thr_count * 5;
+	log_debug("waiting %u seconds for %d threads", n, conf.thr_count);
+	for (i = 0; i < n; i++) {
+		if (conf.thr_count == 0)
+			break;
+		UNLOCK_MUTEX(conf.thr_mutex);
+		sleep(1);
+		LOCK_MUTEX(conf.thr_mutex);
+	}
+	UNLOCK_MUTEX(conf.thr_mutex);
+
         if (conf.pid_file != NULL && *conf.pid_file != '\0')
                 unlink(conf.pid_file);
 
@@ -512,3 +543,66 @@ main(int argc, char **argv)
 	return (0);
 }
 #endif
+
+void
+do_stdin(void)
+{
+	struct file	*stdin_file;
+	int		 flags, error;
+	char		*line;
+
+#ifdef DEBUG
+	xmalloc_clear();
+#endif
+
+	setlinebuf(stdin);
+	if ((flags = fcntl(fileno(stdin), F_GETFL)) < 0)
+		fatal("fcntl");
+	flags &= ~O_NONBLOCK;
+	if (fcntl(fileno(stdin), F_SETFL, flags) < 0)
+		fatal("fcntl");
+
+restart:
+	stdin_file = xcalloc(1, sizeof *stdin_file);
+
+        TAILQ_INIT(&stdin_file->saves);
+	INIT_MUTEX(stdin_file->saves_mutex);
+
+        TAILQ_INIT(&stdin_file->contexts);
+
+	strlcpy(stdin_file->tag.name, "stdin", sizeof stdin_file->tag.name);
+	stdin_file->fd = stdin;
+	stdin_file->path = xstrdup("stdin");
+
+	LOCK_MUTEX(conf.files_mutex);
+	TAILQ_INSERT_TAIL(&conf.files, stdin_file, entry);
+	UNLOCK_MUTEX(conf.files_mutex);
+	
+	while (!quit) {
+                if (reload) {
+			stdin_file->fd = NULL;
+			reload_conf();
+			reload = 0;
+			goto restart;
+		}
+
+		line = read_line(stdin_file, &error);
+		if (line != NULL) {
+			if (parse_line(line, stdin_file) != 0)
+				exit(1);
+			xfree(line);
+		} else {
+			/* warn about errors, but not about EOF */
+			if (error != 0) {
+				log_warnx("error from stdin. exiting");
+				exit(1);
+			}
+			log_debug("EOF from stdin");
+			break;
+		}		
+	}
+
+#ifdef DEBUG
+	xmalloc_dump(__progname);
+#endif
+}

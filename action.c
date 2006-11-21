@@ -61,7 +61,7 @@ repl_one(char *src, char *rpl)
 }
 
 char *
-repl_matches(char *line, char *src, regmatch_t *match)
+repl_matches(char *line, char *src, regmatch_t match[10])
 {
         char	*buf, *mptr;
         size_t	 len, mlen, pos = 0;
@@ -109,7 +109,7 @@ act_ignore(struct file *file, char *t)
 }
 
 void
-act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
+act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
         char		*cmd;
         pthread_t	 thread;
@@ -128,7 +128,7 @@ act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 }
 
 void
-act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
+act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
     char *line)
 {
         char		*cmd;
@@ -159,7 +159,7 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 }
 
 void
-act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
+act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
         char	*key;
 
@@ -179,14 +179,14 @@ act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[])
                 return;
         }
 
-	if (add_context(file, key, rule) == NULL)
+	if (add_context(file, key, rule, t, match) == NULL)
 		log_warnx("error adding context");
 
         xfree(key);
 }
 
 void
-act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
+act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
     char *line)
 {
         struct context	*context;
@@ -224,13 +224,13 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[],
 		    context->key, context->rule->params.ent_max);
 		
 		act_context(context, context->rule->params.ent_act,
-		    context->rule->params.ent_str);
+		    context->rule->params.ent_str, 1);
                 delete_context(file, context);
         }
 }
 
 void
-act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
+act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
         struct context	*context;
         char		*key, *str;
@@ -257,7 +257,7 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
                 str = repl_matches(t, rule->params.close_str, match);
 	else
 		str = NULL;
-	act_context(context, rule->params.close_act, str);
+	act_context(context, rule->params.close_act, str, 0);
 	if (str != NULL)
                 xfree(str);
 
@@ -265,7 +265,7 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 }
 
 void
-act_clear(struct file *file, char *t, struct rule *rule, regmatch_t match[])
+act_clear(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
         struct context	*context;
         char		*key, *str;
@@ -293,7 +293,7 @@ act_clear(struct file *file, char *t, struct rule *rule, regmatch_t match[])
                 str = repl_matches(t, rule->params.clear_str, match);
 	else
 		str = NULL;
-	act_context(context, rule->params.clear_act, str);
+	act_context(context, rule->params.clear_act, str, 0);
 	if (str != NULL)
                 xfree(str);
 
@@ -301,7 +301,7 @@ act_clear(struct file *file, char *t, struct rule *rule, regmatch_t match[])
 }
 
 void
-act_write(struct file *file, char *t, struct rule *rule, regmatch_t match[],
+act_write(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
     char *line, int append)
 {
         char		*path;

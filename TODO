@@ -11,3 +11,5 @@
 - Investigate HUP no worky on linux
 - -n syntax check
 - make logfmon able to monitor FIFOs, /dev/stdin, sockets
+- Update man pages per better style op/ar
+- Update man pages for stdin, context changes

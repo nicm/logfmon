@@ -28,7 +28,6 @@ CFLAGS+= -Wmissing-declarations
 CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+= -Wsign-compare -Wredundant-decls
 CFLAGS+= -DBUILD="\"$(VERSION) ($(FILEMON))\""
-CFLAGS+= -DUSE_FGETLN
 
 PREFIX?= /usr/local
 INSTALLBIN= install -g bin -o root -m 555
@@ -43,12 +42,12 @@ LDFLAGS+= -pthread
 LIBS+= -lpthread
 .endif
 
-DISTFILES= *.[chyl] ${PROG}.conf ${PROG}.conf.freebsd \
+DISTFILES= *.[chyl] compat/*.[chyl] ${PROG}.conf ${PROG}.conf.freebsd \
 	GNUmakefile Makefile *.[1-9] README \
 	rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
 
-CLEANFILES= ${PROG} *.o y.tab.c lex.yy.c y.tab.h .depend ${PROG}-*.tar.gz \
-	*.[1-9].gz *~ *.ln ${PROG}.core
+CLEANFILES= ${PROG} *.o compat/*.o y.tab.c lex.yy.c y.tab.h .depend \
+	${PROG}-*.tar.gz *.[1-9].gz *~ *.ln ${PROG}.core
 
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}

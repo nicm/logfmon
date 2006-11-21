@@ -228,6 +228,9 @@ struct context {
         char			*key;
         time_t			 expiry;
 
+	char			*line;
+	regmatch_t		 match[10];
+
         struct rule		*rule;
 	TAILQ_HEAD(, msg)	 msgs;
 
@@ -308,6 +311,7 @@ struct file {
 /* Configuration settings */
 struct conf {
 	int 			 debug;
+	int			 use_stdin;
 
 	char 			*mail_cmd;
 	unsigned int 		 mail_time;
@@ -330,8 +334,8 @@ struct conf {
 	pthread_mutex_t		 files_mutex;
 
 	/* Thread limit variables */
-	int			 thr_limit;
-	int			 thr_count;
+	u_int			 thr_limit;
+	u_int			 thr_count;
 	pthread_mutex_t		 thr_mutex;
 	pthread_cond_t		 thr_cond;
 };
@@ -368,28 +372,32 @@ int	vasprintf(char **, const char *, va_list);
 char	*repl_one(char *, char *);
 char	*repl_matches(char *, char *, regmatch_t *);
 void	 act_ignore(struct file *, char *);
-void	 act_exec(struct file *, char *, struct rule *, regmatch_t []);
-void	 act_pipe(struct file *, char *, struct rule *, regmatch_t [], char *);
-void	 act_open(struct file *, char *, struct rule *, regmatch_t []);
-void	 act_appd(struct file *, char *, struct rule *, regmatch_t [], char *);
-void	 act_close(struct file *, char *, struct rule *, regmatch_t []);
-void	 act_clear(struct file *, char *, struct rule *, regmatch_t []);
-void	 act_write(struct file *, char *, struct rule *, regmatch_t [], char *, int);
+void	 act_exec(struct file *, char *, struct rule *, regmatch_t [10]);
+void	 act_pipe(struct file *, char *, struct rule *, regmatch_t [10],
+	     char *);
+void	 act_open(struct file *, char *, struct rule *, regmatch_t [10]);
+void	 act_appd(struct file *, char *, struct rule *, regmatch_t [10],
+	     char *);
+void	 act_close(struct file *, char *, struct rule *, regmatch_t [10]);
+void	 act_clear(struct file *, char *, struct rule *, regmatch_t [10]);
+void	 act_write(struct file *, char *, struct rule *, regmatch_t [10],
+    	     char *, int);
 
 /* cache.c */
 int		 save_cache(void);
 int		 load_cache(void);
 
 /* context.c */
-struct context	*add_context(struct file *, char *, struct rule *);
+struct context	*add_context(struct file *, char *, struct rule *, char *,
+    		     regmatch_t [10]);
 void		 free_contexts(struct file *);
 void		 reset_context(struct context *);
 void		 delete_context(struct file *, struct context *);
 struct context	*find_context_by_key(struct file *, char *);
 void		 expire_contexts(struct file *);
-void		 act_context(struct context *, enum action, char *);
+void		 act_context(struct context *, enum action, char *, int);
 void		 pipe_context(struct context *, char *);
-void		 exec_context(struct context *, char *);
+void		 exec_context(char *);
 void		 write_context(struct context *, char *, int);
 unsigned int	 count_msgs(struct context *);
 
@@ -439,6 +447,12 @@ void		*exec_thread(void *);
 void		*save_thread(void *);
 
 /* xmalloc.c */
+#ifdef DEBUG
+void		 xmalloc_clear(void);
+void		 xmalloc_dump(const char *);
+#endif
+void		*ensure_size(void *, size_t *, size_t, size_t);
+void		*ensure_for(void *, size_t *, size_t, size_t, size_t);
 char		*xstrdup(const char *);
 void		*xcalloc(size_t, size_t);
 void		*xmalloc(size_t);

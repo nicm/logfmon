@@ -18,90 +18,11 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "logfmon.h"
-
-/* Three different versions of this is pretty excessive, considering the
-   Solaris version will work on anything. */
-
-#ifdef USE_GETLINE
-
-/* getline() */
-char *
-getln(FILE *fd, int *error, int *eol, size_t *read_len)
-{
-	char	*buf = NULL;
-	size_t	 len = 0;
-	ssize_t	 res;
-
-	*error = 0;
-	*eol = 0;
-
-	res = getline(&buf, &len, fd);
-	if (res == -1) {
-		if (buf != NULL)
-			xfree(buf);
-		if (feof(fd)) {
-			clearerr(fd);
-			return (NULL);
-		}
-		*error = 1;
-		return (NULL);
-	}
-
-	len = res;
-	if (len >= 1 && buf[len - 1] == '\n') {
-		*eol = 1;
-		--len;
-		buf[len] = '\0';
-	}
-
-	*read_len = len;
-	return (buf);
-}
-
-#else /* USE_GETLINE */
-
-#ifdef USE_FGETLN
-
-/* fgetln() */
-char *
-getln(FILE *fd, int *error, int *eol, size_t *read_len)
-{
-	char	*buf, *lbuf;
-	size_t	 len;
-
-	*error = 0;
-	*eol = 0;
-
-	buf = fgetln(fd, &len);
-	if (buf == NULL) {
-		if (feof(fd)) {
-			clearerr(fd);
-			return (NULL);
-		}
-		clearerr(fd);
-		*error = 1;
-		return (NULL);
-	}
-
-	if (buf[len - 1] == '\n') {
-		*eol = 1;
-		len--;
-	}
-
-	lbuf = xmalloc(len + 1);
-	memcpy(lbuf, buf, len);
-	lbuf[len] = '\0';
-
-	*read_len = len;
-	return (lbuf);
-
-}
-
-#else /* USE_FGETLN */
 
 char *
 getln(FILE *fd, int *error, int *eol, size_t *read_len)
@@ -121,18 +42,36 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 		ch = fgetc(fd);
 		if (ch == EOF) {
 			if (feof(fd)) {
+				clearerr(fd);
 				if (used == 0) {
-					clearerr(fd);
+					xfree(buf);
 					return (NULL);
 				}
 				/* fake an EOL so that final unterminated
 				   lines are returned */
 				ch = '\n';
 			} else {
-				/* errors are always bad, even if there is
-				   data sitting here */
 				clearerr(fd);
+
+				/* if interrupted, return what we have and leave
+				   it to the caller's buffering */
+				if (errno == EINTR) {
+					if (used == 0) {
+						xfree(buf);
+						return (NULL);
+					}
+
+					ENSURE_SIZE(buf, len, used);
+					buf[used] = '\0';
+					*read_len = used;
+					return (buf);
+				}
+
+				/* other errors are always bad, even if there is
+				   data sitting here */
 				*error = 1;
+
+				xfree(buf);
 				return (NULL);
 			}
 		}
@@ -141,13 +80,11 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 		buf[used++] = ch;
 	} while (ch != '\n');
 
-	buf[used - 1] = '\0';
 	*eol = 1;
 
+	/* replace the \n */
+	buf[used - 1] = '\0';
 	*read_len = used - 1;
+
 	return (buf);
 }
-
-#endif /* !USE_FGETLN */
-
-#endif /* USE_GETLINE */

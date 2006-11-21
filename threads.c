@@ -58,7 +58,7 @@ exec_thread(void *arg)
 
 	while ((line = getln(fd, &error, &eol, &len)) != NULL) {
 		if (!eol)
-			log_warnx("partial read from pipe");
+			log_warnx("%s: partial read from pipe", (char *) arg);
 
 		log_warnx("%s: %s", (char *) arg, line);
 		xfree(line);

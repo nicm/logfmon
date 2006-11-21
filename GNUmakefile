@@ -3,16 +3,12 @@
 .PHONY: clean
 
 PROG = logfmon
-VERSION = 0.9c
-
-## Installation parameters
+VERSION = 1.0
 
 PREFIX = /usr/local
 
 BIN_OWNER = bin
 BIN_GROUP = root
-
-### Programs
 
 CC = gcc
 
@@ -30,8 +26,6 @@ LFLAGS = -l
 INSTALLBIN = install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 555
 INSTALLMAN = install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 444
 
-### Compilation
-
 FILEMON = linux
 
 SRCS = logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
@@ -40,20 +34,21 @@ SRCS = logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
 DEFS = $(shell getconf LFS_CFLAGS) -DBUILD="\"$(VERSION) ($(FILEMON))\""
 
 ifeq ($(shell uname),SunOS)
-SRCS += daemon.c asprintf.c
+CPPFLAGS += -Icompat
+SRCS += compat/daemon.c compat/asprintf.c
 DEFS += -DNO_PROGNAME -DNO_ASPRINTF -DNO_DAEMON -DNO_QUEUE_H
 endif
 ifeq ($(shell uname),Linux)
-SRCS += strlcpy.c strlcat.c strtonum.c
-DEFS += -D_GNU_SOURCE -DNO_STRLCPY -DNO_STRLCAT -DUSE_GETLINE -DNO_STRTONUM
+SRCS += compat/strlcpy.c compat/strlcat.c compat/strtonum.c
+DEFS += -D_GNU_SOURCE -DNO_STRLCPY -DNO_STRLCAT -DNO_STRTONUM
 endif
 
 OBJS = $(patsubst %.c,%.o,$(SRCS))
-CPPFLAGS = $(DEFS) -I.
-CFLAGS+= -std=c99 -pedantic -Wno-long-long -Wall -W -Wnested-externs \
-	-Wformat=2 -Wmissing-prototypes -Wstrict-prototypes \
-	-Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual \
-	-Wsign-compare -Wredundant-decls
+CPPFLAGS += $(DEFS) -I.
+CFLAGS += -std=c99 -pedantic -Wno-long-long -Wall -W -Wnested-externs \
+	  -Wformat=2 -Wmissing-prototypes -Wstrict-prototypes \
+	  -Wmissing-declarations -Wshadow -Wpointer-arith -Wcast-qual \
+	  -Wsign-compare -Wredundant-decls
 
 LIBS_fam = -lfam
 LIBS_linux = 
