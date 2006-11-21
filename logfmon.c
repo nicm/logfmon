@@ -549,9 +549,15 @@ out:
         if (conf.pid_file != NULL && *conf.pid_file != '\0')
                 unlink(conf.pid_file);
 
+	free_files();
 	DESTROY_MUTEX(conf.files_mutex);
 
         log_info("terminated");
+
+#ifdef DEBUG
+	if (conf.use_stdin)
+		xmalloc_dump(__progname);
+#endif
 
 	return (0);
 }
@@ -637,8 +643,4 @@ restart:
 			break;
 		}		
 	}
-
-#ifdef DEBUG
-	xmalloc_dump(__progname);
-#endif
 }
