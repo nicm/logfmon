@@ -436,7 +436,7 @@ rule: /* match, action=* */
 		      rule = add_rule(ACT_APPEND, $2, $3, $4);
 		      if (rule == NULL)
 			      exit(1);
-		      rule->params.key = $6;
+		      rule->params.key = xstrdup($6);
 	      }
 
 	      free_tags($2);
@@ -477,6 +477,7 @@ rule: /* match, action=* */
 		      rule = add_rule(ACT_APPEND, $2, $3, $4);
 		      if (rule == NULL)
 			      exit(1);
+		      rule->params.key = xstrdup($6);
 	      }
 
 	      free_tags($2);
