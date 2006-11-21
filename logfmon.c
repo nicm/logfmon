@@ -72,9 +72,19 @@ sighandler(int sig)
 int
 load_conf(void)
 {
+	struct macro	*macro;
+
         yyin = fopen(conf.conf_file, "r");
         if (yyin == NULL)
                 return (1);
+
+	TAILQ_INIT(&macros);
+
+	macro = xmalloc(sizeof *macro);
+	strlcpy(macro->name, "%pid", sizeof macro->name);
+	macro->type = MACRO_NUMBER;
+	macro->value.number = getpid();
+	TAILQ_INSERT_HEAD(&macros, macro, entry);
 
         yyparse();
 

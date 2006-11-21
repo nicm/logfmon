@@ -32,14 +32,13 @@
 
 #include "logfmon.h"
 
-struct macros	macros = TAILQ_HEAD_INITIALIZER(macros);
+struct macros	macros;
 
 extern int 	yylineno;
 
 int		yyparse(void);
 void 		yyerror(const char *, ...);
 int 		yywrap(void);
-struct macro   *find_macro(char *);
 
 extern int yylex(void);
 

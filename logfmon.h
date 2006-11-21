@@ -435,6 +435,10 @@ void printflike1	 log_debug3(const char *, ...);
 __dead void		 fatal(const char *);
 __dead void		 fatalx(const char *);
 
+/* parse.y */
+extern struct macros	 macros;
+struct macro   		*find_macro(char *);
+
 /* rules.c */
 void		 free_tags(struct tags *);
 struct rule	*add_rule(enum action, struct tags *, char *, char *);

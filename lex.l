@@ -35,9 +35,6 @@
 
 extern int 			 yylex(void);
 extern __dead printflike1 void	 yyerror(const char *, ...);
-
-extern struct macros		 macros;
-extern struct macro		*find_macro(char *);
 %}
 
 %%
