@@ -43,32 +43,16 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 		if (ch == EOF) {
 			if (feof(fd)) {
 				clearerr(fd);
-				if (used == 0) {
-					xfree(buf);
-					return (NULL);
-				}
-				/* fake an EOL so that final unterminated
-				   lines are returned */
-				ch = '\n';
+
+				goto return_all;
 			} else {
 				/* save errno */
 				*error = errno;
 
 				clearerr(fd);
 
-				/* if interrupted, return what we have and leave
-				   it to the caller's buffering */
-				if (errno == EINTR || errno == EAGAIN) {
-					if (used == 0) {
-						xfree(buf);
-						return (NULL);
-					}
-
-					ENSURE_SIZE(buf, len, used);
-					buf[used] = '\0';
-					*read_len = used;
-					return (buf);
-				}
+				if (errno == EINTR || errno == EAGAIN)
+					goto return_all;
 
 				xfree(buf);
 				return (NULL);
@@ -85,5 +69,17 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 	buf[used - 1] = '\0';
 	*read_len = used - 1;
 
+	return (buf);
+
+return_all:
+	if (used == 0) {
+		xfree(buf);
+		return (NULL);
+	}
+
+	/* return what we have and leave it to the caller's buffering */
+	ENSURE_SIZE(buf, len, used);
+	buf[used] = '\0';
+	*read_len = used;
 	return (buf);
 }
