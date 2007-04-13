@@ -210,7 +210,7 @@ match in daemon "ntpd\\\\[[0-9]*\\\\]: adjusting local clock by [0-9.-]*s" ignor
 This executes
 .Ar command
 when a matching entry is seen.
-$0 is replaced in the command with the entire log entry and $1 to $9 are replaced with any bracketted expressions in the regexp.
+$0 is replaced in the command with the entire log entry and $1 to $9 are replaced with any bracketted match expressions in the regexp.
 .Pp
 An example
 .Ic exec
@@ -247,8 +247,7 @@ An action may be taken when a context expires, or, with a
 command, optionally when it reaches a certain number of entries.
 If a
 .Ic pipe
-action is used, then $1 is replaced by the name of the context in the command
-before the context is piped to it.
+action is used, then $1 to $9 is replaced by any match expressions from the matched log line before the context is piped to it.
 .Pp
 Note that unlike the other rules,
 .Xr logfmon 8

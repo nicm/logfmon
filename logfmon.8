@@ -22,14 +22,10 @@
 .Nd "log file monitoring daemon"
 .Sh SYNOPSIS
 .Nm logfmon
-.Op Fl dv
 .Bk -words
+.Op Fl dsv
 .Op Fl f Ar conffile
-.Ek
-.Bk -words
 .Op Fl c Ar cachefile
-.Ek
-.Bk -words
 .Op Fl p Ar pidfile
 .Ek
 .Sh DESCRIPTION
@@ -61,6 +57,12 @@ Run in the foreground and log to
 .Pp
 This option also causes additional debugging messages to be generated.
 This option may be specified multiple times for increasing levels of verbosity.
+.It Fl s
+Monitor
+.Em stdin .
+This causes 
+.Nm
+to remain in the foreground and filter log messages passed on stdin.
 .It Fl f Ar conffile
 Specify the configuration file location. Default is
 .Pa /etc/logfmon.conf .
