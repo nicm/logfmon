@@ -31,6 +31,18 @@ Important changes in 0.9:
 	  behaviour as "close", but does not close the context, merely wipes
 	  the accumulated messages.
 
+Changes in 1.0:
+	- Handle blank lines and partial lines at EOF properly,
+	- Option to read messages from stdin,
+	- Wait for threads on exit,
+	- Replaces $1, $2, etc using original log message when expiring
+	  contexts, rather than using context name,
+	- Configuration file macros,
+	- Simplify line input code and other code cleanup. 
+
+	Thanks to Daniel Berlin for the first four and some other stuff I
+	forget.
+
 Logfmon supports three different methods of monitoring log files:
 
 - kqueue: This uses the *BSD kqueue event system. This is the default in the
