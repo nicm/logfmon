@@ -27,4 +27,5 @@ new offset=7
 read: tag=test
 matched: (test) test-6 -- ignoring
 new offset=14
+waiting 0 seconds for 0 threads
 terminated
