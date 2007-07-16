@@ -159,7 +159,7 @@ save_thread(void *arg)
 
                 pclose(fd);
 
-                log_debug("processed %d unmatched messages", n);
+                log_debug("processed %u unmatched messages", n);
         }
 
         return (NULL);
