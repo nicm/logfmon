@@ -458,7 +458,7 @@ main(int argc, char **argv)
 				log_debug("new offset=%lld", file->offset);
 		}
         }
-	log_info("initial parse complete");
+	log_debug("initial parse complete");
 	save_cache();
 
         init_events();
