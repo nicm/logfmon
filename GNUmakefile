@@ -5,6 +5,8 @@
 PROG = logfmon
 VERSION = 1.0
 
+DEBUG= 1
+
 PREFIX = /usr/local
 
 BIN_OWNER = bin

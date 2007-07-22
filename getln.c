@@ -59,7 +59,7 @@ getln(FILE *fd, int *error, int *eol, size_t *read_len)
 			}
 		}
 
-		ENSURE_SIZE(buf, len, used);
+		ENSURE_SIZE(buf, len, used + 1);
 		buf[used++] = ch;
 	} while (ch != '\n');
 

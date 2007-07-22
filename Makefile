@@ -9,6 +9,9 @@ VERSION= 1.1
 OS!= uname
 REL!= uname -r
 
+# This must be empty as OpenBSD includes it in default CFLAGS.
+DEBUG=
+
 FILEMON= kqueue
 SRCS= logfmon.c log.c rules.c xmalloc.c xmalloc-debug.c file.c context.c \
       cache.c threads.c getln.c parse.y lex.l action.c event-${FILEMON}.c
