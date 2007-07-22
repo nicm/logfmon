@@ -174,7 +174,7 @@ init_events()
   struct file *file = NULL;
 
   if (FAMOpen(&fc) < 0)
-    fatal("FAMOpen");
+    log_fatal("FAMOpen");
 
   TAILQ_FOREACH(file, &conf.files, entry) {
     if (file->fd != NULL) {

@@ -29,16 +29,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "logfmon.h"
 
 #ifdef NO_PROGNAME
-char	*__progname = "logfmon";
+const char	*__progname = "logfmon";
 #endif
 
 #ifdef DEBUG
-char	*malloc_options = "AFGJX";
+const char	*malloc_options = "AFGJX";
 #endif
 
 extern FILE		*yyin;
@@ -105,7 +106,7 @@ reload_conf(void)
 	free_files(); /* closes too */
 
 	if (load_conf() != 0)
-		fatal(conf.conf_file);
+		log_fatal(conf.conf_file);
 
 	load_cache();
 
@@ -309,8 +310,6 @@ main(int argc, char **argv)
 	TAILQ_INIT(&conf.rules);
 	TAILQ_INIT(&conf.files);
 
-	log_init(1);
-
         while ((opt = getopt(argc, argv, "c:df:p:sv")) != EOF) {
                 switch (opt) {
                 case 'c':
@@ -341,13 +340,18 @@ main(int argc, char **argv)
 	if (argc != 0)
 		usage();
 
+	if (conf.debug)
+		log_open(stderr, LOG_DAEMON, conf.debug);
+	else
+		log_open(NULL, LOG_DAEMON, conf.debug);
+
 	conf.thr_limit = THREADLIMIT;
 	INIT_MUTEX(conf.thr_mutex);
 	if (pthread_cond_init(&conf.thr_cond, NULL) != 0) 
-		fatalx("pthread_cond_init failed");
+		log_fatalx("pthread_cond_init failed");
 
 	if (regcomp(&conf.entry_re, LOGREGEXP, REG_EXTENDED) != 0)
-		fatalx("invalid log regexp: " LOGREGEXP);
+		log_fatalx("invalid log regexp: " LOGREGEXP);
 
 	conf.mail_time = MAILTIME;
 	conf.mail_cmd = NULL;
@@ -372,12 +376,8 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	log_init(conf.debug);
-
-        if (!conf.debug && !conf.use_stdin) {
-                if (daemon(0, 0) != 0)
-                        fatal("daemon");
-        }
+        if (!conf.debug && !conf.use_stdin && daemon(0, 0) != 0)
+		log_fatal("daemon");
 
         if (conf.pid_file != NULL && *conf.pid_file != '\0') {
                 fd = fopen(conf.pid_file, "w");
@@ -391,23 +391,23 @@ main(int argc, char **argv)
         }
 
         if (setpriority(PRIO_PROCESS, getpid(), 1) != 0)
-		fatal("setpriority");
+		log_fatal("setpriority");
 
         if (conf.gid != 0) {
                 if (geteuid() != 0)
-                        fatalx("need root privileges to set group");
+                        log_fatalx("need root privileges to set group");
                 else {
                         if (setgroups(1, &conf.gid) != 0 ||
                             setegid(conf.gid) != 0 || setgid(conf.gid) != 0)
-                                fatalx("failed to drop group privileges");
+                                log_fatalx("failed to drop group privileges");
                 }
         }
         if (conf.uid != 0) {
                 if (geteuid() != 0)
-                        fatalx("need root privileges to set user");
+                        log_fatalx("need root privileges to set user");
                 else {
                         if (setuid(conf.uid) != 0 || seteuid(conf.uid) != 0)
-                                fatalx("failed to drop user privileges");
+                                log_fatalx("failed to drop user privileges");
                 }
         }
 
@@ -418,18 +418,18 @@ main(int argc, char **argv)
 
 	INIT_MUTEX(conf.files_mutex);
         if (pthread_create(&thread, NULL, save_thread, NULL) != 0)
-                fatalx("pthread_create failed");
+                log_fatalx("pthread_create failed");
 
         if (!conf.debug && !conf.use_stdin) {
                 if (signal(SIGINT, SIG_IGN) == SIG_ERR)
-                        fatalx("signal");
+                        log_fatalx("signal");
                 if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
-                        fatalx("signal");
+                        log_fatalx("signal");
         }
         if (signal(SIGHUP, sighandler) == SIG_ERR)
-                fatalx("signal");
+                log_fatalx("signal");
         if (signal(SIGTERM, sighandler) == SIG_ERR)
-                fatalx("signal");
+                log_fatalx("signal");
 
 	/* special-case stdin */
 	if (conf.use_stdin) {
@@ -529,9 +529,10 @@ main(int argc, char **argv)
 	close_events();
 
 out:
-	/* close files. this will wait on files_mutex for the save thread to
+	/* free files. this will wait on files_mutex for the save thread to
 	   finish if it is going */
-        close_files();	
+        free_files();	
+	DESTROY_MUTEX(conf.files_mutex);
 
 	/* wait some time for all threads to exit */
 	LOCK_MUTEX(conf.thr_mutex);
@@ -549,14 +550,11 @@ out:
         if (conf.pid_file != NULL && *conf.pid_file != '\0')
                 unlink(conf.pid_file);
 
-	free_files();
-	DESTROY_MUTEX(conf.files_mutex);
-
         log_info("terminated");
 
 #ifdef DEBUG
-	if (conf.use_stdin)
-		xmalloc_dump(__progname);
+	if (conf.debug || conf.use_stdin)
+		xmalloc_report(getpid(), __progname);
 #endif
 
 	return (0);
@@ -578,10 +576,10 @@ do_stdin(void)
 
 	setlinebuf(stdin);
 	if ((flags = fcntl(fileno(stdin), F_GETFL)) < 0)
-		fatal("fcntl");
+		log_fatal("fcntl");
 	flags |= O_NONBLOCK;
 	if (fcntl(fileno(stdin), F_SETFL, flags) < 0)
-		fatal("fcntl");
+		log_fatal("fcntl");
 
 restart:
 	stdin_file = xcalloc(1, sizeof *stdin_file);
@@ -613,7 +611,7 @@ restart:
 		if ((error = poll(&pfd, 1, EXPIRETIMEOUT * 1000)) < 0) {
 			if (error == EINTR)
 				continue;
-			fatal("poll");
+			log_fatal("poll");
 		}
 
 		/* expire contexts before reading lines */

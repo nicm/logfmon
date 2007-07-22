@@ -22,9 +22,15 @@
 #include <sys/types.h>
 
 #ifdef NO_QUEUE_H
-#include "queue.h"
+#include "compat/queue.h"
 #else
 #include <sys/queue.h>
+#endif
+
+#ifndef NO_TREE_H
+#include <sys/tree.h>
+#else
+#include "compat/tree.h"
 #endif
 
 #include <pthread.h>
@@ -159,12 +165,15 @@
 	}							 	\
 } while (0)
 
-/* Ensure buffer size */
-#define ENSURE_SIZE(buf, len, req) do {                                 \
-        while (len <= (req)) {                                          \
-                buf = xrealloc(buf, 2, len);                            \
-                len *= 2;                                               \
-        }                                                               \
+/* Ensure buffer size. */
+#define ENSURE_SIZE(buf, len, size) do {				\
+	(buf) = ensure_size(buf, &(len), 1, size);			\
+} while (0)
+#define ENSURE_SIZE2(buf, len, nmemb, size) do {			\
+	(buf) = ensure_size(buf, &(len), nmemb, size);			\
+} while (0)
+#define ENSURE_FOR(buf, len, size, adj) do {				\
+	(buf) = ensure_for(buf, &(len), size, adj);			\
 } while (0)
 
 extern char			*__progname;
@@ -424,16 +433,19 @@ struct file	*find_file_mismatch(void);
 char		*getln(FILE *, int *, int *, size_t *);
 
 /* log.c */
-void		 	 log_init(int);
-void    	 	 vlog(int, const char *, va_list);
-void printflike1	 log_warn(const char *, ...);
-void printflike1	 log_warnx(const char *, ...);
-void printflike1	 log_info(const char *, ...);
-void printflike1	 log_debug(const char *, ...);
-void printflike1	 log_debug2(const char *, ...);
-void printflike1	 log_debug3(const char *, ...);
-__dead void		 fatal(const char *);
-__dead void		 fatalx(const char *);
+void		 log_open(FILE *, int, int);
+void		 log_close(void);
+void		 log_vwrite(FILE *, int, const char *, va_list);
+void		 log_write(FILE *, int, const char *, ...);
+void printflike1 log_warn(const char *, ...);
+void printflike1 log_warnx(const char *, ...);
+void printflike1 log_info(const char *, ...);
+void printflike1 log_debug(const char *, ...);
+void printflike1 log_debug2(const char *, ...);
+void printflike1 log_debug3(const char *, ...);
+__dead void	 log_vfatal(const char *, va_list);
+__dead void	 log_fatal(const char *, ...);
+__dead void	 log_fatalx(const char *, ...);
 
 /* parse.y */
 extern struct macros	 macros;
@@ -451,18 +463,31 @@ void		*exec_thread(void *);
 void		*save_thread(void *);
 
 /* xmalloc.c */
-#ifdef DEBUG
-void		 xmalloc_clear(void);
-void		 xmalloc_dump(const char *);
-#endif
 void		*ensure_size(void *, size_t *, size_t, size_t);
-void		*ensure_for(void *, size_t *, size_t, size_t, size_t);
+void		*ensure_for(void *, size_t *, size_t, size_t);
 char		*xstrdup(const char *);
 void		*xcalloc(size_t, size_t);
 void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t, size_t);
 void		 xfree(void *);
 int printflike2	 xasprintf(char **, const char *, ...);
+int		 xvasprintf(char **, const char *, va_list);
 int printflike3	 xsnprintf(char *, size_t, const char *, ...);
+int		 xvsnprintf(char *, size_t, const char *, va_list);
+int printflike3	 printpath(char *, size_t, const char *, ...);
+char 		*xdirname(const char *);
+char 		*xbasename(const char *);
+
+/* xmalloc-debug.c */
+#ifdef DEBUG
+#define xmalloc_caller() __builtin_return_address(0)
+
+void		 xmalloc_clear(void);
+void		 xmalloc_report(pid_t, const char *);
+
+void		 xmalloc_new(void *, void *, size_t);
+void		 xmalloc_change(void *, void *, void *, size_t);
+void		 xmalloc_free(void *);
+#endif
 
 #endif

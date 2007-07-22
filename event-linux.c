@@ -99,7 +99,7 @@ get_event(enum event *event, int timeout)
                 if (usleep(100000L) == -1) {
                         if (errno == EINTR)
                                 return (NULL);
-                        fatal("usleep");
+                        log_fatal("usleep");
                 }
 
                 n++;

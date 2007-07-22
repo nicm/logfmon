@@ -39,7 +39,7 @@ init_events(void)
         if (kq == -1) {
                 kq = kqueue();
                 if (kq == -1)
-                        fatal("kqueue");
+                        log_fatal("kqueue");
         }
 
         kevlen = count_open_files() * 2;
@@ -63,7 +63,7 @@ init_events(void)
         }
 
         if (kevent(kq, kevlist, kevlen, NULL, 0, NULL))
-                fatal("kevent");
+                log_fatal("kevent");
 
 	xfree(kevlist);
 }
@@ -88,7 +88,7 @@ get_event(enum event *event, int timeout)
         if (res == -1) {
                 if (errno == EINTR)
                         return (NULL);
-                fatal("kevent");
+                log_fatal("kevent");
         }
         if (res == 0) {
                 *event = EVENT_TIMEOUT;

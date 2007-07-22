@@ -4,14 +4,14 @@
 .PHONY: clean regress index.html
 
 PROG= logfmon
-VERSION= 1.0
+VERSION= 1.1
 
 OS!= uname
 REL!= uname -r
 
 FILEMON= kqueue
-SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c cache.c threads.c \
-	getln.c parse.y lex.l action.c event-${FILEMON}.c
+SRCS= logfmon.c log.c rules.c xmalloc.c xmalloc-debug.c file.c context.c \
+      cache.c threads.c getln.c parse.y lex.l action.c event-${FILEMON}.c
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 
@@ -19,15 +19,16 @@ LEX= lex
 YACC= yacc -d
 
 CC= cc
-CFLAGS+= -std=c99
-CFLAGS+= -g -ggdb -DDEBUG
-CFLAGS+= -pedantic -Wno-long-long
-CFLAGS+= -Wall -W -Wnested-externs -Wformat=2
-CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes
-CFLAGS+= -Wmissing-declarations
-CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
-CFLAGS+= -Wsign-compare -Wredundant-decls
 CFLAGS+= -DBUILD="\"$(VERSION) ($(FILEMON))\""
+.ifdef DEBUG
+CFLAGS+= -g -ggdb -DDEBUG
+LDFLAGS+= -Wl,-E
+.endif
+#CFLAGS+= -pedantic -std=c99
+CFLAGS+= -Wno-long-long -Wall -W -Wnested-externs -Wformat=2
+CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations
+CFLAGS+= -Wwrite-strings -Wshadow -Wpointer-arith -Wcast-qual -Wsign-compare
+CFLAGS+= -Wundef -Wshadow -Wbad-function-cast -Winline -Wcast-align
 
 PREFIX?= /usr/local
 INSTALLBIN= install -g bin -o root -m 555

@@ -16,209 +16,31 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 
 #include <errno.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdint.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "logfmon.h"
 
-#ifdef DEBUG
-size_t	xmalloc_allocated;
-size_t	xmalloc_freed;
-size_t	xmalloc_peak;
-u_int	xmalloc_frees;
-u_int	xmalloc_mallocs;
-u_int	xmalloc_reallocs;
-
-struct xmalloc_block {
-	void	*ptr;
-	size_t	 size;
-};
-#define XMALLOC_SLOTS 8192
-struct xmalloc_block	 xmalloc_array[XMALLOC_SLOTS];
-
-struct xmalloc_block	*xmalloc_find(void *);
-void			 xmalloc_new(void *, size_t);
-void			 xmalloc_change(void *, void *, size_t);
-void			 xmalloc_free(void *);
-
-void
-xmalloc_clear(void)
-{
- 	u_int	i;
-
-	xmalloc_allocated = 0;
-	xmalloc_freed = 0;
-
-	for (i = 0; i < XMALLOC_SLOTS; i++)
-		xmalloc_array[i].ptr = NULL;
-}
-
-void
-xmalloc_dump(const char *hdr)
-{
- 	u_int	 		 i, j, n = 0;
-	int	 		 off, off2;
-	size_t	 		 len;
-	char	 		 tmp[4096];
-	struct xmalloc_block	*p;
-	
-	log_debug("%s: allocated=%zu, freed=%zu, difference=%zd, peak=%zd", hdr,
-	    xmalloc_allocated, xmalloc_freed,
-	    xmalloc_allocated - xmalloc_freed, xmalloc_peak);
-	log_debug("%s: mallocs=%u, reallocs=%u, frees=%u", hdr,
-	    xmalloc_mallocs, xmalloc_reallocs, xmalloc_frees);
-
-	if (xmalloc_allocated == xmalloc_freed)
-		return;
-
-	len = sizeof tmp;
-	if ((off = xsnprintf(tmp, len, "%s: ", hdr)) < 0)
-		fatal("xsnprintf");
-	for (i = 0; i < XMALLOC_SLOTS; i++) {
-		n++;
-		if (n > 64)
-			break;
-
-		p = &xmalloc_array[i];
-		if (p->ptr != NULL) {
-			off2 = xsnprintf(tmp + off, len - off, "[%p %zu:",
-			    p->ptr, p->size);
-			if (off2 < 0)
-				break;
-			off += off2;
-
-			for (j = 0; j < (p->size > 8 ? 8 : p->size); j++) {
-				if (((char *) p->ptr)[j] > 31) {
-					off2 = xsnprintf(tmp + off, len - off,
-					    "%c", ((char *) p->ptr)[j]);
-				} else {
-					off2 = xsnprintf(tmp + off, len - off,
-					    "\\%03o", ((char *) p->ptr)[j]);
-				}
-				if (off2 < 0)
-					break;
-				off += off2;
-			}
-
-			off2 = xsnprintf(tmp + off, len - off, "] ");
-			if (off2 < 0)
-				break;
-			off += off2;
-		}
-	}
-	tmp[off - 1] = '\0';
-	log_debug("%s", tmp);
-}
-
-struct xmalloc_block *
-xmalloc_find(void *ptr)
-{
-	u_int	i;
-
-	/* XXX */
-	if (xmalloc_allocated - xmalloc_freed > xmalloc_peak)
-		xmalloc_peak = xmalloc_allocated - xmalloc_freed;
-
-	for (i = 0; i < XMALLOC_SLOTS; i++) {
-		if (xmalloc_array[i].ptr == ptr)
-			return (&xmalloc_array[i]);
-	}
-	return (NULL);
-}
-
-void
-xmalloc_new(void *ptr, size_t size)
-{
-	struct xmalloc_block	*block;
-
-#if 0
-	log_debug3("xmalloc_new: %p %zu", ptr, size);
-#endif
-
-	if ((block = xmalloc_find(NULL)) == NULL) {
-		log_debug2("xmalloc_new: no space");
-		return;
-	}
-
-	block->ptr = ptr;
-	block->size = size;
-
-	xmalloc_allocated += size;
-}
-
-void
-xmalloc_change(void *oldptr, void *newptr, size_t newsize)
-{
-	struct xmalloc_block	*block;
-	ssize_t			 change;
-
-#if 0
-	log_debug3("xmalloc_change: %p -> %p %zu", oldptr, newptr, newsize);
-#endif
-
-	if (oldptr == NULL) {
-		xmalloc_new(newptr, newsize);
-		return;
-	}
-		
-	if ((block = xmalloc_find(oldptr)) == NULL) {
-		log_debug2("xmalloc_change: not found");
-		return;
-	}
-
-	change = newsize - block->size;
-	if (change > 0)
-		xmalloc_allocated += change;
-	else
-		xmalloc_freed -= change;
-
-	block->ptr = newptr;
-	block->size = newsize;
-}
-
-void
-xmalloc_free(void *ptr)
-{
-	struct xmalloc_block	*block;
-
-#if 0
-	log_debug3("xmalloc_free: %p", ptr);
-#endif
-	if ((block = xmalloc_find(ptr)) == NULL) {
-		log_debug2("xmalloc_free: not found (%p)", ptr);
-		return;
-	}
-
-	xmalloc_freed += block->size;
-
-	block->ptr = NULL;
-}
-
-#endif /* DEBUG */
-
 void *
-ensure_for(void *buf, size_t *len, size_t now, size_t nmemb, size_t size)
+ensure_for(void *buf, size_t *len, size_t size, size_t adj)
 {
-	if (nmemb == 0 || size == 0)
-		fatalx("ensure_for: zero size");
-	if (SIZE_MAX / nmemb < size)
-		fatalx("ensure_for: nmemb * size > SIZE_MAX");
+	if (adj == 0)
+		log_fatalx("ensure_for: zero adj");
 
-	if (SIZE_MAX - now < nmemb * size)
-		fatalx("ensure_for: SIZE_MAX - now < nmemb * size");
-	now += nmemb * size;
+	if (SIZE_MAX - size < adj)
+		log_fatalx("ensure_for: size + adj > SIZE_MAX");
+	size += adj;
 
-	if (*len == 0)
-		fatalx("ensure_for: *len == 0");
+	if (*len == 0) {
+		*len = BUFSIZ;
+		buf = xmalloc(*len);
+	}
 
-	while (*len <= now) {
+	while (*len <= size) {
 		buf = xrealloc(buf, 2, *len);
 		*len *= 2;
 	}
@@ -230,12 +52,14 @@ void *
 ensure_size(void *buf, size_t *len, size_t nmemb, size_t size)
 {
 	if (nmemb == 0 || size == 0)
-		fatalx("ensure_size: zero size");
+		log_fatalx("ensure_size: zero size");
 	if (SIZE_MAX / nmemb < size)
-		fatalx("ensure_size: nmemb * size > SIZE_MAX");
+		log_fatalx("ensure_size: nmemb * size > SIZE_MAX");
 
-	if (*len == 0)
-		fatalx("ensure_size: *len == 0");
+	if (*len == 0) {
+		*len = BUFSIZ;
+		buf = xmalloc(*len);
+	}
 
 	while (*len <= nmemb * size) {
 		buf = xrealloc(buf, 2, *len);
@@ -263,35 +87,31 @@ xcalloc(size_t nmemb, size_t size)
         void	*ptr;
 
         if (size == 0 || nmemb == 0)
-                fatalx("xcalloc: zero size");
+                log_fatalx("xcalloc: zero size");
         if (SIZE_MAX / nmemb < size)
-                fatalx("xcalloc: nmemb * size > SIZE_MAX");
+                log_fatalx("xcalloc: nmemb * size > SIZE_MAX");
         if ((ptr = calloc(nmemb, size)) == NULL)
-		fatal("xcalloc");
+		log_fatal("xcalloc");
 
 #ifdef DEBUG
-	xmalloc_mallocs++;
-	xmalloc_new(ptr, nmemb * size);
+	xmalloc_new(xmalloc_caller(), ptr, nmemb * size);
 #endif
-
         return (ptr);
 }
 
 void *
 xmalloc(size_t size)
 {
-        void	*ptr;
+	void	*ptr;
 
         if (size == 0)
-                fatalx("xmalloc: zero size");
+                log_fatalx("xmalloc: zero size");
         if ((ptr = malloc(size)) == NULL)
-		fatal("xmalloc");
+		log_fatal("xmalloc");
 
 #ifdef DEBUG
-	xmalloc_mallocs++;
-	xmalloc_new(ptr, size);
+	xmalloc_new(xmalloc_caller(), ptr, size);
 #endif
-
         return (ptr);
 }
 
@@ -302,17 +122,15 @@ xrealloc(void *oldptr, size_t nmemb, size_t size)
 	void	*newptr;
 
 	if (newsize == 0)
-                fatalx("xrealloc: zero size");
+                log_fatalx("xrealloc: zero size");
         if (SIZE_MAX / nmemb < size)
-                fatalx("xrealloc: nmemb * size > SIZE_MAX");
+                log_fatalx("xrealloc: nmemb * size > SIZE_MAX");
         if ((newptr = realloc(oldptr, newsize)) == NULL)
-		fatal("xrealloc");
+		log_fatal("xrealloc");
 
 #ifdef DEBUG
-	xmalloc_reallocs++;
-	xmalloc_change(oldptr, newptr, newsize);
+	xmalloc_change(xmalloc_caller(), oldptr, newptr, nmemb * size);
 #endif
-
         return (newptr);
 }
 
@@ -320,32 +138,12 @@ void
 xfree(void *ptr)
 {
 	if (ptr == NULL)
-		fatalx("xfree: null pointer");
+		log_fatalx("xfree: null pointer");
 	free(ptr);
 
 #ifdef DEBUG
-	xmalloc_frees++;
 	xmalloc_free(ptr);
 #endif
-}
-
-int printflike3
-xsnprintf(char *str, size_t size, const char *fmt, ...)
-{
-	int	i;
-
-	va_list	ap;
-
-	va_start(ap, fmt);
-	i = vsnprintf(str, size, fmt, ap);
-	va_end(ap);
-
-	if (i > 0 && (size_t) i >= size) {	/* truncation is failure */
-		i = -1;
-		errno = EINVAL;
-	}
-
-	return (i);
 }
 
 int printflike2
@@ -355,16 +153,103 @@ xasprintf(char **ret, const char *fmt, ...)
         int	i;
 
         va_start(ap, fmt);
-        i = vasprintf(ret, fmt, ap);
+        i = xvasprintf(ret, fmt, ap);
         va_end(ap);
 
+	return (i);
+}
+
+int
+xvasprintf(char **ret, const char *fmt, va_list ap)
+{
+	int	i;
+
+	i = vasprintf(ret, fmt, ap);
+
         if (i < 0 || *ret == NULL)
-                fatal("xasprintf");
+                log_fatal("xvasprintf");
 
 #ifdef DEBUG
-	xmalloc_mallocs++;
-	xmalloc_new(*ret, i + 1);
+	xmalloc_new(xmalloc_caller(), *ret, i + 1);
 #endif
+        return (i);
+}
+
+int printflike3
+xsnprintf(char *buf, size_t len, const char *fmt, ...)
+{
+        va_list ap;
+        int	i;
+
+        va_start(ap, fmt);
+        i = xvsnprintf(buf, len, fmt, ap);
+        va_end(ap);
+
+	return (i);
+}
+
+int
+xvsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
+{
+	int	i;
+
+	if (len > INT_MAX) {
+		errno = EINVAL;
+		log_fatal("xvsnprintf");
+	}
+
+	i = vsnprintf(buf, len, fmt, ap);
+
+        if (i < 0)
+                log_fatal("xvsnprintf");
 
         return (i);
+}
+
+/*
+ * Print a path. Same as xsnprintf, but return ENAMETOOLONG on truncation.
+ */
+int printflike3
+printpath(char *buf, size_t len, const char *fmt, ...)
+{
+	va_list	ap;
+	int	n;
+
+	if (len > INT_MAX) {
+		errno = ENAMETOOLONG;
+		return (1);
+	}
+
+	va_start(ap, fmt);
+	n = xvsnprintf(buf, len, fmt, ap);
+	va_end(ap);
+
+	if ((size_t) n >= len) {
+		errno = ENAMETOOLONG;
+		return (1);
+	}
+
+	return (0);
+}
+
+/*
+ * Some systems modify the path in place. This function and xbasename below
+ * avoid that by using a temporary buffer.
+ */
+char *
+xdirname(const char *src)
+{
+	static char	dst[MAXPATHLEN];
+
+	strlcpy(dst, src, sizeof dst);
+	return (dirname(dst));
+}
+
+char *
+xbasename(const char *src)
+{
+	static char	dst[MAXPATHLEN];
+
+	strlcpy(dst, src, sizeof dst);
+	return (basename(dst));
 }
