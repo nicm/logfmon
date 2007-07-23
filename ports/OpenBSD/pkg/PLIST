@@ -1,4 +1,9 @@
-@comment $Id$
+@comment $OpenBSD$
 @man man/man5/logfmon.conf.5
 @man man/man8/logfmon.8
 sbin/logfmon
+share/doc/logfmon/
+share/doc/logfmon/README
+share/examples/logfmon/
+share/examples/logfmon/example-logfmon.conf
+share/examples/logfmon/freebsd_example-logfmon.conf
