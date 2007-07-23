@@ -40,6 +40,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "array.h"
+
 #define THREADLIMIT	100
 
 #define MAXTAGLEN	32
@@ -68,29 +70,6 @@
 #define printflike1 __attribute__ ((format (printf, 1, 2)))
 #define printflike2 __attribute__ ((format (printf, 2, 3)))
 #define printflike3 __attribute__ ((format (printf, 3, 4)))
-
-#ifndef TAILQ_HEAD_INITIALIZER
-#define TAILQ_HEAD_INITIALIZER(head)					\
-	{ NULL, &(head).tqh_first }
-#endif
-#ifndef TAILQ_FIRST
-#define TAILQ_FIRST(head) (head)->tqh_first
-#endif
-#ifndef TAILQ_END
-#define TAILQ_END(head) NULL
-#endif
-#ifndef TAILQ_NEXT
-#define TAILQ_NEXT(elm, field) ((elm)->field.tqe_next)
-#endif
-#ifndef TAILQ_FOREACH
-#define TAILQ_FOREACH(var, head, field)					\
-	for ((var) = TAILQ_FIRST(head);					\
-	     (var) != TAILQ_END(head);				 	\
-	     (var) = TAILQ_NEXT(var, field))
-#endif
-#ifndef TAILQ_EMPTY
-#define TAILQ_EMPTY(head) (TAILQ_FIRST(head) == TAILQ_END(head))
-#endif
 
 #define CREATE_THREAD(thread, fn, arg) do {				\
 	LOCK_MUTEX(conf.thr_mutex);					\
@@ -181,12 +160,20 @@ extern char			*__progname;
 extern volatile sig_atomic_t	 reload;
 extern volatile sig_atomic_t	 quit;
 
+/* Configuration file (used by parser). */
+struct cfgfile {
+        FILE            *f;
+        int              line;
+        const char      *path;
+};
+ARRAY_DECL(cfgfiles, struct cfgfile *);
+
 /* Macros in configuration file. */
 struct macro {
 	char			 name[MAXNAMESIZE];
 	union {
-		long long	 number;
-		char		*string;
+		long long	 num;
+		char		*str;
 	} value;
 	enum {
 		MACRO_NUMBER,
@@ -447,9 +434,16 @@ __dead void	 log_vfatal(const char *, va_list);
 __dead void	 log_fatal(const char *, ...);
 __dead void	 log_fatalx(const char *, ...);
 
+/* lex.c */
+int 	 	 	yylex(void);
+
 /* parse.y */
-extern struct macros	 macros;
-struct macro   		*find_macro(char *);
+extern struct macros	parse_macros;
+extern struct cfgfiles  parse_filestack;
+extern struct cfgfile  *parse_file;
+int	 		parse_conf(const char *);
+__dead printflike1 void yyerror(const char *, ...);
+struct macro 	       *find_macro(char *);
 
 /* rules.c */
 void		 free_tags(struct tags *);

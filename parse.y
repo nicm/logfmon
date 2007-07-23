@@ -32,15 +32,55 @@
 
 #include "logfmon.h"
 
-struct macros	macros;
+struct macros	 parse_macros;
 
-extern int 	yylineno;
+struct cfgfiles  parse_filestack;
+struct cfgfile	*parse_file;
 
-int		yyparse(void);
-void 		yyerror(const char *, ...);
-int 		yywrap(void);
+int		 yyparse(void);
+void 		 yyerror(const char *, ...);
 
-extern int yylex(void);
+int
+parse_conf(const char *path)
+{
+	struct macro	*macro;
+	FILE		*f;
+
+        if ((f = fopen(path, "r")) == NULL)
+                return (-1);
+	
+	ARRAY_INIT(&parse_filestack);
+	parse_file = xmalloc(sizeof *parse_file);
+
+	parse_file->f = f;
+	parse_file->line = 1;
+	parse_file->path = path;
+
+	TAILQ_INIT(&parse_macros);
+
+	macro = xmalloc(sizeof *macro);
+	strlcpy(macro->name, "%pid", sizeof macro->name);
+	macro->type = MACRO_NUMBER;
+	macro->value.num = getpid();
+	TAILQ_INSERT_HEAD(&parse_macros, macro, entry);
+
+        yyparse();
+
+	ARRAY_FREE(&parse_filestack);
+	xfree(parse_file);
+
+	while (!TAILQ_EMPTY(&parse_macros)) {
+		macro = TAILQ_FIRST(&parse_macros);
+		TAILQ_REMOVE(&parse_macros, macro, entry);
+
+		if (macro->type == MACRO_STRING)
+			xfree(macro->value.str);
+		xfree(macro);
+	}
+
+        fclose(f);
+        return (0);
+}
 
 __dead void
 yyerror(const char *fmt, ...)
@@ -48,7 +88,8 @@ yyerror(const char *fmt, ...)
         va_list  ap;
         char    *s;
 
-        xasprintf(&s, "%s: %s at line %d", conf.conf_file, fmt, yylineno);
+	xasprintf(&s,
+	    "%s: %s at line %d", parse_file->path, fmt, parse_file->line);
 
         va_start(ap, fmt);
         log_vwrite(NULL, LOG_CRIT, s, ap);
@@ -57,28 +98,12 @@ yyerror(const char *fmt, ...)
         exit(1);
 }
 
-int
-yywrap(void)
-{
-	struct macro	*macro;
-
-	while (!TAILQ_EMPTY(&macros)) {
-		macro = TAILQ_FIRST(&macros);
-		TAILQ_REMOVE(&macros, macro, entry);
-		if (macro->type == MACRO_STRING)
-			xfree(macro->value.string);
-		xfree(macro);
-	}
-
-        return (1);
-}
-
 struct macro *
 find_macro(char *name)
 {
 	struct macro	*macro;
 
-	TAILQ_FOREACH(macro, &macros, entry) {
+	TAILQ_FOREACH(macro, &parse_macros, entry) {
 		if (strcmp(macro->name, name) == 0)
 			return (macro);
 	}
@@ -87,8 +112,10 @@ find_macro(char *name)
 }
 %}
 
-%token TOKMATCH TOKIGNORE TOKSET TOKFILE TOKIN TOKTAG TOKAUTOAPPEND
-%token TOKOPEN TOKAPPEND TOKCLOSE TOKEXPIRE TOKWHEN TOKNOT TOKCLEAR
+%token NONE
+%token TOKMATCH TOKIGNORE TOKSET TOKFILE TOKIN TOKTAG TOKAUTOAPPEND TOKOPEN
+%token TOKAPPEND TOKCLOSE TOKEXPIRE TOKWHEN TOKNOT TOKCLEAR TOKHOURS TOKMINUTES
+%token TOKSECONDS
 %token OPTMAILCMD OPTMAILTIME OPTUSER OPTGROUP OPTCACHEFILE 
 %token OPTPIDFILE OPTLOGREGEXP OPTMAXTHREADS
 
@@ -104,8 +131,8 @@ find_macro(char *name)
 	} action;
 }
 
-%token <number> NUMBER TIME
-%token <string> STRING STRMACRO STRMACROB NUMMACRO NUMMACROB TAG
+%token <number> NUMBER
+%token <string> STRING STRMACRO NUMMACRO STRCOMMAND NUMCOMMAND TAG
 %token <action.act> BASICACTION
 
 %type  <number> time num
@@ -125,14 +152,37 @@ cmds: /* empty */
     | cmds file
     | cmds rule
     | cmds set
+    | cmds NONE
 
-time: TIME
+time: num TOKHOURS
+      {
+	      if ($1 > INT_MAX / 3600)
+		      yyerror("time too big: %d", $1);
+	      $$ = $1 * 3600;
+      }
+    | num TOKMINUTES
+      {
+	      if ($1 > INT_MAX / 60)
+		      yyerror("time too big: %d", $1);
+	      $$ = $1 * 60;
+      }
+    | num TOKSECONDS
     | num
       {
+	      if ($1 > INT_MAX)
+		      yyerror("time too big: %d", $1);
 	      $$ = $1;
       }
 
-str: STRING
+str: STRCOMMAND
+     {
+	     yyerror("commands are not supported");
+	     /*
+	     $$ = run_command($1, parse_file->path);
+	     xfree($1);
+	     */
+     }
+   | STRING
      {
 	     $$ = $1;
      }
@@ -148,34 +198,30 @@ str: STRING
 	     if (macro->type != MACRO_STRING)
 		     yyerror("string macro expected: %s", $1);
 
-	     $$ = xstrdup(macro->value.string);
+	     $$ = xstrdup(macro->value.str);
 
 	     xfree($1);
      }
-   | STRMACROB
+
+num: NUMCOMMAND
      {
-	     struct macro	*macro;
-	     char 		 name[MAXNAMESIZE];
-
-	     if (strlen($1) > MAXNAMESIZE + 2)
- 		     yyerror("macro name too long: %s", $1);
-
-	     name[0] = $1[0];
-	     name[1] = '\0';
-	     strlcat(name, $1 + 2, MAXNAMESIZE);
-	     name[strlen(name) - 1] = '\0';
-
-	     if ((macro = find_macro(name)) == NULL)
-		     yyerror("undefined macro: %s", name);
-	     if (macro->type != MACRO_STRING)
-		     yyerror("string macro expected: %s", name);
-
-	     $$ = xstrdup(macro->value.string);
-
+	     yyerror("commands are not supported");
+	     /*
+	     const char	*errstr;
+	     char	*s;
+	     
+	     s = run_command($1, parse_file->path);
+	     
+	     $$ = strtonum(s, 0, LLONG_MAX, &errstr);
+	     if (errstr != NULL)
+		     yyerror("number is %s", errstr);
+	     
+	     xfree(s);
+	     
 	     xfree($1);
-     }
-
-num: NUMBER
+	     */
+      }
+   | NUMBER
      {
 	     $$ = $1;
      }
@@ -191,29 +237,7 @@ num: NUMBER
 	     if (macro->type != MACRO_NUMBER)
 		     yyerror("number macro expected: %s", $1);
 
-	     $$ = macro->value.number;
-
-	     xfree($1);
-     }
-   | NUMMACROB
-     {
-	     struct macro	*macro;
-	     char 		 name[MAXNAMESIZE];
-
-	     if (strlen($1) > MAXNAMESIZE + 2)
-		     yyerror("macro name too long: %s", $1);
-
-	     name[0] = $1[0];
-	     name[1] = '\0';
-	     strlcat(name, $1 + 2, MAXNAMESIZE);
-	     name[strlen(name) - 1] = '\0';
-
-	     if ((macro = find_macro(name)) == NULL)
-		     yyerror("undefined macro: %s", name);
-	     if (macro->type != MACRO_NUMBER)
-		     yyerror("number macro expected: %s", name);
-
-	     $$ = macro->value.number;
+	     $$ = macro->value.num;
 
 	     xfree($1);
      }
@@ -227,10 +251,10 @@ defmacro: STRMACRO '=' STRING
 			  if (strlen($1) > MAXNAMESIZE)
 				  yyerror("macro name too long: %s", $1);
 			  strlcpy(macro->name, $1, sizeof macro->name);
-			  TAILQ_INSERT_HEAD(&macros, macro, entry);
+			  TAILQ_INSERT_HEAD(&parse_macros, macro, entry);
 		  }
 		  macro->type = MACRO_STRING;
-		  macro->value.string = $3;
+		  macro->value.str = $3;
 		  xfree($1);
 	  }
         | NUMMACRO '=' NUMBER
@@ -242,10 +266,10 @@ defmacro: STRMACRO '=' STRING
 		     if (strlen($1) > MAXNAMESIZE)
 			     yyerror("macro name too long: %s", $1);
 		     strlcpy(macro->name, $1, sizeof macro->name);
-		     TAILQ_INSERT_HEAD(&macros, macro, entry);
+		     TAILQ_INSERT_HEAD(&parse_macros, macro, entry);
 	     }
 	     macro->type = MACRO_NUMBER;
-	     macro->value.number = $3;
+	     macro->value.num = $3;
 	     xfree($1);
 	  }
 
@@ -339,7 +363,7 @@ set: TOKSET OPTMAILCMD str
    | TOKSET OPTLOGREGEXP str
      {
 	     if (regcomp(&conf.entry_re, $3, REG_EXTENDED) != 0)
-		     yyerror("invalid log regexp", $3);
+		     yyerror("invalid log regexp: %s", $3);
 
              xfree($3);
      }

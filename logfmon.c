@@ -42,15 +42,11 @@ const char	*__progname = "logfmon";
 const char	*malloc_options = "AFGJX";
 #endif
 
-extern FILE		*yyin;
-extern int 		 yyparse(void);
-
 volatile sig_atomic_t	 reload;
 volatile sig_atomic_t	 quit;
 struct conf		 conf;
 
 int			 reload_conf(void);
-int			 load_conf(void);
 void			 sighandler(int);
 int			 read_lines(struct file *);
 char			*read_line(struct file *, int *);
@@ -72,30 +68,6 @@ sighandler(int sig)
 }
 
 int
-load_conf(void)
-{
-	struct macro	*macro;
-
-        yyin = fopen(conf.conf_file, "r");
-        if (yyin == NULL)
-                return (1);
-
-	TAILQ_INIT(&macros);
-
-	macro = xmalloc(sizeof *macro);
-	strlcpy(macro->name, "%pid", sizeof macro->name);
-	macro->type = MACRO_NUMBER;
-	macro->value.number = getpid();
-	TAILQ_INSERT_HEAD(&macros, macro, entry);
-
-        yyparse();
-
-        fclose(yyin);
-
-        return (0);
-}
-
-int
 reload_conf(void)
 {
 	log_info("reloading configuration");
@@ -105,7 +77,7 @@ reload_conf(void)
 	free_rules();
 	free_files(); /* closes too */
 
-	if (load_conf() != 0)
+	if (parse_conf(conf.conf_file) != 0)
 		log_fatal(conf.conf_file);
 
 	load_cache();
@@ -359,7 +331,7 @@ main(int argc, char **argv)
 	if (conf.conf_file == NULL)
                 conf.conf_file = xstrdup(CONFFILE);
 
-        if (load_conf() != 0) {
+	if (parse_conf(conf.conf_file) != 0) {
                 log_warn("%s", conf.conf_file);
 		exit(1);
         }

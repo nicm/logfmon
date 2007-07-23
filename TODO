@@ -11,5 +11,6 @@
 - make logfmon able to monitor FIFOs, /dev/stdin, sockets
 - Update man pages per better style op/ar
 - Privsep
-- Port lex.c from fdm for ' and include/ifdef, updated macro code
 - USR1 send mail immediately
+- Change log
+- Commands in cfg

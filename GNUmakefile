@@ -22,16 +22,13 @@ YACC= bison
 YFLAGS= -dy
 endif
 
-LEX= flex
-LFLAGS= -l
-
 INSTALLBIN= install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 555
 INSTALLMAN= install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 444
 
 FILEMON= linux
 
 SRCS= logfmon.c log.c rules.c xmalloc.c xmalloc-debug.c file.c context.c \
-      cache.c threads.c getln.c action.c event-$(FILEMON).c y.tab.c lex.yy.c
+      cache.c threads.c getln.c action.c lex.c event-$(FILEMON).c y.tab.c
 
 DEFS= $(shell getconf LFS_CFLAGS) -DBUILD="\"$(VERSION) ($(FILEMON))\""
 
@@ -64,7 +61,7 @@ LIBS_fam= -lfam
 LIBS_linux= 
 LIBS+= -lm -lpthread $(LIBS_$(FILEMON))
 
-CLEANFILES= $(PROG) y.tab.c lex.yy.c y.tab.h $(OBJS) .depend
+CLEANFILES= $(PROG) y.tab.c y.tab.h $(OBJS) .depend
 
 all: logfmon
 
@@ -76,9 +73,6 @@ depend: $(SRCS)
 
 y.tab.c y.tab.h: parse.y
 	$(YACC) $(YFLAGS) $<
-
-lex.yy.c: lex.l
-	$(LEX) $(LFLAGS) $<
 
 install:
 	$(INSTALLBIN) $(PROG) $(PREFIX)/sbin/$(PROG)

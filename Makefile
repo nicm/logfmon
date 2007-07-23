@@ -1,6 +1,6 @@
 # $Id$
 
-.SUFFIXES: .c .o .y .l .h
+.SUFFIXES: .c .o .y .h
 .PHONY: clean regress index.html
 
 PROG= logfmon
@@ -14,11 +14,10 @@ DEBUG=
 
 FILEMON= kqueue
 SRCS= logfmon.c log.c rules.c xmalloc.c xmalloc-debug.c file.c context.c \
-      cache.c threads.c getln.c parse.y lex.l action.c event-${FILEMON}.c
+      cache.c threads.c getln.c parse.y lex.c action.c event-${FILEMON}.c
 
 OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 
-LEX= lex
 YACC= yacc -d
 
 CC= cc
@@ -49,15 +48,11 @@ LIBS+= -lpthread
 DISTFILES= *.[chyl] GNUmakefile Makefile *.[1-9] README \
 	`find examples regress compat rc.d -type f -and ! -path '*CVS*'`
 
-CLEANFILES= ${PROG} *.o compat/*.o y.tab.c lex.yy.c y.tab.h .depend \
+CLEANFILES= ${PROG} *.o compat/*.o y.tab.c y.tab.h .depend \
 	${PROG}-*.tar.gz *.[1-9].gz *~ *.ln ${PROG}.core
 
 .c.o:
 		${CC} ${CFLAGS} ${INCDIRS} -c ${.IMPSRC} -o ${.TARGET}
-
-.l.o:
-		${LEX} ${.IMPSRC}
-		${CC} ${CFLAGS} ${INCDIRS} -c lex.yy.c -o ${.TARGET}
 
 .y.o:
 		${YACC} ${.IMPSRC}

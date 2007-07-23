@@ -26,6 +26,7 @@
 
 #include "logfmon.h"
 
+/* This sucks. enum action as index. */
 const char *actions[] = { "ignore", "exec", "pipe", "write", "write-append",
 			  "open", "append", "close", "clear", NULL };
 
