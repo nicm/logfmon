@@ -46,9 +46,8 @@ LDFLAGS+= -pthread
 LIBS+= -lpthread
 .endif
 
-DISTFILES= *.[chyl] compat/*.[chyl] ${PROG}.conf ${PROG}.conf.freebsd \
-	GNUmakefile Makefile *.[1-9] README \
-	rc.d/logfmon.sh.freebsd.5.3 rc.d/logfmon.sh.freebsd.4.10
+DISTFILES= *.[chyl] GNUmakefile Makefile *.[1-9] README \
+	`find examples regress compat rc.d -type f -and ! -path '*CVS*'`
 
 CLEANFILES= ${PROG} *.o compat/*.o y.tab.c lex.yy.c y.tab.h .depend \
 	${PROG}-*.tar.gz *.[1-9].gz *~ *.ln ${PROG}.core

@@ -35,69 +35,16 @@
 
 extern int 			 yylex(void);
 extern __dead printflike1 void	 yyerror(const char *, ...);
+
+#define ECHO yyerror("syntax error")
+;
 %}
 
 %%
 
-\{ {
-        int	 	 done = 0, ch;
-	unsigned int	 pos = 0;
-        char	 	 name[MAXTAGLEN];
-	struct tag	*tag;
-
-        yylval.tags = xmalloc(sizeof (struct tags));
-        TAILQ_INIT(yylval.tags);
-
-        while (!done) {
-                switch (ch = input()) {
-		case 0:
-		case EOF:
-			yyerror("unterminated tag list");
-                case '}':
-			done = 1;
-			break;
-                case ' ':
-                        if (pos > 0) {
-                                *(name + pos) = '\0';
-				tag = xmalloc(sizeof (struct tag));
-				strlcpy(tag->name, name, sizeof tag->name);
-				TAILQ_INSERT_TAIL(yylval.tags, tag, entry);
-                                pos = 0;
-                        }
-                        break;
-                default:
-                        if (ch == '-' || ch == '_' ||
-			    isalpha((unsigned char) ch) ||
-			    isdigit((unsigned char) ch)) {
-				/* Tag must begin with a letter */
-				if (pos == 0 && !isalpha((unsigned char) ch))
-					yyerror("illegal tag first character");
-                                *(name + pos) = ch;
-                                pos++;
-				/* Bail if the size has become too long */
-                                if (pos >= sizeof name)
-					yyerror("tag too long");
-			} else
-				yyerror("illegal character in tag");
-                        break;
-                }
-        }
-
-        if (pos > 0) {
-		*(name + pos) = '\0';
-		tag = xmalloc(sizeof (struct tag));
-		strlcpy(tag->name, name, sizeof tag->name);
-		TAILQ_INSERT_TAIL(yylval.tags, tag, entry);
-        }
-
-        if (TAILQ_EMPTY(yylval.tags))
-		yyerror("empty tag list");
-
-        return (TAGS);
-}
 [0-9]+[HhMmSs] {
 	const char	*errstr;
-        char	       *cp, ch;
+        char		*cp, ch;
 
 	cp = yytext + strlen(yytext) - 1;
 	ch = *cp;
@@ -260,12 +207,6 @@ when return (TOKWHEN);
 	    
 	return (BASICACTION);
 }
-\* {
-        yylval.tags = xmalloc(sizeof (struct tags));
-	TAILQ_INIT(yylval.tags);
-
-        return (TAGS);
-}
 \$[A-Za-z][A-Za-z0-9_]* {
         yylval.string = xstrdup(yytext);
 	return (STRMACRO);
@@ -283,20 +224,12 @@ when return (TOKWHEN);
 	return (NUMMACROB);
 }
 [A-Za-z][A-Za-z0-9_-]* {
-	struct tag	*tag;
-
-	if (strlen(yytext) > MAXTAGLEN - 1)
-		yyerror("tag too long");
-
-        yylval.tags = xmalloc(sizeof (struct tags));
-	TAILQ_INIT(yylval.tags);
-
-	tag = xmalloc(sizeof (struct tag));
-	strlcpy(tag->name, yytext, sizeof tag->name);
-	TAILQ_INSERT_HEAD(yylval.tags, tag, entry);
-
-        return (TAGS);
+        yylval.string = xstrdup(yytext);
+        return (TAG);
 }
+\{ return ('{');
+\} return ('}');
+\* return ('*');
 = return ('=');
 \#.*\n /* ignore comments */;
 \n /* ignore end of line */;

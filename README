@@ -11,7 +11,7 @@ Important changes in 0.9:
 	- The number of simultaneous threads is limited to 100 by default. This
 	  limit can be changed using the "set maxthreads" directive. 
 	- There are two new actions, "write" and "write-append", for 
-	  writing or appending to a file.Thanks again to Laurent Pelecq for
+	  writing or appending to a file. Thanks again to Laurent Pelecq for
 	  the suggestion.
 	- Any basic (non-context) action may now be used with contexts, not 
 	  just the "pipe" action.
@@ -52,7 +52,7 @@ Logfmon supports three different methods of monitoring log files:
 	  efficient method but most portable. This is the default when using
 	  the GNU makefile.
 - fam:    This uses the FAM notification system. It is recommended to choose
-	  this on Linux if possible but the seperate FAM software is required
+	  this on Linux if possible but the separate FAM software is required
 	  (on Debian, with their fetish for splitting things into a million
 	  packages, you also need the headers from libfam-dev). Note that 
 	  FAM will not work if the log files are on NFS.

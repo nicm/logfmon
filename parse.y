@@ -105,13 +105,12 @@ find_macro(char *name)
 }
 
 %token <number> NUMBER TIME
-%token <string> STRING STRMACRO STRMACROB NUMMACRO NUMMACROB
-%token <tags> TAGS
+%token <string> STRING STRMACRO STRMACROB NUMMACRO NUMMACROB TAG
 %token <action.act> BASICACTION
 
 %type  <number> time num
 %type  <action> action
-%type  <tags> tags
+%type  <tags> tags tagslist
 %type  <string> not str
 %type  <number> user
 %type  <number> group
@@ -362,16 +361,51 @@ action: BASICACTION str
 		$$.str = NULL;
         }
 
-tags: TOKIN TAGS
-      {
-	      if ($2 == NULL)
-                      yyerror("no tags or illegal tag");		      
+tagslist: tagslist TAG
+	  {
+		  struct tag	*tag;
 
-	      $$ = $2;
+		  $$ = $1;
+
+		  tag = xmalloc(sizeof *tag);
+		  strlcpy(tag->name, $2, sizeof tag->name);
+		  TAILQ_INSERT_TAIL($$, tag, entry);
+	  }
+	| TAG
+	  {
+		  struct tag	*tag;
+		  
+		  $$ = xmalloc(sizeof *$$);
+		  TAILQ_INIT($$);
+		  
+		  tag = xmalloc(sizeof *tag);
+		  strlcpy(tag->name, $1, sizeof tag->name);
+		  TAILQ_INSERT_TAIL($$, tag, entry);
+	  }
+
+tags: TOKIN '*'
+      {
+	      $$ = xmalloc(sizeof *$$);
+	      TAILQ_INIT($$);
+      }
+    | TOKIN TAG
+      {
+	      struct tag	*tag;
+      
+	      $$ = xmalloc(sizeof *$$);
+	      TAILQ_INIT($$);
+
+	      tag = xmalloc(sizeof *tag);
+	      strlcpy(tag->name, $2, sizeof tag->name);
+	      TAILQ_INSERT_TAIL($$, tag, entry);
+      }
+    | TOKIN '{' tagslist '}'    
+      {
+	      $$ = $3;
       }
     | /* empty */ 
       {
-	      $$ = xmalloc(sizeof (struct tags));
+	      $$ = xmalloc(sizeof *$$);
 	      TAILQ_INIT($$);
       }
 
@@ -555,27 +589,15 @@ rule: /* match, action=* */
 		      xfree($4);
       }
 
-file: TOKFILE str TOKTAG TAGS
+file: TOKFILE str TOKTAG TAG
       {
-	      struct tag	*tag;
-
               if (*$2 == '\0')
                       yyerror("path cannot be empty string");
-              if ($4 == NULL)
-                      yyerror("no tags or illegal tag");
 
-	      tag = TAILQ_FIRST($4);
-	      if (tag == NULL)
-                      yyerror("at least one tag must be given");
-              if (TAILQ_NEXT(tag, entry) != NULL)
-                      yyerror("only one tag may be assigned to a file");
-
-              if (add_file($2, xstrdup(tag->name)) == NULL)
+              if (add_file($2, $4) == NULL)
                       exit(1);
 
               xfree($2);
-	      free_tags($4);
-              xfree($4);
       }
     | TOKFILE str
       {
