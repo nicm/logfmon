@@ -18,7 +18,6 @@ WANTLIB=	c m pthread
 
 MASTER_SITES=	${MASTER_SITE_SOURCEFORGE:=logfmon/}
 
-# Necessary regress/ subdirectory is not shipped with logfmon currently
 NO_REGRESS=	Yes
 
 post-install:
