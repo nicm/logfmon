@@ -14,3 +14,5 @@
 - USR1 send mail immediately
 - Changelog
 - Commands in cfg
+- Tag glob expressions
+- Match multiple files under one tag
