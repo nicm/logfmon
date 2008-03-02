@@ -118,3 +118,9 @@ void
 close_events(void)
 {
 }
+
+void
+reinit_events(void)
+{
+        init_events();
+}

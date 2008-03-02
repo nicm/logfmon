@@ -44,6 +44,10 @@ DEFS+= -D_GNU_SOURCE -DNO_STRLCPY -DNO_STRLCAT -DNO_STRTONUM \
 CFLAGS+= -std=c99
 endif
 
+ifeq ($(shell test -d /usr/include/inotifytools && echo found),found)
+CPPFLAGS += -I/usr/include/inotifytools -DHAVE_INOTIFYTOOLS
+endif
+
 OBJS= $(patsubst %.c,%.o,$(SRCS))
 CPPFLAGS+= $(DEFS) -I.
 ifdef DEBUG

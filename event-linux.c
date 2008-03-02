@@ -139,3 +139,10 @@ get_event(enum event *event, int timeout)
                 }
         }
 }
+
+void
+reinit_events(void)
+{
+        close_events();
+        init_events();
+}
