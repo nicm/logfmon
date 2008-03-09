@@ -329,6 +329,7 @@ main(int argc, char **argv)
 
 	if (conf.conf_file == NULL)
                 conf.conf_file = xstrdup(CONFFILE);
+	INIT_MUTEX(conf.files_mutex);
 
 	if (parse_conf(conf.conf_file) != 0) {
                 log_warn("%s", conf.conf_file);
@@ -387,7 +388,6 @@ main(int argc, char **argv)
         reload = 0;
         quit = 0;
 
-	INIT_MUTEX(conf.files_mutex);
         if (pthread_create(&thread, NULL, save_thread, NULL) != 0)
                 log_fatalx("pthread_create failed");
 
