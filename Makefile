@@ -16,8 +16,6 @@ FILEMON= kqueue
 SRCS= logfmon.c log.c rules.c xmalloc.c xmalloc-debug.c file.c context.c \
       cache.c threads.c getln.c parse.y lex.c action.c event-${FILEMON}.c
 
-OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
-
 YACC= yacc -d
 
 CC= cc
@@ -44,6 +42,13 @@ LDFLAGS+= -pthread
 .else
 LIBS+= -lpthread
 .endif
+
+.if ${OS} == "NetBSD"
+CFLAGS+= -DNO_STRTONUM
+SRCS+= compat/strtonum.c
+.endif
+
+OBJS= ${SRCS:S/.c/.o/:S/.y/.o/:S/.l/.o/}
 
 DISTFILES= *.[chyl] GNUmakefile Makefile *.[1-9] README \
 	`find examples regress compat rc.d -type f -and ! -path '*CVS*'`
