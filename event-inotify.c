@@ -48,7 +48,7 @@ set_nonblock(int fd)
 {
         long flags = 0;
         if (fcntl(fd, F_GETFL, &flags) < 0)
-                fatal("cannot read file descriptor attributes");
+                log_fatal("cannot read file descriptor attributes");
         flags |= O_NONBLOCK;
         if (fcntl(fd, F_SETFL, &flags) < 0)
                 log_warnx("non-blocking mode not available");
@@ -138,7 +138,7 @@ open_watch(watch_t *w)
 	w->wd = inotify_add_watch(inotify_fd, w->path, w->mask);
 	if (w->wd < 0) {
 		close_events();
-		fatal("inotify_add_watch");
+		log_fatal("inotify_add_watch");
 	}
 }
 
@@ -164,7 +164,7 @@ void delete_watch(watch_t *w)
 {
 	if (w->wd >= 0) {
 		if (w->nref <= 0)
-			fatal("deleting an unused watch");
+			log_fatal("deleting an unused watch");
 		--(w->nref);
 		if (w->nref == 0) {
 			log_debug("remove watch on path: %s", w->path);
@@ -267,7 +267,7 @@ void read_pending_events(void)
                         case EAGAIN:
                                 return;
                         default:
-                                fatal("read failed");
+                                log_fatal("read failed");
                         }
                 } else
                         end += count;
@@ -314,7 +314,7 @@ init_events(void)
 
 	inotify_fd = inotify_init();
 	if (inotify_fd < 0)
-		fatal("inotify");
+		log_fatal("inotify");
 	set_nonblock(inotify_fd);
 	log_debug("inotify initialized");
 
@@ -375,7 +375,7 @@ get_event(enum event *event, int timeout)
 			ret = select(inotify_fd + 1, &rfds, NULL, NULL, &tv);
 			switch (ret) {
 			case -1:
-				fatal("inotify select");
+				log_fatal("inotify select");
 				break;
 			case 0:
 				*event = EVENT_TIMEOUT;

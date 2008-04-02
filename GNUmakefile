@@ -73,7 +73,7 @@ $(PROG): $(OBJS)
 	$(CC) $(LDFLAGS) $(LIBS) -o $@ $+
 
 depend: $(SRCS)
-	$(CC) -MM $(SRCS) > .depend
+	$(CC) -MM -I. $(SRCS) > .depend
 
 y.tab.c y.tab.h: parse.y
 	$(YACC) $(YFLAGS) $<
