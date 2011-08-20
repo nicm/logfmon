@@ -79,8 +79,10 @@ close_events(void)
 	struct file	*file;
 
 	TAILQ_FOREACH(file, &conf.files, entry) {
-		xfree(file->data);
-		file->data = NULL;
+		if (file->data != NULL) {
+			xfree(file->data);
+			file->data = NULL;
+		}
 	}
 }
 
