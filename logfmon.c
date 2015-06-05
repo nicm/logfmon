@@ -38,10 +38,6 @@
 const char	*__progname = "logfmon";
 #endif
 
-#ifdef DEBUG
-const char	*malloc_options = "AFGJX";
-#endif
-
 volatile sig_atomic_t	 reload;
 volatile sig_atomic_t	 quit;
 struct conf		 conf;
@@ -263,7 +259,6 @@ usage(void)
         exit(1);
 }
 
-#ifndef REGRESS
 int
 main(int argc, char **argv)
 {
@@ -522,14 +517,8 @@ out:
 
         log_info("terminated");
 
-#ifdef DEBUG
-	if (conf.debug || conf.use_stdin)
-		xmalloc_report(getpid(), __progname);
-#endif
-
 	return (0);
 }
-#endif
 
 void
 do_stdin(void)
@@ -539,10 +528,6 @@ do_stdin(void)
 	char		*line;
 	time_t		 expiretime;
 	struct pollfd	 pfd;
-
-#ifdef DEBUG
-	xmalloc_clear();
-#endif
 
 	setlinebuf(stdin);
 	if ((flags = fcntl(fileno(stdin), F_GETFL)) < 0)

@@ -93,9 +93,6 @@ xcalloc(size_t nmemb, size_t size)
         if ((ptr = calloc(nmemb, size)) == NULL)
 		log_fatal("xcalloc");
 
-#ifdef DEBUG
-	xmalloc_new(xmalloc_caller(), ptr, nmemb * size);
-#endif
         return (ptr);
 }
 
@@ -109,9 +106,6 @@ xmalloc(size_t size)
         if ((ptr = malloc(size)) == NULL)
 		log_fatal("xmalloc");
 
-#ifdef DEBUG
-	xmalloc_new(xmalloc_caller(), ptr, size);
-#endif
         return (ptr);
 }
 
@@ -128,9 +122,6 @@ xrealloc(void *oldptr, size_t nmemb, size_t size)
         if ((newptr = realloc(oldptr, newsize)) == NULL)
 		log_fatal("xrealloc");
 
-#ifdef DEBUG
-	xmalloc_change(xmalloc_caller(), oldptr, newptr, nmemb * size);
-#endif
         return (newptr);
 }
 
@@ -140,10 +131,6 @@ xfree(void *ptr)
 	if (ptr == NULL)
 		log_fatalx("xfree: null pointer");
 	free(ptr);
-
-#ifdef DEBUG
-	xmalloc_free(ptr);
-#endif
 }
 
 int printflike2
@@ -169,9 +156,6 @@ xvasprintf(char **ret, const char *fmt, va_list ap)
         if (i < 0 || *ret == NULL)
                 log_fatal("xvasprintf");
 
-#ifdef DEBUG
-	xmalloc_new(xmalloc_caller(), *ret, i + 1);
-#endif
         return (i);
 }
 

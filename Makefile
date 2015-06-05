@@ -13,7 +13,7 @@ REL!= uname -r
 DEBUG=
 
 FILEMON= kqueue
-SRCS= logfmon.c log.c rules.c xmalloc.c xmalloc-debug.c file.c context.c \
+SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c \
       cache.c threads.c getln.c parse.y lex.c action.c event-${FILEMON}.c
 
 YACC= yacc -d
@@ -73,34 +73,8 @@ dist:		clean
 			-s '/.*/${PROG}-${VERSION}\/\0/' \
 			-f ${PROG}-${VERSION}.tar.gz ${DISTFILES}
 
-port:
-		find ports/OpenBSD/* -type f -and ! -path '*CVS*' | tar -zxc \
-			-s '/ports\/OpenBSD/${PROG}/' \
-			-I - \
-			-f ${PROG}-${VERSION}-openbsd${REL}-port.tar.gz
-
 depend:
 		mkdep ${CFLAGS} ${SRCS}
-
-regress:	clean ${OBJS} ${PROG}
-		rm logfmon.o
-		${CC} -DREGRESS ${CFLAGS} ${INCDIRS} -c logfmon.c -o logfmon.o
-		cd regress && ${MAKE} CFLAGS='${CFLAGS}' INCDIRS='${INCDIRS}' CC='${CC}' LDFLAGS='${LDFLAGS}' LIBS='${LIBS}' OBJS='${OBJS}' FILEMON='${FILEMON}'
-
-index.html:
-		nroff -mdoc logfmon.conf.5|m2h -u > logfmon.conf.5.html
-		nroff -mdoc logfmon.8|m2h -u > logfmon.8.html
-		awk ' \
-			{ if ($$0 ~ /%%/) {			\
-				name = substr($$0, 3);		\
-				while ((getline < name) == 1) {	\
-					print $$0;		\
-				}				\
-				close(name);			\
-			} else {				\
-				print $$0;			\
-			} }' index.html.in > index.html
-		rm -f logfmon.conf.5.html logfmon.8.html
 
 install:	all
 		${INSTALLBIN} ${PROG} ${PREFIX}/sbin/${PROG}

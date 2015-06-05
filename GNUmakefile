@@ -27,7 +27,7 @@ INSTALLMAN= install -D -g $(BIN_OWNER) -o $(BIN_GROUP) -m 444
 
 FILEMON= linux
 
-SRCS= logfmon.c log.c rules.c xmalloc.c xmalloc-debug.c file.c context.c \
+SRCS= logfmon.c log.c rules.c xmalloc.c file.c context.c \
       cache.c threads.c getln.c action.c lex.c event-$(FILEMON).c y.tab.c
 
 DEFS= $(shell getconf LFS_CFLAGS) -DBUILD="\"$(VERSION) ($(FILEMON))\""
