@@ -1,0 +1,6 @@
+*.o
+logfmon
+y.tab.c
+y.tab.h
+*~
+			
