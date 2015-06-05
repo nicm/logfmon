@@ -193,7 +193,7 @@ reopen_files(unsigned int *failed)
 				(*failed)++;
 			continue;
 		}
-		
+
 		file->fd = fopen(file->path, "r");
 		if (file->fd == NULL) {
 			if (file->fd != NULL) {
@@ -204,7 +204,7 @@ reopen_files(unsigned int *failed)
 				(*failed)++;
 			continue;
 		}
-			
+
 		file->timer = 0;
 		file->offset = 0;
 		opened++;

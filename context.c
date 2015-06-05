@@ -154,7 +154,7 @@ act_context(struct context *context, enum action act, char *str, int repl)
 	if (repl)
 		str = repl_matches(context->line, str, context->match);
 
-	log_debug("acting on context: action=%s, target=%s", 
+	log_debug("acting on context: action=%s, target=%s",
 	    actions[act], str);
 	switch (act) {
 	case ACT_IGNORE:
@@ -167,7 +167,7 @@ act_context(struct context *context, enum action act, char *str, int repl)
 		break;
 	case ACT_WRITE:
 		write_context(context, str, 0);
-		break;			
+		break;
 	case ACT_WRITEAPPEND:
 		write_context(context, str, 1);
 		break;
@@ -213,7 +213,7 @@ pipe_context(struct context *context, char *cmd)
 			break;
 		}
 	}
-	
+
 	CREATE_THREAD(&thread, pclose_thread, fd);
 }
 
@@ -240,7 +240,7 @@ write_context(struct context *context, char *path, int append)
 		log_warnx("empty write path");
 		return;
 	}
-       
+
 	fd = fopen(path, append ? "a" : "w");
 	if (fd == NULL) {
 		log_warn("%s", path);

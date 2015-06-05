@@ -116,7 +116,7 @@ get_event(enum event *event, int timeout)
 			file = evfile;
 			evfile = TAILQ_NEXT(evfile, entry);
 
-			if (file->fd != NULL) {	
+			if (file->fd != NULL) {
 				size = file->data;
 
 				if (stat(file->path, &sb) != 0) {

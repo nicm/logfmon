@@ -152,9 +152,9 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
 	else {
 		if (fwrite(line, strlen(line), 1, fd) == 1)
 			fputc('\n', fd);
-		
+
 		CREATE_THREAD(&thread, pclose_thread, fd);
-		
+
 		xfree(cmd);
 	}
 }
@@ -202,7 +202,7 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
 		return;
 	}
 
-	log_debug("matched: (%s) %s -- appending: '%s'", file->tag.name, t, 
+	log_debug("matched: (%s) %s -- appending: '%s'", file->tag.name, t,
 	    key);
 
 	context = find_context_by_key(file, key);
@@ -223,7 +223,7 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
 	if (count_msgs(context) >= context->rule->params.ent_max) {
 		log_debug("context %s reached limit of %u entries",
 		    context->key, context->rule->params.ent_max);
-		
+
 		act_context(context, context->rule->params.ent_act,
 		    context->rule->params.ent_str, 1);
 		delete_context(file, context);
@@ -315,7 +315,7 @@ act_write(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
 			xfree(path);
 		return;
 	}
-	
+
 	log_debug("matched: (%s) %s -- writing: %s", file->tag.name, t, path);
 
 	fd = fopen(path, append ? "a" : "w");
@@ -324,9 +324,9 @@ act_write(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
 	else {
 		if (fwrite(line, strlen(line), 1, fd) == 1)
 			fputc('\n', fd);
-		
+
 		fclose(fd);
-		
+
 		xfree(path);
 	}
 }

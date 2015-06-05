@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
- 
+
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -93,11 +93,11 @@ read_lines(struct file *file)
 	while ((line = read_line(file, &error)) != NULL) {
 		if (parse_line(line, file) != 0)
 			exit(1);
-		xfree(line);		
+		xfree(line);
 	}
 	if (!error)
 		file->offset = ftello(file->fd);
-	
+
 	return (error);
 }
 
@@ -108,7 +108,7 @@ read_line(struct file *file, int *error)
 	size_t	 len;
 	int	 eol;
 
-	buf = getln(file->fd, error, &eol, &len); 
+	buf = getln(file->fd, error, &eol, &len);
 	if (buf == NULL)
 		return (NULL);
 
@@ -122,7 +122,7 @@ read_line(struct file *file, int *error)
 		file->bufused = len;
 		return (NULL);
 	}
-	
+
 	/* there is an existing buffer, so expand it to fit if necessary.  add
 	   an extra byte on to the length in case the data is finished and we
 	   need to add a \0 */
@@ -134,14 +134,14 @@ read_line(struct file *file, int *error)
 		file->bufused += len;
 	}
 	xfree(buf);
-	
+
 	/* if the new data didn't include an EOL, it cannot be returned yet */
 	if (!eol)
 		return (NULL);
 
 	/* the buffer holds a complete line, so return it. note that the
 	   various getln functions should never return /more/ than a line
-	   (ie any data after a \n) so we do not need to worry about leftover 
+	   (ie any data after a \n) so we do not need to worry about leftover
 	   data in the buffer */
 	file->buf[file->bufused] = '\0';
 	buf = file->buf;
@@ -161,7 +161,7 @@ parse_line(char *line, struct file *file)
 	/* ignore blank lines */
 	if (*line == '\0')
 		return (0);
-	
+
 	/* replace ctrl chars with _ */
 	for (s = line; *s != '\0'; s++) {
 		if (*s < 32)
@@ -313,7 +313,7 @@ main(int argc, char **argv)
 
 	conf.thr_limit = THREADLIMIT;
 	INIT_MUTEX(conf.thr_mutex);
-	if (pthread_cond_init(&conf.thr_cond, NULL) != 0) 
+	if (pthread_cond_init(&conf.thr_cond, NULL) != 0)
 		log_fatalx("pthread_cond_init failed");
 
 	if (regcomp(&conf.entry_re, LOGREGEXP, REG_EXTENDED) != 0)
@@ -402,7 +402,7 @@ main(int argc, char **argv)
 		do_stdin();
 		goto out;
 	}
- 
+
 	load_cache();
 	open_files();
 
@@ -410,7 +410,7 @@ main(int argc, char **argv)
 	   deals with the anything added since last cache write and gets up to
 	   date on new files */
 	TAILQ_FOREACH(file, &conf.files, entry) {
-		if (file->fd == NULL || file_size(file, &size) != 0) 
+		if (file->fd == NULL || file_size(file, &size) != 0)
 			continue;
 
 		if (file->offset < size) {
@@ -496,7 +496,7 @@ main(int argc, char **argv)
 out:
 	/* free files. this will wait on files_mutex for the save thread to
 	   finish if it is going */
-	free_files();	
+	free_files();
 	DESTROY_MUTEX(conf.files_mutex);
 
 	/* wait some time for all threads to exit */
@@ -552,7 +552,7 @@ restart:
 	TAILQ_INSERT_TAIL(&conf.files, stdin_file, entry);
 	UNLOCK_MUTEX(conf.files_mutex);
 
-	expiretime = time(NULL);	
+	expiretime = time(NULL);
 	while (!quit) {
 		if (reload) {
 			stdin_file->fd = NULL;
@@ -594,6 +594,6 @@ restart:
 			}
 			log_debug("EOF from stdin");
 			break;
-		}		
+		}
 	}
 }

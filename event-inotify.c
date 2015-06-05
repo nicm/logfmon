@@ -91,7 +91,7 @@ int comp_watches_by_wd(const void *a, const void *b) {
 		return -1;
 	else if (awd > bwd)
 		return 1;
-	return 0; 
+	return 0;
 }
 
 static
