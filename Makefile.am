@@ -5,12 +5,14 @@ CLEANFILES = parse.c parse.h
 
 EXTRA_DIST = \
 	README \
-	examples compat \
+	examples compat/*.[ch] \
 	array.h \
 	logfmon.h \
 	event-inotify.c \
 	event-kqueue.c \
 	event-linux.c
+dist-hook:
+	make clean
 
 CPPFLAGS += \
 	-DSYSCONFFILE="\"$(sysconfdir)/logfmon.conf\"" \
