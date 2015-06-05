@@ -34,7 +34,7 @@
 
 #include "logfmon.h"
 
-#ifdef NO_PROGNAME
+#ifndef HAVE___PROGNAME
 const char	*__progname = "logfmon";
 #endif
 
@@ -294,7 +294,7 @@ main(int argc, char **argv)
 			conf.use_stdin = 1;
 			break;
 		case 'v':
-			printf("%s " BUILD "\n", __progname);
+			printf("%s " VERSION "\n", __progname);
 			exit(1);
 		case '?':
 		default:

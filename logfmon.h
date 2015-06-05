@@ -21,16 +21,16 @@
 
 #include <sys/types.h>
 
-#ifdef NO_QUEUE_H
+#ifndef HAVE_QUEUE_H
 #include "compat/queue.h"
 #else
 #include <sys/queue.h>
 #endif
 
-#ifndef NO_TREE_H
-#include <sys/tree.h>
-#else
+#ifndef HAVE_TREE_H
 #include "compat/tree.h"
+#else
+#include <sys/tree.h>
 #endif
 
 #include <pthread.h>
@@ -50,12 +50,12 @@
 #define MAILTIME	900
 #define MAILCMD		"/usr/bin/mail root"
 
-#define CONFFILE	"/etc/logfmon.conf"
-#define CACHEFILE	"/var/db/logfmon.cache"
-#define PIDFILE		"/var/run/logfmon.pid"
+#define CONFFILE	SYSCONFFILE
+#define CACHEFILE	SYSCACHEFILE
+#define PIDFILE		SYSPIDFILE
 
 #define LOGREGEXP	"^[A-Z][a-z][a-z] [0-9 ][0-9] " \
-			    "[0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* (.*)$"
+			"[0-9][0-9]:[0-9][0-9]:[0-9][0-9] [^ ]* (.*)$"
 
 #define EXPIRETIMEOUT	10	/* context expiry check time */
 #define CACHETIMEOUT	10	/* cache save check time */

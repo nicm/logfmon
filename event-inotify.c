@@ -17,13 +17,9 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
-#include <sys/ioctl.h>
-#ifdef HAVE_INOTIFYTOOLS
-#include <inotify.h>
-#else
 #include <sys/inotify.h>
-#endif
+#include <sys/ioctl.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <stdio.h>
