@@ -1,118 +1,21 @@
-As of 0.8, logfmon has had major restructuring. I've verified it runs on
-OpenBSD 3.7/i386, OpenBSD 3.8/i386, OpenBSD 3.8/sparc and FreeBSD 5.4/i386.
+logfmon is a log file monitoring daemon.
 
-Two important changes in 0.8:
-	- The default cache file path is /var/db/logfmon.cache.
-	- The match regexps are now extended regexps.
+For more information look at the manpages:
 
-Important changes in 0.9:
-	- Thanks to Laurent Pelecq, there is now support for the FAM file
-	  notification monitor on Linux and a makefile suitable for GNU make.
-	- The number of simultaneous threads is limited to 100 by default. This
-	  limit can be changed using the "set maxthreads" directive. 
-	- There are two new actions, "write" and "write-append", for 
-	  writing or appending to a file. Thanks again to Laurent Pelecq for
-	  the suggestion.
-	- Any basic (non-context) action may now be used with contexts, not 
-	  just the "pipe" action.
-	- Logfmon now uses a regexp to extract the useful part of the log line.
-	  The default regexp assumes a syslog-style,
+	$ nroff -mdoc logfmon.8|less
+	$ nroff -mdoc logfmon.conf.5|less
 
-		Nov 16 11:46:34 hostname message
-	
-	  format. It can be changed with the "set logregexp" option.
-	- If a tag is not specified, Logfmon will now attempt to use the file's
-	  base filename, truncated to 32 characters. If the tag is already in 
-	  use, numbers are appended, truncating the name further if necessary.
-	- The "autoappend" keyword may be added to "open" rules to auto-
-	  matically create an "append" rule with the same regexp(s) and 
-	  context key.
-	- There is now a "clear" context action which has the same syntax and
-	  behaviour as "close", but does not close the context, merely wipes
-	  the accumulated messages.
+To build and install logfmon:
 
-Changes in 1.0:
-	- Handle blank lines and partial lines at EOF properly,
-	- Option to read messages from stdin,
-	- Wait for threads on exit,
-	- Replaces $1, $2, etc using original log message when expiring
-	  contexts, rather than using context name,
-	- Configuration file macros,
-	- Simplify line input code and other code cleanup. 
+	$ ./configure
+	$ make
+	$ sudo make install
 
-	Thanks to Daniel Berlin for the first four and some other stuff I
-	forget.
+If building from Git, run this first:
 
-Logfmon supports three different methods of monitoring log files:
+	$ sh autogen.sh
 
-- kqueue: This uses the *BSD kqueue event system. This is the default in the
- 	  BSD makefile and sadly is not supported on Linux. Note that kqueue 
-	  will not work if the log files are not on UFS/UFS2.
-- linux:  This uses a sleep/stat loop to monitor the files. This is the least
-	  efficient method but most portable. This is the default when using
-	  the GNU makefile.
-- fam:    This uses the FAM notification system. It is recommended to choose
-	  this on Linux if possible but the separate FAM software is required
-	  (on Debian, with their fetish for splitting things into a million
-	  packages, you also need the headers from libfam-dev). Note that 
-	  FAM will not work if the log files are on NFS.
+logfmon will use kqueue or inotify if available, otherwise will wake up
+periodically to poll.
 
-To build with a specific system, use:
-
-	make FILEMON={kqueue,linux,fam}
-
-Or to build the default, just:
-
-	make
-
-Then to install, as root:
-	
-	make install
-
-By default, the executable is put in /usr/local/sbin and the man pages in
-/usr/local/man.
-
-To build on Solaris 10 you have to use gcc, GNU make, flex but Sun's yacc (I
-couldn't persuade bison to work in the short time I spent on it, anyway). I've
-hardly tested it, so let me know of any problems.
-
-Create a logfmon.conf in /etc. My current logfmon.conf is included. Be careful
-to escape characters that need it properly. This is my first attempt at
-using lex/yacc so it may be a bit fragile, I'd appreciate feedback if so.
-
-On OpenBSD, I add these lines to /etc/rc.local to run logfmon on startup:
-
-	if [ -x /usr/local/sbin/logfmon -a -e /etc/logfmon.conf ]; then
-        	echo -n ' logfmon';     /usr/local/sbin/logfmon
-	fi
-
-For FreeBSD, example rc.d scripts for 4.10 and 5.3 are included in the rc.d/
-directory. If you use it, you need to put your logfmon.conf in /usr/local/etc.
-
-Version 0.5 and higher now keep a cache file. Disable it by setting the
-cachefile option to "" in your logfmon.conf. If enabled, it means that
-restarting logfmon or sending it a HUP should not reparse lines it has
-already seen. If disabled, the behaviour is the same as before. NOTE that
-at the moment, saved messages and contexts are not cached and so will not
-be reparsed and emailed when the cache is enabled. Also, any commands that
-are in the middle of running will die when logfmon is killed and since the
-messages that kicked them off aren't seen again, they may not be executed.
-In practice, unless you are restarting logfmon every day this isn't really
-much of a worry but just so you know :-).
-
-If you are doing any kind of log rotation, you may occasionally see 
-`No such file or directory' messages from logfmon in your logs. This happens
-when logfmon sees that the file has been renamed or deleted by log rotation
-and tries to reopen it before the log file has been recreated. An occasional
-one or two of these is normal. If a file is renamed or deleted after logfmon
-has started it tries to reopen every second until it suceeds, so if you see a 
-lot (more than 5 or 10) of these messages, something is probably wrong. This
-only applies when logfmon is running. If opening a file fails when logfmon is
-initially started, it will report it to stderr and exit immediately.
-
-Feedback and suggestions are welcome.
-
-Nicholas Marriott
-nicm@users.sourceforge.net
-
-# $Id$
+Nicholas Marriott <nicholas.marriott@gmail.com>
