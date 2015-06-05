@@ -46,14 +46,14 @@ static
 void
 set_nonblock(int fd)
 {
-        long flags = 0;
-        if (fcntl(fd, F_GETFL, &flags) < 0)
-                log_fatal("cannot read file descriptor attributes");
-        flags |= O_NONBLOCK;
-        if (fcntl(fd, F_SETFL, &flags) < 0)
-                log_warnx("non-blocking mode not available");
-        else
-                log_info("non-blocking mode enabled");
+	long flags = 0;
+	if (fcntl(fd, F_GETFL, &flags) < 0)
+		log_fatal("cannot read file descriptor attributes");
+	flags |= O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, &flags) < 0)
+		log_warnx("non-blocking mode not available");
+	else
+		log_info("non-blocking mode enabled");
 }
 
 /*
@@ -261,31 +261,31 @@ void read_pending_events(void)
 	do {
 		count = read(inotify_fd, ev_buffer + end, EVENT_BUFFER_SIZE - end);
 		if (count < 0) {
-                        switch (errno) {
-                        case EINTR:
-                                break;
-                        case EAGAIN:
-                                return;
-                        default:
-                                log_fatal("read failed");
-                        }
-                } else
-                        end += count;
-        } while (count <= 0);
+			switch (errno) {
+			case EINTR:
+				break;
+			case EAGAIN:
+				return;
+			default:
+				log_fatal("read failed");
+			}
+		} else
+			end += count;
+	} while (count <= 0);
 
 	for(;;) {
-                struct inotify_event *ev = (struct inotify_event*)(ev_buffer + start);
+		struct inotify_event *ev = (struct inotify_event*)(ev_buffer + start);
 		size_t ev_size = EVENT_SIZE(ev);
 		if (start + ev_size > end)
 			break;
-                else {
-                        struct inotify_event ev_aligned;
-                        memcpy(&ev_aligned, ev, sizeof(ev_aligned));
-                        process_event(&ev_aligned, ev->name);
+		else {
+			struct inotify_event ev_aligned;
+			memcpy(&ev_aligned, ev, sizeof(ev_aligned));
+			process_event(&ev_aligned, ev->name);
 			start += ev_size;
-                        ++nevents;
-                }
-        }
+			++nevents;
+		}
+	}
 
 	if (nevents > max_nevents) {
 		max_nevents = nevents;
@@ -304,7 +304,7 @@ reinit_events(void)
 void
 init_events(void)
 {
-        struct file	*file = NULL;
+	struct file	*file = NULL;
 	int		nfiles = 0;
 
 	nfiles = count_open_files();
@@ -321,8 +321,8 @@ init_events(void)
 	watches = xcalloc(nfiles * 2, sizeof(watch_t));
 
 	nwatches = 0;
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd != NULL) {
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->fd != NULL) {
 			char *dirname = NULL;
 			watch_t *file_watch = NULL;
 			watch_t *dir_watch = NULL;
@@ -344,21 +344,21 @@ init_events(void)
 			} else
 				dir_watch = push_watch(dirname, IN_CREATE|IN_MOVED_TO, NULL);
 			file_watch->parent = dir_watch;
-                }
-        }
+		}
+	}
 	qsort(watches, nwatches, sizeof(watch_t), comp_watches_by_wd);
 }
 
 struct file *
 get_event(enum event *event, int timeout)
 {
-        struct file	*file = NULL;
+	struct file	*file = NULL;
 	fd_set rfds;
 
-        *event = EVENT_NONE;
+	*event = EVENT_NONE;
 
-        if (inotify_fd < 0)
-                return (NULL);
+	if (inotify_fd < 0)
+		return (NULL);
 
 	file = find_event(event);
 	if (!file) {
@@ -387,7 +387,7 @@ get_event(enum event *event, int timeout)
 		}
 	}
 
-        return file;
+	return file;
 }
 
 void

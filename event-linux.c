@@ -42,12 +42,12 @@
  *
  *    - select() & poll() return immediately when a file is at EOF.
  *    - epoll is poorly documented, not well supported by distros as yet (both
- *      a 2.6 kernel and a patched glibc is needed), and refuses to work for me
- *      altogether on files.
+ *	a 2.6 kernel and a patched glibc is needed), and refuses to work for me
+ *	altogether on files.
  *    - aio_* is not what I am looking for at all, and it would be a real pain
- *      to make it do what I want.
+ *	to make it do what I want.
  *    - F_SETSIG also looks annoying to implement, and I'm not sure it would do
- *      the right thing either.
+ *	the right thing either.
  *
  * So, we are left with a very sucky manual poll with stat() which is, well,
  * crap and I'm not very happy about at all.
@@ -89,62 +89,62 @@ close_events(void)
 struct file *
 get_event(enum event *event, int timeout)
 {
-        struct stat	 sb;
-        int		 n;
+	struct stat	 sb;
+	int		 n;
 	off_t		*size;
 	struct file	*file;
 
-        n = 0;
-        for (;;) {
-                *event = EVENT_NONE;
+	n = 0;
+	for (;;) {
+		*event = EVENT_NONE;
 
-                if (usleep(100000L) == -1) {
-                        if (errno == EINTR)
-                                return (NULL);
-                        log_fatal("usleep");
-                }
+		if (usleep(100000L) == -1) {
+			if (errno == EINTR)
+				return (NULL);
+			log_fatal("usleep");
+		}
 
-                n++;
-                if (n > timeout * 10) {
-                        *event = EVENT_TIMEOUT;
-                        return (NULL);
-                }
+		n++;
+		if (n > timeout * 10) {
+			*event = EVENT_TIMEOUT;
+			return (NULL);
+		}
 
-                if (evfile == NULL)
+		if (evfile == NULL)
 			evfile = TAILQ_FIRST(&conf.files);
 		while (evfile != NULL) {
 			file = evfile;
 			evfile = TAILQ_NEXT(evfile, entry);
 
-                        if (file->fd != NULL) {	
+			if (file->fd != NULL) {	
 				size = file->data;
 
-                                if (stat(file->path, &sb) != 0) {
+				if (stat(file->path, &sb) != 0) {
 					*size = 0;
-                                        *event = EVENT_REOPEN;
-                                        return (file);
-                                }
+					*event = EVENT_REOPEN;
+					return (file);
+				}
 
 				if (sb.st_size < *size) {
 					*size = 0;
-                                        *event = EVENT_REOPEN;
-                                        return (file);
-                                }
-                                if (sb.st_size > *size) {
+					*event = EVENT_REOPEN;
+					return (file);
+				}
+				if (sb.st_size > *size) {
 					if (fsync(fileno(file->fd)) != 0)
 						log_warn("fsync");
 					*size = sb.st_size;
-                                        *event = EVENT_READ;
-                                        return (file);
-                                }
-                        }
-                }
-        }
+					*event = EVENT_READ;
+					return (file);
+				}
+			}
+		}
+	}
 }
 
 void
 reinit_events(void)
 {
-        close_events();
-        init_events();
+	close_events();
+	init_events();
 }

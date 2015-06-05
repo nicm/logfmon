@@ -30,72 +30,72 @@
 int
 save_cache(void)
 {
-        struct file	*file;
-        FILE		*fd;
-        char		 path[MAXPATHLEN];
-        int		 res;
+	struct file	*file;
+	FILE		*fd;
+	char		 path[MAXPATHLEN];
+	int		 res;
 
-        if (conf.cache_file == NULL || *conf.cache_file == '\0')
-                return (0);
+	if (conf.cache_file == NULL || *conf.cache_file == '\0')
+		return (0);
 
 	log_debug("saving cache");
 
-        res = xsnprintf(path, sizeof path, "%s.new", conf.cache_file);
+	res = xsnprintf(path, sizeof path, "%s.new", conf.cache_file);
 	if (res < 0) {
-                log_warnx("bad cache file");
+		log_warnx("bad cache file");
 		return (1);
-        }
+	}
 
-        fd = fopen(path, "w+");
-        if (fd == NULL) {
-                log_warn("%s", path);
-                return (1);
-        }
+	fd = fopen(path, "w+");
+	if (fd == NULL) {
+		log_warn("%s", path);
+		return (1);
+	}
 
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (fprintf(fd, "%lu %s 0 %lld\n",
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (fprintf(fd, "%lu %s 0 %lld\n",
 		    (unsigned long) strlen(file->path), file->path,
 		    (long long) file->offset) == -1) {
-                        fclose(fd);
-                        log_warnx("error writing cache");
-                        unlink(path);
-                        return (1);
-                }
-        }
+			fclose(fd);
+			log_warnx("error writing cache");
+			unlink(path);
+			return (1);
+		}
+	}
 
-        fclose(fd);
+	fclose(fd);
 
-        if (rename(path, conf.cache_file) != 0) {
-                log_warn("rename");
-                unlink(path);
-                return (1);
-        }
+	if (rename(path, conf.cache_file) != 0) {
+		log_warn("rename");
+		unlink(path);
+		return (1);
+	}
 
-        return (0);
+	return (0);
 }
 
 int
 load_cache(void)
 {
-        struct file	*file;
-        FILE		*fd;
-        char		 path[MAXPATHLEN], fmt[32];
-        off_t	         off;
+	struct file	*file;
+	FILE		*fd;
+	char		 path[MAXPATHLEN], fmt[32];
+	off_t		 off;
 	int		 res;
-        unsigned int	 len;
+	unsigned int	 len;
 
-        if (conf.cache_file == NULL || *conf.cache_file == '\0')
-                return (0);
+	if (conf.cache_file == NULL || *conf.cache_file == '\0')
+		return (0);
 
 	log_debug("loading cache");
 
-        fd = fopen(conf.cache_file, "r");
-        if (fd == NULL) {
-                log_warn("cache not loaded. %s", conf.cache_file);
-                return (1);
-        }
+	fd = fopen(conf.cache_file, "r");
+	if (fd == NULL) {
+		log_warn("cache not loaded. %s", conf.cache_file);
+		return (1);
+	}
 
-        while (!feof(fd)) {
+	while (!feof(fd)) {
 		if (fscanf(fd, "%u ", &len) != 1)
 			break;
 		if (len >= sizeof path)
@@ -106,24 +106,24 @@ load_cache(void)
 			goto error;
 
 		memset(path, 0, sizeof path);
-                if (fscanf(fd, fmt, path, &off) != 2)
+		if (fscanf(fd, fmt, path, &off) != 2)
 			goto error;
-                path[len] = '\0';
+		path[len] = '\0';
 
-                file = find_file_by_path(path);
-                if (file != NULL) {
+		file = find_file_by_path(path);
+		if (file != NULL) {
 			file->offset = off;
 			log_debug("file %s, was %lld now %lld",
 			    path, off, file->offset);
-                }
-        }
+		}
+	}
 
 	fclose(fd);
-        return (0);
+	return (0);
 
 error:
 	log_warnx("cannot load cache; possibly corrupted");
 
 	fclose(fd);
-        return (1);
+	return (1);
 }

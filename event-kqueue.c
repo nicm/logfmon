@@ -32,38 +32,38 @@ int kq = -1;
 void
 init_events(void)
 {
-        struct file	*file;
-        struct kevent	*kevlist, *kevptr;
-        int		 kevlen;
+	struct file	*file;
+	struct kevent	*kevlist, *kevptr;
+	int		 kevlen;
 
-        if (kq == -1) {
-                kq = kqueue();
-                if (kq == -1)
-                        log_fatal("kqueue");
-        }
+	if (kq == -1) {
+		kq = kqueue();
+		if (kq == -1)
+			log_fatal("kqueue");
+	}
 
-        kevlen = count_open_files() * 2;
-        if (kevlen == 0)
-                return;
+	kevlen = count_open_files() * 2;
+	if (kevlen == 0)
+		return;
 
-        kevlist = xcalloc(kevlen, sizeof (struct kevent));
+	kevlist = xcalloc(kevlen, sizeof (struct kevent));
 
-        kevptr = kevlist;
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd != NULL) {
+	kevptr = kevlist;
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->fd != NULL) {
 			log_debug("init file: tag=%s", file->tag.name);
-                        EV_SET(kevptr, fileno(file->fd), EVFILT_VNODE,
+			EV_SET(kevptr, fileno(file->fd), EVFILT_VNODE,
 			    EV_ADD | EV_CLEAR, NOTE_DELETE | NOTE_RENAME |
 			    NOTE_REVOKE, 0, NULL);
-                        kevptr++;
-                        EV_SET(kevptr, fileno(file->fd), EVFILT_READ,
+			kevptr++;
+			EV_SET(kevptr, fileno(file->fd), EVFILT_READ,
 			    EV_ADD | EV_CLEAR, 0, 0, NULL);
-                        kevptr++;
-                }
-        }
+			kevptr++;
+		}
+	}
 
-        if (kevent(kq, kevlist, kevlen, NULL, 0, NULL))
-                log_fatal("kevent");
+	if (kevent(kq, kevlist, kevlen, NULL, 0, NULL))
+		log_fatal("kevent");
 
 	xfree(kevlist);
 }
@@ -71,47 +71,47 @@ init_events(void)
 struct file *
 get_event(enum event *event, int timeout)
 {
-        struct file	*file;
-        struct kevent	 kev;
-        struct timespec	 ts;
-        int		 res;
+	struct file	*file;
+	struct kevent	 kev;
+	struct timespec	 ts;
+	int		 res;
 
-        *event = EVENT_NONE;
+	*event = EVENT_NONE;
 
-        if (kq == -1)
-                return (NULL);
+	if (kq == -1)
+		return (NULL);
 
-        ts.tv_nsec = 0;
-        ts.tv_sec = timeout;
+	ts.tv_nsec = 0;
+	ts.tv_sec = timeout;
 
-        res = kevent(kq, NULL, 0, &kev, 1, &ts);
-        if (res == -1) {
-                if (errno == EINTR)
-                        return (NULL);
-                log_fatal("kevent");
-        }
-        if (res == 0) {
-                *event = EVENT_TIMEOUT;
-                return (NULL);
-        }
+	res = kevent(kq, NULL, 0, &kev, 1, &ts);
+	if (res == -1) {
+		if (errno == EINTR)
+			return (NULL);
+		log_fatal("kevent");
+	}
+	if (res == 0) {
+		*event = EVENT_TIMEOUT;
+		return (NULL);
+	}
 
-        file = find_file_by_fd(kev.ident);
-        if (file == NULL)
-                return (NULL);
+	file = find_file_by_fd(kev.ident);
+	if (file == NULL)
+		return (NULL);
 
-        switch (kev.filter) {
-        case EVFILT_VNODE:
-                *event = EVENT_REOPEN;
-                return (file);
-        case EVFILT_READ:
-                if (kev.data < 0)
-                        *event = EVENT_REOPEN;
-                else
-                        *event = EVENT_READ;
-                return (file);
-        }
+	switch (kev.filter) {
+	case EVFILT_VNODE:
+		*event = EVENT_REOPEN;
+		return (file);
+	case EVFILT_READ:
+		if (kev.data < 0)
+			*event = EVENT_REOPEN;
+		else
+			*event = EVENT_READ;
+		return (file);
+	}
 
-        return (NULL);
+	return (NULL);
 }
 
 void
@@ -122,5 +122,5 @@ close_events(void)
 void
 reinit_events(void)
 {
-        init_events();
+	init_events();
 }

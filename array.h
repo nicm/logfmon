@@ -37,7 +37,7 @@
 
 #define ARRAY_INIT(a) do {						\
 	(a)->num = 0;							\
-	(a)->list = NULL;		 				\
+	(a)->list = NULL;						\
 	(a)->space = 0;							\
 } while (0)
 
@@ -56,11 +56,11 @@
 	if (((u_int) (i)) >= (a)->num)					\
 		abort();						\
 	if (i < (a)->num - 1) {						\
-		memmove((a)->list + (i), (a)->list + (i) + 1, 		\
-		    ARRAY_ITEMSIZE(a) * ((a)->num - (i) - 1)); 		\
+		memmove((a)->list + (i), (a)->list + (i) + 1,		\
+		    ARRAY_ITEMSIZE(a) * ((a)->num - (i) - 1));		\
 	}								\
 	(a)->num--;							\
-        if ((a)->num == 0)						\
+	if ((a)->num == 0)						\
 		ARRAY_FREE(a);						\
 } while (0)
 
@@ -70,14 +70,14 @@
 } while (0)
 #define ARRAY_TRUNC(a, n) do {						\
 	if ((a)->num > n)						\
-		(a)->num -= n;				       		\
+		(a)->num -= n;						\
 	else								\
 		ARRAY_FREE(a);						\
 } while (0)
 
 #define ARRAY_CONCAT(a, b) do {						\
-	ENSURE_SIZE2((a)->list, (a)->space, (a)->num + (b)->num, 	\
-	    ARRAY_ITEMSIZE(a)); 					\
+	ENSURE_SIZE2((a)->list, (a)->space, (a)->num + (b)->num,	\
+	    ARRAY_ITEMSIZE(a));						\
 	memcpy((a)->list + (a)->num, (b)->list, (b)->num * ARRAY_ITEMSIZE(a)) \
 	(a)->num += (b)->num;						\
 } while (0)

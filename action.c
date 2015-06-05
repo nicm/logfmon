@@ -33,49 +33,49 @@ const char *actions[] = { "ignore", "exec", "pipe", "write", "write-append",
 char *
 repl_one(char *src, char *rpl)
 {
-        char	*buf;
-        size_t	 len, pos = 0;
+	char	*buf;
+	size_t	 len, pos = 0;
 
 	if (src == NULL || *src == '\0')
 		return (NULL);
 
-        len = strlen(src) + 512;
-        buf = xmalloc(len);
+	len = strlen(src) + 512;
+	buf = xmalloc(len);
 
-        while (*src != '\0') {
-                if (src[0] == '$' && src[1] == '1') {
+	while (*src != '\0') {
+		if (src[0] == '$' && src[1] == '1') {
 			ENSURE_SIZE(buf, len, pos + strlen(rpl));
 			strlcpy(buf + pos, rpl, len - pos);
 			pos += strlen(rpl);
 			src += 2;
 			continue;
-                }
+		}
 
 		ENSURE_SIZE(buf, len, pos + 1);
 		*(buf + pos++) = *src++;
-        }
+	}
 
 	ENSURE_SIZE(buf, len, pos + 1);
-        *(buf + pos) = '\0';
+	*(buf + pos) = '\0';
 
-        return (buf);
+	return (buf);
 }
 
 char *
 repl_matches(char *line, char *src, regmatch_t match[10])
 {
-        char	*buf, *mptr;
-        size_t	 len, mlen, pos = 0;
-        int	 num;
+	char	*buf, *mptr;
+	size_t	 len, mlen, pos = 0;
+	int	 num;
 
 	if (src == NULL || *src == '\0')
 		return (NULL);
 
-        len = strlen(src) + 512;
-        buf = xmalloc(len);
+	len = strlen(src) + 512;
+	buf = xmalloc(len);
 
-        while (*src != '\0') {
-                if (src[0] == '$' && isdigit((unsigned char) src[1]) &&
+	while (*src != '\0') {
+		if (src[0] == '$' && isdigit((unsigned char) src[1]) &&
 		    !isdigit((unsigned char) src[2])) {
 			src++; /* skip $ */
 			num = *src - '0';
@@ -91,16 +91,16 @@ repl_matches(char *line, char *src, regmatch_t match[10])
 				*(buf + pos++) = '$';
 			}
 			continue;
-                }
+		}
 
 		ENSURE_SIZE(buf, len, pos + 1);
 		*(buf + pos++) = *src++;
-        }
+	}
 
 	ENSURE_SIZE(buf, len, pos + 1);
 	*(buf + pos) = '\0';
 
-        return (buf);
+	return (buf);
 }
 
 void
@@ -112,12 +112,12 @@ act_ignore(struct file *file, char *t)
 void
 act_exec(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
-        char		*cmd;
-        pthread_t	 thread;
+	char		*cmd;
+	pthread_t	 thread;
 
-        cmd = repl_matches(t, rule->params.str, match);
-        if (cmd == NULL || *cmd == '\0') {
-                log_warnx("empty exec command");
+	cmd = repl_matches(t, rule->params.str, match);
+	if (cmd == NULL || *cmd == '\0') {
+		log_warnx("empty exec command");
 		if (cmd != NULL)
 			xfree(cmd);
 		return;
@@ -132,14 +132,14 @@ void
 act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
     char *line)
 {
-        char		*cmd;
-        pthread_t	 thread;
-        FILE		*fd;
+	char		*cmd;
+	pthread_t	 thread;
+	FILE		*fd;
 
-        cmd = repl_matches(t, rule->params.str, match);
-        if (cmd == NULL || *cmd == '\0') {
-                log_warnx("empty pipe command");
-                if (cmd != NULL)
+	cmd = repl_matches(t, rule->params.str, match);
+	if (cmd == NULL || *cmd == '\0') {
+		log_warnx("empty pipe command");
+		if (cmd != NULL)
 			xfree(cmd);
 		return;
 	}
@@ -156,15 +156,15 @@ act_pipe(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
 		CREATE_THREAD(&thread, pclose_thread, fd);
 		
 		xfree(cmd);
-        }
+	}
 }
 
 void
 act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
-        char	*key;
+	char	*key;
 
-        key = repl_matches(t, rule->params.key, match);
+	key = repl_matches(t, rule->params.key, match);
 	if (key == NULL || *key == '\0') {
 		log_warnx("empty open key");
 		if (key != NULL)
@@ -174,27 +174,27 @@ act_open(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 
 	log_debug("matched: (%s) %s -- opening: '%s'", file->tag.name, t, key);
 
-        if (find_context_by_key(file, key) != NULL) {
+	if (find_context_by_key(file, key) != NULL) {
 		log_debug("ignoring open; found existing context %s", key);
-                xfree(key);
-                return;
-        }
+		xfree(key);
+		return;
+	}
 
 	if (add_context(file, key, rule, t, match) == NULL)
 		log_warnx("error adding context");
 
-        xfree(key);
+	xfree(key);
 }
 
 void
 act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
     char *line)
 {
-        struct context	*context;
+	struct context	*context;
 	struct msg	*msg;
-        char		*key;
+	char		*key;
 
-        key = repl_matches(t, rule->params.key, match);
+	key = repl_matches(t, rule->params.key, match);
 	if (key == NULL || *key == '\0') {
 		log_warnx("empty append key");
 		if (key != NULL)
@@ -205,38 +205,38 @@ act_appd(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
 	log_debug("matched: (%s) %s -- appending: '%s'", file->tag.name, t, 
 	    key);
 
-        context = find_context_by_key(file, key);
-        if (context == NULL) {
+	context = find_context_by_key(file, key);
+	if (context == NULL) {
 		log_debug("missing context %s for append", key);
-                xfree(key);
-                return;
-        }
-        xfree(key);
+		xfree(key);
+		return;
+	}
+	xfree(key);
 
 	msg = xmalloc(sizeof (struct msg));
 	msg->str = xstrdup(line);
 	TAILQ_INSERT_TAIL(&context->msgs, msg, entry);
 
-        if (context->rule->params.ent_max == 0)
-                return;
+	if (context->rule->params.ent_max == 0)
+		return;
 
-        if (count_msgs(context) >= context->rule->params.ent_max) {
+	if (count_msgs(context) >= context->rule->params.ent_max) {
 		log_debug("context %s reached limit of %u entries",
 		    context->key, context->rule->params.ent_max);
 		
 		act_context(context, context->rule->params.ent_act,
 		    context->rule->params.ent_str, 1);
-                delete_context(file, context);
-        }
+		delete_context(file, context);
+	}
 }
 
 void
 act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
-        struct context	*context;
-        char		*key, *str;
+	struct context	*context;
+	char		*key, *str;
 
-        key = repl_matches(t, rule->params.key, match);
+	key = repl_matches(t, rule->params.key, match);
 	if (key == NULL || *key == '\0') {
 		log_warnx("empty close key");
 		if (key != NULL)
@@ -246,32 +246,32 @@ act_close(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 
 	log_debug("matched: (%s) %s -- closing: '%s'", file->tag.name, t, key);
 
-        context = find_context_by_key(file, key);
-        if (context == NULL) {
+	context = find_context_by_key(file, key);
+	if (context == NULL) {
 		log_debug("missing context %s for close", key);
-                xfree(key);
-                return;
-        }
+		xfree(key);
+		return;
+	}
 	xfree(key);
 
 	if (rule->params.close_str != NULL)
-                str = repl_matches(t, rule->params.close_str, match);
+		str = repl_matches(t, rule->params.close_str, match);
 	else
 		str = NULL;
 	act_context(context, rule->params.close_act, str, 0);
 	if (str != NULL)
-                xfree(str);
+		xfree(str);
 
-        delete_context(file, context);
+	delete_context(file, context);
 }
 
 void
 act_clear(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 {
-        struct context	*context;
-        char		*key, *str;
+	struct context	*context;
+	char		*key, *str;
 
-        key = repl_matches(t, rule->params.key, match);
+	key = repl_matches(t, rule->params.key, match);
 	if (key == NULL || *key == '\0') {
 		log_warnx("empty clear key");
 		if (key != NULL)
@@ -282,36 +282,36 @@ act_clear(struct file *file, char *t, struct rule *rule, regmatch_t match[10])
 	log_debug("matched: (%s) %s -- clearing: '%s'", file->tag.name, t,
 	    key);
 
-        context = find_context_by_key(file, key);
-        if (context == NULL) {
+	context = find_context_by_key(file, key);
+	if (context == NULL) {
 		log_debug("missing context %s for clear", key);
-                xfree(key);
-                return;
-        }
+		xfree(key);
+		return;
+	}
 	xfree(key);
 
 	if (rule->params.clear_str != NULL)
-                str = repl_matches(t, rule->params.clear_str, match);
+		str = repl_matches(t, rule->params.clear_str, match);
 	else
 		str = NULL;
 	act_context(context, rule->params.clear_act, str, 0);
 	if (str != NULL)
-                xfree(str);
+		xfree(str);
 
-        reset_context(context);
+	reset_context(context);
 }
 
 void
 act_write(struct file *file, char *t, struct rule *rule, regmatch_t match[10],
     char *line, int append)
 {
-        char		*path;
-        FILE		*fd;
+	char		*path;
+	FILE		*fd;
 
-        path = repl_matches(t, rule->params.str, match);
-        if (path == NULL || *path == '\0') {
-                log_warnx("empty write path");
-                if (path != NULL)
+	path = repl_matches(t, rule->params.str, match);
+	if (path == NULL || *path == '\0') {
+		log_warnx("empty write path");
+		if (path != NULL)
 			xfree(path);
 		return;
 	}

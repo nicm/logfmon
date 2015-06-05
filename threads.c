@@ -31,10 +31,10 @@ pclose_thread(void *arg)
 {
 	ENTER_THREAD();
 
-        pclose((FILE *) arg);
+	pclose((FILE *) arg);
 
 	LEAVE_THREAD();
-        return (NULL);
+	return (NULL);
 }
 
 void *
@@ -43,7 +43,7 @@ exec_thread(void *arg)
 	FILE	*fd;
 	char	*cmd, *line;
 	int	 error, eol;
-	size_t   len;
+	size_t	 len;
 
 	ENTER_THREAD();
 
@@ -68,35 +68,35 @@ exec_thread(void *arg)
 
 	xfree(cmd);
 
-        xfree(arg);
+	xfree(arg);
 	LEAVE_THREAD();
-        return (NULL);
+	return (NULL);
 }
 
 /* ARGSUSED */
 void *
 save_thread(void *arg)
 {
-        struct msg	*save;
-        struct file	*file;
-        FILE		*fd;
-        int		 flag;
+	struct msg	*save;
+	struct file	*file;
+	FILE		*fd;
+	int		 flag;
 	unsigned int	 n, t;
 
 	arg = NULL; /* stop gcc complaining */
 
-        for (;;) {
+	for (;;) {
 		log_debug("sleeping for %d seconds", conf.mail_time);
 
 		t = conf.mail_time;
 		while (t > 0)
 			t = sleep(t);
-                if (quit)
-                        break;
-                if (conf.mail_cmd == NULL || *conf.mail_cmd == '\0')
-                        continue;
+		if (quit)
+			break;
+		if (conf.mail_cmd == NULL || *conf.mail_cmd == '\0')
+			continue;
 
-                LOCK_MUTEX(conf.files_mutex);
+		LOCK_MUTEX(conf.files_mutex);
 		flag = 0;
 		TAILQ_FOREACH(file, &conf.files, entry) {
 			LOCK_MUTEX(file->saves_mutex);
@@ -106,31 +106,31 @@ save_thread(void *arg)
 				break;
 			}
 			UNLOCK_MUTEX(file->saves_mutex);
-                }
-                UNLOCK_MUTEX(conf.files_mutex);
+		}
+		UNLOCK_MUTEX(conf.files_mutex);
 		if (!flag)
 			continue;
 
 		log_debug("processing saved messages. executing: %s",
 		    conf.mail_cmd);
 
-                fd = popen(conf.mail_cmd, "w");
-                if (fd == NULL) {
-                        log_warn("%s", conf.mail_cmd);
+		fd = popen(conf.mail_cmd, "w");
+		if (fd == NULL) {
+			log_warn("%s", conf.mail_cmd);
 			continue;
-                }
+		}
 
-                LOCK_MUTEX(conf.files_mutex);
-                n = 0;
+		LOCK_MUTEX(conf.files_mutex);
+		n = 0;
 		TAILQ_FOREACH(file, &conf.files, entry) {
 			LOCK_MUTEX(file->saves_mutex);
 
-                        if (TAILQ_EMPTY(&file->saves)) {
+			if (TAILQ_EMPTY(&file->saves)) {
 				UNLOCK_MUTEX(file->saves_mutex);
 				continue;
 			}
 
-                        if (fprintf(fd, "Unmatched messages for file %s, "
+			if (fprintf(fd, "Unmatched messages for file %s, "
 			    "tag %s:\n\n", file->path, file->tag.name) == -1) {
 				UNLOCK_MUTEX(file->saves_mutex);
 				break;
@@ -144,23 +144,23 @@ save_thread(void *arg)
 				}
 				if (fputc('\n', fd) == EOF) {
 					log_warn("fputc");
-                                        break;
+					break;
 				}
-                                n++;
-                        }
+				n++;
+			}
 			if (fputc('\n', fd) == EOF)
 				log_warn("fputc");
 
 			UNLOCK_MUTEX(file->saves_mutex);
-                        reset_file(file);
+			reset_file(file);
 
-                }
-                UNLOCK_MUTEX(conf.files_mutex);
+		}
+		UNLOCK_MUTEX(conf.files_mutex);
 
-                pclose(fd);
+		pclose(fd);
 
-                log_debug("processed %u unmatched messages", n);
-        }
+		log_debug("processed %u unmatched messages", n);
+	}
 
-        return (NULL);
+	return (NULL);
 }

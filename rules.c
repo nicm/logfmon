@@ -30,14 +30,14 @@ void	free_rule(struct rule *);
 struct rule *
 add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 {
-        struct rule	*rule;
+	struct rule	*rule;
 
-        rule = xmalloc(sizeof (struct rule));
+	rule = xmalloc(sizeof (struct rule));
 	memset(rule, 0, sizeof (struct rule));
 
 	copy_tags(tags, &rule->tags);
 
-        rule->action = action;
+	rule->action = action;
 
 	if (re != NULL) {
 		rule->re = xmalloc(sizeof (regex_t));
@@ -48,18 +48,18 @@ add_rule(enum action action, struct tags *tags, char *re, char *not_re)
 		}
 	}
 	if (not_re != NULL) {
-                rule->not_re = xmalloc(sizeof (regex_t));
-                if (regcomp(rule->not_re, not_re, REG_EXTENDED) != 0) {
+		rule->not_re = xmalloc(sizeof (regex_t));
+		if (regcomp(rule->not_re, not_re, REG_EXTENDED) != 0) {
 			free_rule(rule);
-                        log_warnx("%s: bad regexp", not_re);
-                        return (NULL);
-                }
-        }
+			log_warnx("%s: bad regexp", not_re);
+			return (NULL);
+		}
+	}
 
 	log_debug("added rule: re=%s, not_re=%s, action=%s",
 	    re, not_re != NULL ? not_re : "<none>", actions[action]);
 	TAILQ_INSERT_TAIL(&conf.rules, rule, entry);
-        return (rule);
+	return (rule);
 }
 
 void
@@ -87,7 +87,7 @@ free_rule(struct rule *rule)
 void
 free_rules(void)
 {
-        struct rule	*rule;
+	struct rule	*rule;
 
 	while (!TAILQ_EMPTY(&conf.rules)) {
 		rule = TAILQ_FIRST(&conf.rules);
@@ -137,4 +137,3 @@ free_tags(struct tags *tags)
 		xfree(tag);
 	}
 }
-

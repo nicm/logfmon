@@ -53,14 +53,14 @@ void			 do_stdin(void);
 void
 sighandler(int sig)
 {
-        switch (sig) {
-        case SIGTERM:
-                quit = 1;
-                break;
-        case SIGHUP:
-                reload = 1;
-                break;
-        }
+	switch (sig) {
+	case SIGTERM:
+		quit = 1;
+		break;
+	case SIGHUP:
+		reload = 1;
+		break;
+	}
 }
 
 int
@@ -106,7 +106,7 @@ read_line(struct file *file, int *error)
 {
 	char	*buf;
 	size_t	 len;
-	int      eol;
+	int	 eol;
 
 	buf = getln(file->fd, error, &eol, &len); 
 	if (buf == NULL)
@@ -152,9 +152,9 @@ read_line(struct file *file, int *error)
 int
 parse_line(char *line, struct file *file)
 {
-        char		*entry, *s;
-        struct rule	*rule;
-        regmatch_t	 match[10];
+	char		*entry, *s;
+	struct rule	*rule;
+	regmatch_t	 match[10];
 	struct msg	*save;
 	size_t		 mlen;
 
@@ -184,38 +184,38 @@ parse_line(char *line, struct file *file)
 	if (conf.debug > 1)
 		log_debug("found entry: %s", entry);
 
-        TAILQ_FOREACH(rule, &conf.rules, entry) {
+	TAILQ_FOREACH(rule, &conf.rules, entry) {
 		if (!has_tag(rule, file->tag.name))
-                        continue;
+			continue;
 
-                if (regexec(rule->re, entry, 10, match, 0) != 0)
-                        continue;
-                if (rule->not_re != NULL &&
+		if (regexec(rule->re, entry, 10, match, 0) != 0)
+			continue;
+		if (rule->not_re != NULL &&
 		    regexec(rule->not_re, entry, 0, NULL, 0) == 0)
 			continue;
 
 		/* perform action and return */
-                switch (rule->action) {
-                case ACT_IGNORE:
-                        act_ignore(file, entry);
+		switch (rule->action) {
+		case ACT_IGNORE:
+			act_ignore(file, entry);
 			goto done;
-                case ACT_EXEC:
-                        act_exec(file, entry, rule, match);
+		case ACT_EXEC:
+			act_exec(file, entry, rule, match);
 			goto done;
-                case ACT_PIPE:
-                        act_pipe(file, entry, rule, match, line);
+		case ACT_PIPE:
+			act_pipe(file, entry, rule, match, line);
 			goto done;
-                case ACT_OPEN:
-                        act_open(file, entry, rule, match);
+		case ACT_OPEN:
+			act_open(file, entry, rule, match);
 			continue; /* falls-through to following rules */
-                case ACT_APPEND:
-                        act_appd(file, entry, rule, match, line);
+		case ACT_APPEND:
+			act_appd(file, entry, rule, match, line);
 			continue; /* falls-through to following rules */
-                case ACT_CLOSE:
-                        act_close(file, entry, rule, match);
+		case ACT_CLOSE:
+			act_close(file, entry, rule, match);
 			continue; /* falls-through to following rules */
 		case ACT_CLEAR:
-                        act_clear(file, entry, rule, match);
+			act_clear(file, entry, rule, match);
 			continue; /* falls-through to following rules */
 		case ACT_WRITE:
 			act_write(file, entry, rule, match, line, 0);
@@ -223,24 +223,24 @@ parse_line(char *line, struct file *file)
 		case ACT_WRITEAPPEND:
 			act_write(file, entry, rule, match, line, 1);
 			goto done;
-                }
+		}
 
 		/* NOTREACHED */ /* shut lint up */
 		log_warnx("unknown action: %d", rule->action);
 		goto error;
-        }
+	}
 
 	/* no matching rule found */
 	log_debug("unmatched: (%s) %s", file->tag.name, entry);
 
-        if (conf.mail_cmd != NULL && *conf.mail_cmd != '\0') {
+	if (conf.mail_cmd != NULL && *conf.mail_cmd != '\0') {
 		/* append the line to the saves list */
 		LOCK_MUTEX(file->saves_mutex);
 		save = xmalloc(sizeof (struct msg));
 		save->str = xstrdup(line);
 		TAILQ_INSERT_TAIL(&file->saves, save, entry);
 		UNLOCK_MUTEX(file->saves_mutex);
-        }
+	}
 
 done:
 	xfree(entry);
@@ -256,19 +256,19 @@ usage(void)
 {
 	printf("usage: %s [-dsv] [-f conffile] [-c cachefile] [-p pidfile]\n",
 	    __progname);
-        exit(1);
+	exit(1);
 }
 
 int
 main(int argc, char **argv)
 {
-        int		 opt, timeout, dirty, error;
+	int		 opt, timeout, dirty, error;
 	unsigned int	 failed;
-        pthread_t	 thread;
-        time_t		 expiretime, cachetime;
-        enum event	 event;
-        struct file	*file;
-        FILE		*fd;
+	pthread_t	 thread;
+	time_t		 expiretime, cachetime;
+	enum event	 event;
+	struct file	*file;
+	FILE		*fd;
 	off_t		 size;
 	u_int		 i, n;
 
@@ -276,31 +276,31 @@ main(int argc, char **argv)
 	TAILQ_INIT(&conf.rules);
 	TAILQ_INIT(&conf.files);
 
-        while ((opt = getopt(argc, argv, "c:df:p:sv")) != EOF) {
-                switch (opt) {
-                case 'c':
-                        conf.cache_file = xstrdup(optarg);
-                        break;
-                case 'd':
-                        conf.debug++;
-                        break;
-                case 'f':
-                        conf.conf_file = xstrdup(optarg);
-                        break;
-                case 'p':
-                        conf.pid_file = xstrdup(optarg);
-                        break;
+	while ((opt = getopt(argc, argv, "c:df:p:sv")) != EOF) {
+		switch (opt) {
+		case 'c':
+			conf.cache_file = xstrdup(optarg);
+			break;
+		case 'd':
+			conf.debug++;
+			break;
+		case 'f':
+			conf.conf_file = xstrdup(optarg);
+			break;
+		case 'p':
+			conf.pid_file = xstrdup(optarg);
+			break;
 		case 's':
 			conf.use_stdin = 1;
 			break;
 		case 'v':
 			printf("%s " BUILD "\n", __progname);
 			exit(1);
-                case '?':
-                default:
-                        usage();
-                }
-        }
+		case '?':
+		default:
+			usage();
+		}
+	}
 	argc -= optind;
 	argv += optind;
 	if (argc != 0)
@@ -323,79 +323,79 @@ main(int argc, char **argv)
 	conf.mail_cmd = NULL;
 
 	if (conf.conf_file == NULL)
-                conf.conf_file = xstrdup(CONFFILE);
+		conf.conf_file = xstrdup(CONFFILE);
 	INIT_MUTEX(conf.files_mutex);
 
 	if (parse_conf(conf.conf_file) != 0) {
-                log_warn("%s", conf.conf_file);
-		exit(1);
-        }
-
-        if (conf.mail_cmd == NULL)
-                conf.mail_cmd = xstrdup(MAILCMD);
-        if (conf.cache_file == NULL)
-                conf.cache_file = xstrdup(CACHEFILE);
-        if (conf.pid_file == NULL)
-                conf.pid_file = xstrdup(PIDFILE);
-
-        if (!conf.use_stdin && TAILQ_EMPTY(&conf.files)) {
-                log_warnx("no files specified");
+		log_warn("%s", conf.conf_file);
 		exit(1);
 	}
 
-        if (!conf.debug && !conf.use_stdin && daemon(0, 0) != 0)
+	if (conf.mail_cmd == NULL)
+		conf.mail_cmd = xstrdup(MAILCMD);
+	if (conf.cache_file == NULL)
+		conf.cache_file = xstrdup(CACHEFILE);
+	if (conf.pid_file == NULL)
+		conf.pid_file = xstrdup(PIDFILE);
+
+	if (!conf.use_stdin && TAILQ_EMPTY(&conf.files)) {
+		log_warnx("no files specified");
+		exit(1);
+	}
+
+	if (!conf.debug && !conf.use_stdin && daemon(0, 0) != 0)
 		log_fatal("daemon");
 
-        if (conf.pid_file != NULL && *conf.pid_file != '\0') {
-                fd = fopen(conf.pid_file, "w");
-                if (fd == NULL)
-                        log_warn("%s", conf.pid_file);
-                else {
-                        if (fprintf(fd, "%ld\n", (long) getpid()) == -1)
-                                log_warnx("error writing pid");
-                        fclose(fd);
-                }
-        }
+	if (conf.pid_file != NULL && *conf.pid_file != '\0') {
+		fd = fopen(conf.pid_file, "w");
+		if (fd == NULL)
+			log_warn("%s", conf.pid_file);
+		else {
+			if (fprintf(fd, "%ld\n", (long) getpid()) == -1)
+				log_warnx("error writing pid");
+			fclose(fd);
+		}
+	}
 
-        if (setpriority(PRIO_PROCESS, getpid(), 1) != 0)
+	if (setpriority(PRIO_PROCESS, getpid(), 1) != 0)
 		log_fatal("setpriority");
 
-        if (conf.gid != 0) {
-                if (geteuid() != 0)
-                        log_fatalx("need root privileges to set group");
-                else {
-                        if (setgroups(1, &conf.gid) != 0 ||
-                            setegid(conf.gid) != 0 || setgid(conf.gid) != 0)
-                                log_fatalx("failed to drop group privileges");
-                }
-        }
-        if (conf.uid != 0) {
-                if (geteuid() != 0)
-                        log_fatalx("need root privileges to set user");
-                else {
-                        if (setuid(conf.uid) != 0 || seteuid(conf.uid) != 0)
-                                log_fatalx("failed to drop user privileges");
-                }
-        }
+	if (conf.gid != 0) {
+		if (geteuid() != 0)
+			log_fatalx("need root privileges to set group");
+		else {
+			if (setgroups(1, &conf.gid) != 0 ||
+			    setegid(conf.gid) != 0 || setgid(conf.gid) != 0)
+				log_fatalx("failed to drop group privileges");
+		}
+	}
+	if (conf.uid != 0) {
+		if (geteuid() != 0)
+			log_fatalx("need root privileges to set user");
+		else {
+			if (setuid(conf.uid) != 0 || seteuid(conf.uid) != 0)
+				log_fatalx("failed to drop user privileges");
+		}
+	}
 
-        log_info("started");
+	log_info("started");
 
-        reload = 0;
-        quit = 0;
+	reload = 0;
+	quit = 0;
 
-        if (pthread_create(&thread, NULL, save_thread, NULL) != 0)
-                log_fatalx("pthread_create failed");
+	if (pthread_create(&thread, NULL, save_thread, NULL) != 0)
+		log_fatalx("pthread_create failed");
 
-        if (!conf.debug && !conf.use_stdin) {
-                if (signal(SIGINT, SIG_IGN) == SIG_ERR)
-                        log_fatalx("signal");
-                if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
-                        log_fatalx("signal");
-        }
-        if (signal(SIGHUP, sighandler) == SIG_ERR)
-                log_fatalx("signal");
-        if (signal(SIGTERM, sighandler) == SIG_ERR)
-                log_fatalx("signal");
+	if (!conf.debug && !conf.use_stdin) {
+		if (signal(SIGINT, SIG_IGN) == SIG_ERR)
+			log_fatalx("signal");
+		if (signal(SIGQUIT, SIG_IGN) == SIG_ERR)
+			log_fatalx("signal");
+	}
+	if (signal(SIGHUP, sighandler) == SIG_ERR)
+		log_fatalx("signal");
+	if (signal(SIGTERM, sighandler) == SIG_ERR)
+		log_fatalx("signal");
 
 	/* special-case stdin */
 	if (conf.use_stdin) {
@@ -403,8 +403,8 @@ main(int argc, char **argv)
 		goto out;
 	}
  
-        load_cache();
-        open_files();
+	load_cache();
+	open_files();
 
 	/* read as much of files as possible before entering main loop. this
 	   deals with the anything added since last cache write and gets up to
@@ -423,28 +423,28 @@ main(int argc, char **argv)
 			} else
 				log_debug("new offset=%lld", file->offset);
 		}
-        }
+	}
 	log_debug("initial parse complete");
 	save_cache();
 
-        init_events();
+	init_events();
 
-        dirty = 0;
-        failed = 0;
-        expiretime = time(NULL);
+	dirty = 0;
+	failed = 0;
+	expiretime = time(NULL);
 	cachetime = time(NULL);
 
 	while (!quit) {
 		/* reload config after signal */
-                if (reload) {
+		if (reload) {
 			reload_conf();
 			reload = 0;
-                        dirty = 0;
+			dirty = 0;
 		}
 
 		/* if the check timeout has run out, check for closed files
 		   and save the cache if required */
-                if ((time(NULL) - expiretime) > EXPIRETIMEOUT) {
+		if ((time(NULL) - expiretime) > EXPIRETIMEOUT) {
 			LOCK_MUTEX(conf.files_mutex);
 			TAILQ_FOREACH(file, &conf.files, entry)
 				expire_contexts(file);
@@ -458,45 +458,45 @@ main(int argc, char **argv)
 		}
 
 		/* attempt to reopen closed files */
-                if (reopen_files(&failed) > 0) {
+		if (reopen_files(&failed) > 0) {
 			/* if any files successfully reopened, reset the
 			   event array */
 			reinit_events();
 		}
 		timeout = DEFAULTTIMEOUT;
 		/* if any reopens failed, use alternative timeout */
-                if (failed > 0)
-                        timeout = REOPENTIMEOUT;
+		if (failed > 0)
+			timeout = REOPENTIMEOUT;
 
 		/* get an event */
 		file = get_event(&event, timeout);
-                switch (event) {
-                case EVENT_NONE:
-                case EVENT_TIMEOUT:
-                        break;
-                case EVENT_REOPEN:
+		switch (event) {
+		case EVENT_NONE:
+		case EVENT_TIMEOUT:
+			break;
+		case EVENT_REOPEN:
 			log_debug("reopen: tag=%s", file->tag.name);
-                        fclose(file->fd);
+			fclose(file->fd);
 			file->fd = NULL;
-                        break;
-                case EVENT_READ:
+			break;
+		case EVENT_READ:
 			log_debug("read: tag=%s", file->tag.name);
 			if (read_lines(file) != 0) {
 				fclose(file->fd);
 				file->fd = NULL;
 			} else
 				log_debug("new offset=%lld", file->offset);
-                        dirty = 1;
-                        break;
-                }
-        }
+			dirty = 1;
+			break;
+		}
+	}
 
 	close_events();
 
 out:
 	/* free files. this will wait on files_mutex for the save thread to
 	   finish if it is going */
-        free_files();	
+	free_files();	
 	DESTROY_MUTEX(conf.files_mutex);
 
 	/* wait some time for all threads to exit */
@@ -512,10 +512,10 @@ out:
 	}
 	UNLOCK_MUTEX(conf.thr_mutex);
 
-        if (conf.pid_file != NULL && *conf.pid_file != '\0')
-                unlink(conf.pid_file);
+	if (conf.pid_file != NULL && *conf.pid_file != '\0')
+		unlink(conf.pid_file);
 
-        log_info("terminated");
+	log_info("terminated");
 
 	return (0);
 }
@@ -539,10 +539,10 @@ do_stdin(void)
 restart:
 	stdin_file = xcalloc(1, sizeof *stdin_file);
 
-        TAILQ_INIT(&stdin_file->saves);
+	TAILQ_INIT(&stdin_file->saves);
 	INIT_MUTEX(stdin_file->saves_mutex);
 
-        TAILQ_INIT(&stdin_file->contexts);
+	TAILQ_INIT(&stdin_file->contexts);
 
 	strlcpy(stdin_file->tag.name, "stdin", sizeof stdin_file->tag.name);
 	stdin_file->fd = stdin;
@@ -552,9 +552,9 @@ restart:
 	TAILQ_INSERT_TAIL(&conf.files, stdin_file, entry);
 	UNLOCK_MUTEX(conf.files_mutex);
 
-        expiretime = time(NULL);	
+	expiretime = time(NULL);	
 	while (!quit) {
-                if (reload) {
+		if (reload) {
 			stdin_file->fd = NULL;
 			reload_conf();
 			reload = 0;
@@ -570,7 +570,7 @@ restart:
 		}
 
 		/* expire contexts before reading lines */
-                if ((time(NULL) - expiretime) > EXPIRETIMEOUT) {
+		if ((time(NULL) - expiretime) > EXPIRETIMEOUT) {
 			LOCK_MUTEX(conf.files_mutex);
 			expire_contexts(stdin_file);
 			UNLOCK_MUTEX(conf.files_mutex);

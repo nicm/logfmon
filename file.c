@@ -32,44 +32,44 @@ void	free_file(struct file *);
 struct file *
 add_file(char *path, char *tag)
 {
-        struct file	*file;
-        FILE		*fd;
+	struct file	*file;
+	FILE		*fd;
 
-        file = xmalloc(sizeof (struct file));
+	file = xmalloc(sizeof (struct file));
 	memset(file, 0, sizeof (struct file));
 
-        TAILQ_INIT(&file->saves);
+	TAILQ_INIT(&file->saves);
 	INIT_MUTEX(file->saves_mutex);
 
-        TAILQ_INIT(&file->contexts);
+	TAILQ_INIT(&file->contexts);
 
-        if (find_file_by_path(path) != NULL) {
-                xfree(file);
-                log_warnx("%s: duplicate file", path);
-                return (NULL);
-        }
+	if (find_file_by_path(path) != NULL) {
+		xfree(file);
+		log_warnx("%s: duplicate file", path);
+		return (NULL);
+	}
 
-        if (find_file_by_tag(tag) != NULL) {
-                xfree(file);
-                log_warnx("%s: duplicate tag", tag);
-                return (NULL);
-        }
+	if (find_file_by_tag(tag) != NULL) {
+		xfree(file);
+		log_warnx("%s: duplicate tag", tag);
+		return (NULL);
+	}
 	strlcpy(file->tag.name, tag, sizeof file->tag.name);
 
-        fd = fopen(path, "r");
-        if (fd == NULL) {
-                xfree(file);
-                log_warn("%s", path);
-                return (NULL);
-        }
-        fclose(fd);
+	fd = fopen(path, "r");
+	if (fd == NULL) {
+		xfree(file);
+		log_warn("%s", path);
+		return (NULL);
+	}
+	fclose(fd);
 	file->path = xstrdup(path);
 
 	log_debug("added file: path=%s, tag=%s", path, tag);
 	LOCK_MUTEX(conf.files_mutex);
 	TAILQ_INSERT_TAIL(&conf.files, file, entry);
 	UNLOCK_MUTEX(conf.files_mutex);
-        return (file);
+	return (file);
 }
 
 void
@@ -85,9 +85,9 @@ free_file(struct file *file)
 void
 free_files(void)
 {
-        struct file 	*file;
+	struct file	*file;
 
-        close_files();
+	close_files();
 
 	LOCK_MUTEX(conf.files_mutex);
 	while (!TAILQ_EMPTY(&conf.files)) {
@@ -128,10 +128,10 @@ reset_file(struct file *file)
 unsigned int
 count_open_files(void)
 {
-        struct file 	*file;
-        unsigned int	 n;
+	struct file	*file;
+	unsigned int	 n;
 
-        n = 0;
+	n = 0;
 	TAILQ_FOREACH(file, &conf.files, entry) {
 		if (file->fd != NULL)
 			n++;
@@ -143,14 +143,14 @@ count_open_files(void)
 void
 open_files(void)
 {
-        struct file	*file;
+	struct file	*file;
 	off_t		 size;
 
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd == NULL) {
-                        file->fd = fopen(file->path, "r");
-                        if (file->fd == NULL) {
-                                log_warn("%s", file->path);
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->fd == NULL) {
+			file->fd = fopen(file->path, "r");
+			if (file->fd == NULL) {
+				log_warn("%s", file->path);
 				continue;
 			}
 
@@ -168,21 +168,21 @@ open_files(void)
 			if (fseeko(file->fd, file->offset, SEEK_SET) != 0)
 				log_warn("fseeko");
 		}
-        }
+	}
 }
 
 unsigned int
 reopen_files(unsigned int *failed)
 {
-        struct file 	*file;
-        unsigned int	 opened;
+	struct file	*file;
+	unsigned int	 opened;
 
-        if (failed != NULL)
-                *failed = 0;
-        opened = 0;
+	if (failed != NULL)
+		*failed = 0;
+	opened = 0;
 
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd != NULL)
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->fd != NULL)
 			continue;
 		if (file->buf != NULL) {
 			xfree(file->buf);
@@ -210,63 +210,63 @@ reopen_files(unsigned int *failed)
 		opened++;
 	}
 
-        return (opened);
+	return (opened);
 }
 
 void
 close_files(void)
 {
-        struct file	*file;
+	struct file	*file;
 
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd != NULL) {
-                        fclose(file->fd);
-                        file->fd = NULL;
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->fd != NULL) {
+			fclose(file->fd);
+			file->fd = NULL;
 
 			if (file->buf) {
 				xfree(file->buf);
 				file->buf = NULL;
 			}
-                }
-        }
+		}
+	}
 }
 
 struct file *
 find_file_by_tag(char *tag)
 {
-        struct file	*file;
+	struct file	*file;
 
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (strcmp(file->tag.name, tag) == 0)
-                        return (file);
-        }
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (strcmp(file->tag.name, tag) == 0)
+			return (file);
+	}
 
-        return (NULL);
+	return (NULL);
 }
 
 struct file *
 find_file_by_path(char *path)
 {
-        struct file	*file;
+	struct file	*file;
 
-        TAILQ_FOREACH(file, &conf.files, entry) {
+	TAILQ_FOREACH(file, &conf.files, entry) {
 		if (strcmp(file->path, path) == 0) {
-                        return (file);
+			return (file);
 		}
-        }
+	}
 
-        return (NULL);
+	return (NULL);
 }
 
 struct file *
 find_file_by_fd(int fd)
 {
-        struct file	*file;
+	struct file	*file;
 
-        TAILQ_FOREACH(file, &conf.files, entry) {
-                if (file->fd != NULL && fileno(file->fd) == fd)
-                        return (file);
-        }
+	TAILQ_FOREACH(file, &conf.files, entry) {
+		if (file->fd != NULL && fileno(file->fd) == fd)
+			return (file);
+	}
 
-        return (NULL);
+	return (NULL);
 }

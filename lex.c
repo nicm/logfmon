@@ -92,7 +92,7 @@ static const struct token tokens[] = {
 int
 yylex(void)
 {
-	int	 	 ch, value;
+	int		 ch, value;
 	char		*path;
 
 	/* Switch to new file. See comment in read_token below. */
@@ -203,7 +203,7 @@ cmp_token(const void *name, const void *ptr)
 {
 	const struct token	*token = ptr;
 
-        return (strcmp(name, token->name));
+	return (strcmp(name, token->name));
 }
 
 int
@@ -275,8 +275,8 @@ read_token(int ch)
 		 * can). If we don't do this, there are problems with things
 		 * like:
 		 *
-		 * 	$file = "abc"
-		 * 	include "${file}"
+		 *	$file = "abc"
+		 *	include "${file}"
 		 *
 		 * The include token is seen before yacc has matched the
 		 * previous line, so the macro doesn't exist when we try to
@@ -288,7 +288,7 @@ read_token(int ch)
 
 	ptr = bsearch(token, tokens,
 	    (sizeof tokens)/(sizeof tokens[0]), sizeof tokens[0], cmp_token);
-        if (ptr == NULL) {
+	if (ptr == NULL) {
 		/* Find action name if possible */
 		i = 0;
 		while (actions[i] != NULL) {
@@ -310,7 +310,7 @@ read_number(int ch)
 {
 	char		 number[32];
 	size_t		 nlen;
-	const char 	*errstr;
+	const char	*errstr;
 	long long	 n;
 
 	nlen = 0;
@@ -356,7 +356,7 @@ read_macro(int type, int ch)
 		if (nlen == (sizeof name) - 1)
 			yyerror("macro name too long");
 	}
- 	name[nlen] = '\0';
+	name[nlen] = '\0';
 	if (!brackets)
 		lex_ungetc(ch);
 
@@ -376,10 +376,10 @@ read_command(void)
 	char	*buf, *s;
 
 	len = 24;
-        buf = xmalloc(len + 1);
+	buf = xmalloc(len + 1);
 
 	nesting = 0;
-        while ((ch = lex_getc()) != EOF) {
+	while ((ch = lex_getc()) != EOF) {
 		switch (ch) {
 		case '(':
 			nesting++;
@@ -411,11 +411,11 @@ read_command(void)
 			buf[pos++] = '\'';
 			xfree(s);
 			continue;
-                }
+		}
 
-                buf[pos++] = ch;
-                ENSURE_SIZE(buf, len, pos);
-        }
+		buf[pos++] = ch;
+		ENSURE_SIZE(buf, len, pos);
+	}
 
 	yyerror("missing )");
 }
@@ -425,34 +425,34 @@ read_string(char endch, int esc)
 {
 	int		 ch, oldch;
 	size_t		 pos, len, slen;
-	char	        *name, *s, *buf;
+	char		*name, *s, *buf;
 	struct macro	*macro;
 
 	len = 24;
-        buf = xmalloc(len + 1);
+	buf = xmalloc(len + 1);
 
 	pos = 0;
-        while ((ch = lex_getc()) != endch) {
-                switch (ch) {
+	while ((ch = lex_getc()) != endch) {
+		switch (ch) {
 		case EOF:
 			yyerror("missing %c", endch);
-                case '\\':
+		case '\\':
 			if (!esc)
 				break;
-                        switch (ch = lex_getc()) {
+			switch (ch = lex_getc()) {
 			case EOF:
 				yyerror("missing %c", endch);
-                        case 'r':
-                                ch = '\r';
-                                break;
-                        case 'n':
-                                ch = '\n';
-                                break;
-                        case 't':
-                                ch = '\t';
-                                break;
-                        }
-                        break;
+			case 'r':
+				ch = '\r';
+				break;
+			case 'n':
+				ch = '\n';
+				break;
+			case 't':
+				ch = '\t';
+				break;
+			}
+			break;
 		case '$':
 		case '%':
 			if (!esc)
@@ -476,7 +476,7 @@ read_string(char endch, int esc)
 			xfree(name);
 
 			if (macro->type == MACRO_NUMBER)
- 				xasprintf(&s, "%lld", macro->value.num);
+				xasprintf(&s, "%lld", macro->value.num);
 			else
 				s = macro->value.str;
 			slen = strlen(s);
@@ -488,13 +488,13 @@ read_string(char endch, int esc)
 			if (macro->type == MACRO_NUMBER)
 				xfree(s);
 			continue;
-                }
+		}
 
-                buf[pos++] = ch;
-                ENSURE_SIZE(buf, len, pos);
-        }
+		buf[pos++] = ch;
+		ENSURE_SIZE(buf, len, pos);
+	}
 
-        buf[pos] = '\0';
+	buf[pos] = '\0';
 
 	return (buf);
 }

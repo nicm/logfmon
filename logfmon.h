@@ -73,27 +73,27 @@
 
 #define CREATE_THREAD(thread, fn, arg) do {				\
 	LOCK_MUTEX(conf.thr_mutex);					\
-        if (conf.debug > 1)						\
-		log_debug("new thread: cur=%d, limit=%d", 		\
+	if (conf.debug > 1)						\
+		log_debug("new thread: cur=%d, limit=%d",		\
 		    conf.thr_count, conf.thr_limit);			\
 	while (conf.thr_count >= conf.thr_limit) {			\
 		log_debug("reached thread limit; sleeping");		\
-		if (pthread_cond_wait(&conf.thr_cond, 			\
+		if (pthread_cond_wait(&conf.thr_cond,			\
 		    &conf.thr_mutex) != 0) {				\
 			log_warnx("pthread_cond_wait failed: %s:%d",	\
 			    __FILE__, __LINE__);			\
 			exit(1);					\
 		}							\
-        	if (conf.debug > 1)					\
+		if (conf.debug > 1)					\
 			log_debug("woken after sleep on thread limit");	\
 	}								\
 	conf.thr_count++;						\
 	UNLOCK_MUTEX(conf.thr_mutex);					\
-        if (pthread_create(thread, NULL, fn, arg) != 0) {		\
+	if (pthread_create(thread, NULL, fn, arg) != 0) {		\
 		log_warnx("pthread_create failed: %s:%d",		\
-		    __FILE__, __LINE__);		 	       	\
+		    __FILE__, __LINE__);				\
 		exit(1);						\
-	}							 	\
+	}								\
 } while (0)
 
 #define ENTER_THREAD()
@@ -110,38 +110,38 @@
 } while (0)
 
 #define INIT_MUTEX(mutex) do {						\
-	if (pthread_mutex_init(&(mutex), NULL) != 0) {		 	\
+	if (pthread_mutex_init(&(mutex), NULL) != 0) {			\
 		log_warnx("pthread_mutex_init failed: %s:%d",		\
-		    __FILE__, __LINE__);	 			\
+		    __FILE__, __LINE__);				\
 		exit(1);						\
-	}							 	\
+	}								\
 } while (0)
 
 #define DESTROY_MUTEX(mutex) do {					\
-	int	mtx_error;					 	\
-	while ((mtx_error = pthread_mutex_destroy(&(mutex))) != 0) { 	\
-		if (mtx_error == EBUSY)				 	\
-			continue;				 	\
-		log_warnx("pthread_mutex_destroy failed: %s:%d", 	\
-		    __FILE__, __LINE__);	 		 	\
-		exit(1);					 	\
-	}							 	\
+	int	mtx_error;						\
+	while ((mtx_error = pthread_mutex_destroy(&(mutex))) != 0) {	\
+		if (mtx_error == EBUSY)					\
+			continue;					\
+		log_warnx("pthread_mutex_destroy failed: %s:%d",	\
+		    __FILE__, __LINE__);				\
+		exit(1);						\
+	}								\
 } while (0)
 
 #define LOCK_MUTEX(mutex) do {						\
 	if (pthread_mutex_lock(&(mutex)) != 0) {			\
 		log_warnx("pthread_mutex_lock failed: %s:%d",		\
-		    __FILE__, __LINE__);	 			\
+		    __FILE__, __LINE__);				\
 		exit(1);						\
 	}								\
 } while (0)
 
-#define UNLOCK_MUTEX(mutex) do {                        		\
+#define UNLOCK_MUTEX(mutex) do {					\
 	if (pthread_mutex_unlock(&(mutex)) != 0) {			\
 		log_warnx("pthread_mutex_unlock failed: %s:%d",		\
-		    __FILE__, __LINE__);	 			\
-		exit(1);					 	\
-	}							 	\
+		    __FILE__, __LINE__);				\
+		exit(1);						\
+	}								\
 } while (0)
 
 /* Ensure buffer size. */
@@ -162,9 +162,9 @@ extern volatile sig_atomic_t	 quit;
 
 /* Configuration file (used by parser). */
 struct cfgfile {
-        FILE            *f;
-        int              line;
-        const char      *path;
+	FILE		*f;
+	int		 line;
+	const char	*path;
 };
 ARRAY_DECL(cfgfiles, struct cfgfile *);
 
@@ -186,25 +186,25 @@ TAILQ_HEAD(macros, macro);
 
 /* Valid macro name chars. */
 #define ismacrofirst(c) (						\
-	((c) >= 'a' && (c) <= 'z') || 					\
+	((c) >= 'a' && (c) <= 'z') ||					\
 	((c) >= 'A' && (c) <= 'Z'))
 #define ismacro(c) (							\
-	((c) >= 'a' && (c) <= 'z') || 					\
+	((c) >= 'a' && (c) <= 'z') ||					\
 	((c) >= 'A' && (c) <= 'Z') ||					\
 	((c) >= '0' && (c) <= '9') ||					\
 	(c) == '_' || (c) == '-')
 
 /* Event types */
 enum event {
-        EVENT_NONE,
-        EVENT_TIMEOUT,
-        EVENT_REOPEN,
-        EVENT_READ
+	EVENT_NONE,
+	EVENT_TIMEOUT,
+	EVENT_REOPEN,
+	EVENT_READ
 };
 
 /* Tag entry */
 struct tag {
-        char			 name[MAXTAGLEN];
+	char			 name[MAXTAGLEN];
 
 	TAILQ_ENTRY(tag)	 entry;
 };
@@ -214,20 +214,20 @@ TAILQ_HEAD(tags, tag);
 
 /* Message entry */
 struct msg {
-        char			*str;
+	char			*str;
 
-        TAILQ_ENTRY(msg)	 entry;
+	TAILQ_ENTRY(msg)	 entry;
 };
 
 /* Context entry */
 struct context {
-        char			*key;
-        time_t			 expiry;
+	char			*key;
+	time_t			 expiry;
 
 	char			*line;
 	regmatch_t		 match[10];
 
-        struct rule		*rule;
+	struct rule		*rule;
 	TAILQ_HEAD(, msg)	 msgs;
 
 	TAILQ_ENTRY(context)	 entry;
@@ -236,14 +236,14 @@ struct context {
 
 /* Rule actions */
 enum action {
-        ACT_IGNORE,
-        ACT_EXEC,
-        ACT_PIPE,
+	ACT_IGNORE,
+	ACT_EXEC,
+	ACT_PIPE,
 	ACT_WRITE,
 	ACT_WRITEAPPEND,
-        ACT_OPEN,
-        ACT_APPEND,
-        ACT_CLOSE,
+	ACT_OPEN,
+	ACT_APPEND,
+	ACT_CLOSE,
 	ACT_CLEAR
 };
 extern const char *actions[];	/* defined in action.c */
@@ -252,15 +252,15 @@ extern const char *actions[];	/* defined in action.c */
 struct rule {
 	struct tags		 tags;
 
-        regex_t			*re;
-        regex_t			*not_re;
+	regex_t			*re;
+	regex_t			*not_re;
 
-        enum action	 	 action;
+	enum action		 action;
 
-        struct
-        {
-                char		*str;
-                char		*key;
+	struct
+	{
+		char		*str;
+		char		*key;
 
 		enum action	 close_act;
 		char		*close_str;
@@ -269,35 +269,35 @@ struct rule {
 		char		*clear_str;
 
 		enum action	 exp_act;
-                time_t		 exp_time;
+		time_t		 exp_time;
 		char		*exp_str;
 
 		enum action	 ent_act;
-                unsigned int	 ent_max;
-                char		*ent_str;
-        } params;
+		unsigned int	 ent_max;
+		char		*ent_str;
+	} params;
 
-        TAILQ_ENTRY(rule)	 entry;
+	TAILQ_ENTRY(rule)	 entry;
 };
 
 /* File entry */
 struct file {
-        time_t		 	 timer;
+	time_t			 timer;
 
 	void			*data;	/* event data */
 
-        char			*path;
+	char			*path;
 	struct tag		 tag;
 
-        FILE			*fd;
+	FILE			*fd;
 
-        off_t		 	 offset;
+	off_t			 offset;
 
 	char			*buf;
 	size_t			 buflen;
 	size_t			 bufused;
 
-        TAILQ_HEAD(, context)	 contexts;
+	TAILQ_HEAD(, context)	 contexts;
 	TAILQ_HEAD(, msg)	 saves;
 	pthread_mutex_t		 saves_mutex;
 
@@ -306,13 +306,13 @@ struct file {
 
 /* Configuration settings */
 struct conf {
-	int 			 debug;
+	int			 debug;
 	int			 use_stdin;
 
-	char 			*mail_cmd;
-	unsigned int 		 mail_time;
+	char			*mail_cmd;
+	unsigned int		 mail_time;
 
-	uid_t 			 uid;
+	uid_t			 uid;
 	gid_t			 gid;
 
 	char			*conf_file;
@@ -339,8 +339,8 @@ extern struct conf		 conf;
 
 #ifdef NO_STRTONUM
 /* strtonum.c */
-long long                strtonum(const char *, long long, long long,
-    			     const char **);
+long long		 strtonum(const char *, long long, long long,
+			     const char **);
 #endif
 
 #ifdef NO_STRLCPY
@@ -377,7 +377,7 @@ void	 act_appd(struct file *, char *, struct rule *, regmatch_t [10],
 void	 act_close(struct file *, char *, struct rule *, regmatch_t [10]);
 void	 act_clear(struct file *, char *, struct rule *, regmatch_t [10]);
 void	 act_write(struct file *, char *, struct rule *, regmatch_t [10],
-    	     char *, int);
+	     char *, int);
 
 /* cache.c */
 int		 save_cache(void);
@@ -385,7 +385,7 @@ int		 load_cache(void);
 
 /* context.c */
 struct context	*add_context(struct file *, char *, struct rule *, char *,
-    		     regmatch_t [10]);
+		     regmatch_t [10]);
 void		 free_contexts(struct file *);
 void		 reset_context(struct context *);
 void		 delete_context(struct file *, struct context *);
@@ -401,7 +401,7 @@ unsigned int	 count_msgs(struct context *);
 void		 init_events(void);
 void		 reinit_events(void);
 void		 close_events(void);
-struct file 	*get_event(enum event *, int);
+struct file	*get_event(enum event *, int);
 
 /* file.c */
 struct file	*add_file(char *, char *);
@@ -412,9 +412,9 @@ int		 file_size(struct file *, off_t *);
 void		 open_files(void);
 unsigned int	 reopen_files(unsigned int *);
 void		 close_files(void);
-struct file 	*find_file_by_tag(char *);
-struct file 	*find_file_by_path(char *);
-struct file 	*find_file_by_fd(int);
+struct file	*find_file_by_tag(char *);
+struct file	*find_file_by_path(char *);
+struct file	*find_file_by_fd(int);
 struct file	*find_file_mismatch(void);
 
 /* getln.c */
@@ -436,15 +436,15 @@ __dead void	 log_fatal(const char *, ...);
 __dead void	 log_fatalx(const char *, ...);
 
 /* lex.c */
-int 	 	 	yylex(void);
+int			yylex(void);
 
 /* parse.y */
 extern struct macros	parse_macros;
-extern struct cfgfiles  parse_filestack;
+extern struct cfgfiles	parse_filestack;
 extern struct cfgfile  *parse_file;
-int	 		parse_conf(const char *);
+int			parse_conf(const char *);
 __dead printflike1 void yyerror(const char *, ...);
-struct macro 	       *find_macro(char *);
+struct macro	       *find_macro(char *);
 
 /* rules.c */
 void		 free_tags(struct tags *);
@@ -470,7 +470,7 @@ int		 xvasprintf(char **, const char *, va_list);
 int printflike3	 xsnprintf(char *, size_t, const char *, ...);
 int		 xvsnprintf(char *, size_t, const char *, va_list);
 int printflike3	 printpath(char *, size_t, const char *, ...);
-char 		*xdirname(const char *);
-char 		*xbasename(const char *);
+char		*xdirname(const char *);
+char		*xbasename(const char *);
 
 #endif

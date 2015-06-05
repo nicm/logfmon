@@ -35,22 +35,22 @@ struct context *
 add_context(struct file *file, char *key, struct rule *rule, char *entry,
     regmatch_t match[10])
 {
-        struct context	*context;
+	struct context	*context;
 
-        context = xmalloc(sizeof (struct context));
+	context = xmalloc(sizeof (struct context));
 
 	TAILQ_INIT(&context->msgs);
 
-        context->rule = rule;
-        context->expiry = time(NULL) + rule->params.exp_time;
-        context->key = xstrdup(key);
+	context->rule = rule;
+	context->expiry = time(NULL) + rule->params.exp_time;
+	context->key = xstrdup(key);
 
 	context->line = xstrdup(entry);
 	memcpy(&context->match, match, sizeof context->match);
 
 	log_debug("added context: key=%s", key);
 	TAILQ_INSERT_TAIL(&file->contexts, context, entry);
-        return (context);
+	return (context);
 }
 
 void
@@ -66,7 +66,7 @@ free_context(struct context *context)
 void
 free_contexts(struct file *file)
 {
-        struct context	*context;
+	struct context	*context;
 
 	while (!TAILQ_EMPTY(&file->contexts)) {
 		context = TAILQ_FIRST(&file->contexts);
@@ -99,23 +99,23 @@ delete_context(struct file *file, struct context *context)
 struct context *
 find_context_by_key(struct file *file, char *key)
 {
-        struct context	*context;
+	struct context	*context;
 
 	TAILQ_FOREACH(context, &file->contexts, entry) {
-                if (strcmp(context->key, key) == 0)
-                        return (context);
-        }
+		if (strcmp(context->key, key) == 0)
+			return (context);
+	}
 
-        return (NULL);
+	return (NULL);
 }
 
 unsigned int
 count_msgs(struct context *context)
 {
-        struct msg 	*msg;
-        unsigned int	 n;
+	struct msg	*msg;
+	unsigned int	 n;
 
-        n = 0;
+	n = 0;
 	TAILQ_FOREACH(msg, &context->msgs, entry)
 		n++;
 
@@ -125,21 +125,21 @@ count_msgs(struct context *context)
 void
 expire_contexts(struct file *file)
 {
-        struct context		*context;
+	struct context		*context;
 	TAILQ_HEAD(, context)	 exp_contexts;
-        time_t		 	 now;
+	time_t			 now;
 
-        now = time(NULL);
+	now = time(NULL);
 	TAILQ_INIT(&exp_contexts);
 
 	TAILQ_FOREACH(context, &file->contexts, entry) {
-                if (now >= context->expiry) {
+		if (now >= context->expiry) {
 			log_debug("expired context: key=%s", context->key);
 			act_context(context, context->rule->params.exp_act,
 			    context->rule->params.exp_str, 1);
 			TAILQ_INSERT_HEAD(&exp_contexts, context, exp_entry);
-                }
-        }
+		}
+	}
 
 	while (!TAILQ_EMPTY(&exp_contexts)) {
 		context = TAILQ_FIRST(&exp_contexts);
@@ -188,31 +188,31 @@ act_context(struct context *context, enum action act, char *str, int repl)
 void
 pipe_context(struct context *context, char *cmd)
 {
-        FILE		*fd;
-        struct msg	*msg;
-        pthread_t	 thread;
+	FILE		*fd;
+	struct msg	*msg;
+	pthread_t	 thread;
 
-        if (cmd == NULL || *cmd == '\0') {
-                log_warnx("empty pipe command");
-                return;
-        }
+	if (cmd == NULL || *cmd == '\0') {
+		log_warnx("empty pipe command");
+		return;
+	}
 
-        fd = popen(cmd, "w");
-        if (fd == NULL) {
-                log_warn("%s", cmd);
-                return;
-        }
+	fd = popen(cmd, "w");
+	if (fd == NULL) {
+		log_warn("%s", cmd);
+		return;
+	}
 
 	TAILQ_FOREACH(msg, &context->msgs, entry) {
-                if (fwrite(msg->str, strlen(msg->str), 1, fd) != 1) {
+		if (fwrite(msg->str, strlen(msg->str), 1, fd) != 1) {
 			log_warn("fwrite");
-                        break;
+			break;
 		}
-                if (fputc('\n', fd) == EOF) {
+		if (fputc('\n', fd) == EOF) {
 			log_warn("fputc");
-                        break;
+			break;
 		}
-        }
+	}
 	
 	CREATE_THREAD(&thread, pclose_thread, fd);
 }
@@ -220,12 +220,12 @@ pipe_context(struct context *context, char *cmd)
 void
 exec_context(char *cmd)
 {
-        pthread_t	 thread;
+	pthread_t	 thread;
 
-        if (cmd == NULL || *cmd == '\0') {
-                log_warnx("empty exec command");
-                return;
-        }
+	if (cmd == NULL || *cmd == '\0') {
+		log_warnx("empty exec command");
+		return;
+	}
 
 	CREATE_THREAD(&thread, exec_thread, xstrdup(cmd));
 }
@@ -233,30 +233,30 @@ exec_context(char *cmd)
 void
 write_context(struct context *context, char *path, int append)
 {
-        FILE		*fd;
-        struct msg	*msg;
+	FILE		*fd;
+	struct msg	*msg;
 
-        if (path == NULL || *path == '\0') {
-                log_warnx("empty write path");
-                return;
-        }
+	if (path == NULL || *path == '\0') {
+		log_warnx("empty write path");
+		return;
+	}
        
-        fd = fopen(path, append ? "a" : "w");
-        if (fd == NULL) {
-                log_warn("%s", path);
-                return;
-        }
+	fd = fopen(path, append ? "a" : "w");
+	if (fd == NULL) {
+		log_warn("%s", path);
+		return;
+	}
 
 	TAILQ_FOREACH(msg, &context->msgs, entry) {
-                if (fwrite(msg->str, strlen(msg->str), 1, fd) != 1) {
+		if (fwrite(msg->str, strlen(msg->str), 1, fd) != 1) {
 			log_warn("fwrite");
-                        break;
+			break;
 		}
-                if (fputc('\n', fd) == EOF) {
+		if (fputc('\n', fd) == EOF) {
 			log_warn("fputc");
-                        break;
+			break;
 		}
-        }
+	}
 
 	fclose(fd);
 }
